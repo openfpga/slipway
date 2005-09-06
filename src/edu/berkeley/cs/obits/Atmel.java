@@ -16,6 +16,7 @@ public class Atmel {
         Log.level = Log.DEBUG;
         new Bits().read(System.in);
     }
+
     private static class Bits {
         private byte[] bits    = new byte[0];
         //public int  get(int whichByte, int whichBit, int len) { }
