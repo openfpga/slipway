@@ -7,7 +7,7 @@ import java.util.*;
 import gnu.io.*;
 
 /** the "host" side of the AVR Drone; see AvrDrone.c for the other side */
-public class AvrDrone implements AtmelDevice {
+public class AvrDrone extends AtmelDevice {
 
     final DataInputStream in;
 
@@ -44,7 +44,6 @@ public class AvrDrone implements AtmelDevice {
         } catch (InterruptedException e) { throw new DeviceException(e); }
     }
 
-    /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */
     public void mode4(int z, int y, int x, int d) throws DeviceException {
         try {
             Log.debug(this, "writing configuration frame [zyxd]: " +
