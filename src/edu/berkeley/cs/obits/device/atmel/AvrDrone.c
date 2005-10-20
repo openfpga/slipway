@@ -3,6 +3,7 @@
 //
 
 #define F_CPU 3960000
+#define __AVR_AT94K__
 #include <avr/wdt.h>
 #include <avr/delay.h>
 #include <avr/io.h>
