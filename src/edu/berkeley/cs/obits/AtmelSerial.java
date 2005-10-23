@@ -14,17 +14,18 @@ public class AtmelSerial {
             CommPortIdentifier cpi = (CommPortIdentifier)e.nextElement();
             Log.info(AtmelSerial.class, "trying " + cpi.getName());
         }
-        return new RXTXPort("/dev/cu.usbserial-FTBUODP4");
+        SerialPort ret = new RXTXPort("/dev/cu.usbserial-FTBUODP4");
+        Log.info(AtmelSerial.class, "returning " + ret);
+        return ret;
     }
 
     public static void main(String[] s) throws Exception {
         SerialPort sp = detectObitsPort();
         sp.setSerialPortParams(9600, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-        sp.setFlowControlMode(sp.FLOWCONTROL_NONE);
+        //sp.setFlowControlMode(sp.FLOWCONTROL_NONE);
         OutputStream out = sp.getOutputStream();
         InputStream in = sp.getInputStream();
         int count = 0;
-        byte[] b = InputStreamToByteArray.convert(System.in);
         PrintWriter pw = new PrintWriter(new OutputStreamWriter(out));
         /*
         pw.println("Y38,N,8,1");
@@ -34,6 +35,49 @@ public class AtmelSerial {
         pw.println("GI");
         pw.flush();
         */
+
+        pw.println();
+        pw.flush();
+        pw.println("^@");
+        pw.println("^@");
+        pw.println("^@");
+        pw.flush();
+        try { Thread.sleep(3000); } catch (Exception e) { }
+
+        pw.println("GK\"IMG\"");
+        pw.println("GK\"IMG\"");
+        pw.println();
+        pw.flush();
+        try { Thread.sleep(1000); } catch (Exception e) { }
+        /*
+        pw.println("GI");
+        pw.flush();
+        */
+        int[] data = new int[104 * 104];
+        for(int i=0; i<104*104; i++) data[i] = 1;
+        for(int i=0; i<104; i++) data[i*104+i] = 0;
+        for(int i=0; i<104; i++) data[i*104+(104-i)] = 0;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PCX.dump(104, 104, data, new DataOutputStream(baos));
+        byte[] outb = baos.toByteArray();
+        int len = outb.length;
+        pw.println("GM\"IMG\""+len);
+        pw.flush();
+        DataOutputStream dout = new DataOutputStream(out);
+        for(int i=0; i<len; i++) {
+            System.out.println("wrote " + i + "/"+outb.length);
+            dout.writeByte(outb[i]);
+            dout.flush();
+        }
+        dout.flush();
+
+        pw.println();
+        pw.println("GI");
+        pw.flush();
+
+        try { Thread.sleep(2000); } catch (Exception e) { }
+
+        pw.println();
         pw.println("OD");
         pw.println("N");
         pw.println("D14");
@@ -41,18 +85,6 @@ public class AtmelSerial {
         pw.println("Q609,24");
         pw.println("q754");
         //pw.println("R0,0");
-
-        int len = 228;
-        pw.println("GK\"IMG\"");
-        pw.println("GM\"IMG\""+len);
-        System.out.println("flushing");
-        pw.flush();
-        System.out.println("flushed");
-        DataOutputStream dos = new DataOutputStream(out);
-        
-        dos.flush();
-
-        /*
         pw.println("A170,5,0,1,5,5,N,\"WORLDWIDE\"");
         pw.println("LO5,230,765,10");
         pw.println("A10,265,0,1,3,3,R,\"MODEL:\"");
@@ -61,11 +93,10 @@ public class AtmelSerial {
         pw.println("B280,340,0,3C,2,6,120,B,\"BCP-1234\"");
         pw.println("LO5,520,765,10");
         pw.println("A100,550,0,1,2,2,N,\"ISO9000     Made In USA\"");
-        pw.println("GG650,535,\"CE_5M\"");
-        */
-        pw.println("GG0,0,\"IMG\"");
+        pw.println("GG0,0,\"IMG2\"");
         pw.println("P1");
         pw.flush();
+
         /*
         */
         //Log.debug(this, "consuming any leftover data on the serial port");
