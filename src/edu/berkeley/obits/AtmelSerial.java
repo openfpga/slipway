@@ -2,7 +2,6 @@ package edu.berkeley.obits;
 
 import edu.berkeley.obits.device.atmel.*;
 import org.ibex.util.*;
-import org.ibex.graphics.Picture;
 import java.io.*;
 import java.util.*;
 import gnu.io.*;
