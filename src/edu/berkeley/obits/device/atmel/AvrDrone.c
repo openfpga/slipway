@@ -3,11 +3,14 @@
 //
 
 #define F_CPU 3960000
-#define __AVR_AT94K__
+
+#if !defined(__AVR_AT94K__)
+#error you forgot to put -mmcu=at94k on the command line
+#endif
+
 #include <avr/wdt.h>
-#include <avr/delay.h>
+#include <util/delay.h>
 #include <avr/io.h>
-#include <avr/signal.h>
 #include <avr/interrupt.h>
 
 unsigned char val = 0;
@@ -106,12 +109,12 @@ void doreset() {
   while(1) { }
 }
 
-SIGNAL(SIG_INTERRUPT1) {
+ISR(SIG_INTERRUPT1) {   // use interrupt1 since interrupt0 is sent by the watchdog (I think)
   doreset();
 }
 
 void die() { cli(); cts(0); _delay_ms(2000); while(1) { } }
-SIGNAL(SIG_UART1_RECV) {
+ISR(SIG_UART1_RECV) {
   if (UCSR1A & (1 << FE1))   { portd(2,0); portd(3,1); die(); }  // framing error, lock up with LED=01
   if ((UCSR1A & (1 << OR1))) { portd(2,1); portd(3,0); die(); }  // overflow; lock up with LED=10
   if (full())                { portd(2,1); portd(3,1); die(); }  // buffer overrun

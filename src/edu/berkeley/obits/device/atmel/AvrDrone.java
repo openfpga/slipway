@@ -19,6 +19,7 @@ public class AvrDrone extends AtmelDevice {
         this.sp = sp;
         sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
         sp.setFlowControlMode(sp.FLOWCONTROL_RTSCTS_OUT);
+        //sp.setFlowControlMode(sp.FLOWCONTROL_NONE);
         this.out = new DataOutputStream(sp.getOutputStream());
         this.in = new DataInputStream(sp.getInputStream());
         Log.debug(this, "consuming any leftover data on the serial port");
@@ -38,9 +39,12 @@ public class AvrDrone extends AtmelDevice {
         try {
             Log.info(this, "resetting device");
             sp.setDTR(true);
+            sp.setRTS(true);
             Thread.sleep(500);
+            Log.info(this, "deasserting reset signal");
             sp.setDTR(false);
-            Thread.sleep(3000);
+            sp.setRTS(false);
+            Thread.sleep(100);
         } catch (InterruptedException e) { throw new DeviceException(e); }
     }
 

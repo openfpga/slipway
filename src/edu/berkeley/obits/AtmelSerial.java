@@ -14,7 +14,7 @@ public class AtmelSerial {
             CommPortIdentifier cpi = (CommPortIdentifier)e.nextElement();
             Log.info(AtmelSerial.class, "trying " + cpi.getName());
         }
-        SerialPort ret = new RXTXPort("/dev/cu.usbserial-FTCBWI2P");
+        SerialPort ret = new RXTXPort("/dev/ttyS0");
         Log.info(AtmelSerial.class, "returning " + ret);
         return ret;
     }
