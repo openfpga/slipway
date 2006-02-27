@@ -1,4 +1,4 @@
-package edu.berkeley.cs.obits;
+package edu.berkeley.obits;
 import java.util.*;
 import java.io.*;
 import org.ibex.util.*;

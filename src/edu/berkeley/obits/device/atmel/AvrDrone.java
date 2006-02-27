@@ -1,6 +1,6 @@
-package edu.berkeley.cs.obits.device.atmel;
+package edu.berkeley.obits.device.atmel;
 
-import edu.berkeley.cs.obits.*;
+import edu.berkeley.obits.*;
 import org.ibex.util.Log;
 import java.io.*;
 import java.util.*;

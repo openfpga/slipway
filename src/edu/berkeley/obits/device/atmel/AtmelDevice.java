@@ -1,6 +1,6 @@
-package edu.berkeley.cs.obits.device.atmel;
+package edu.berkeley.obits.device.atmel;
 
-import edu.berkeley.cs.obits.*;
+import edu.berkeley.obits.*;
 //import static edu.berkeley.cs.obits.device.atmel.Wires.*;
 import java.util.*;
 
