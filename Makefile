@@ -9,8 +9,13 @@ led1: obits.jar
 	     -cp /usr/share/java/RXTXcomm.jar:obits.jar \
 	     edu.berkeley.obits.AtmelSerial < bitstreams/led1.md4
 
+run: obits.jar
+	java -Djava.library.path=/usr/lib \
+	     -cp /usr/share/java/RXTXcomm.jar:obits.jar \
+	     edu.berkeley.obits.AtmelSerial
+
 obits.jar: $(shell find src -name \*.java)
-	javac -cp /usr/share/java/RXTXcomm.jar -d build $`
+	javac -cp /usr/share/java/RXTXcomm.jar -d build $(shell find src -name \*.java)
 	cd build; jar cvf ../$@ .
 
 # -O3 is required; otherwise the poor AVR can't keep up with us!

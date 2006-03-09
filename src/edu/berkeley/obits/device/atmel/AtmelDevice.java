@@ -6,8 +6,47 @@ import java.util.*;
 
 public abstract class AtmelDevice extends Bits implements Device {
 
+    public static class Constants {
+        public static final int NONE  = -1;
+        public static final int L0    = 0;
+        public static final int L1    = 1;
+        public static final int L2    = 2;
+        public static final int L3    = 3;
+        public static final int L4    = 4;
+
+        public static final int NORTH = 8;
+        public static final int SOUTH = 9;
+        public static final int EAST  = 10;
+        public static final int WEST  = 11;
+
+        public static final int XLUT  = 12;
+        public static final int YLUT  = 13;
+        public static final int ZMUX  = 14;
+
+        public static final int H4    = 15;
+        public static final int V4    = 16;
+
+        public static final int NW    = 20;
+        public static final int SW    = 21;
+        public static final int NE    = 22;
+        public static final int SE    = 23;
+    }
+
     /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */
     public abstract void mode4(int z, int y, int x, int d) throws DeviceException;
+    public abstract byte mode4(int z, int y, int x);
+    public          void mode4(int z, int y, int x, int d, int invmask) {
+        int old = mode4(z, y, x);
+        old &= ~invmask;
+        old |= d;
+        mode4(z, y, x, old);
+    }
+    public          void mode4(int z, int y, int x, int bit, boolean set) {
+        int old = mode4(z, y, x);
+        old &= 1 << bit;
+        old |= set ? (1 << bit) : 0;
+        mode4(z, y, x, old);
+    }
     /*
     public Sector sector(int col, int row) { return new Sector(col, row); }
     public final class Sector {

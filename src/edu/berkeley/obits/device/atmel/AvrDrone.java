@@ -48,6 +48,12 @@ public class AvrDrone extends AtmelDevice {
         } catch (InterruptedException e) { throw new DeviceException(e); }
     }
 
+    private byte[][][] cache = new byte[24][][];
+    public byte mode4(int z, int y, int x) throws DeviceException {
+        if (cache[x]==null) return 0;
+        if (cache[x][y]==null) return 0;
+        return cache[x][y][z];
+    }
     public void mode4(int z, int y, int x, int d) throws DeviceException {
         try {
             Log.debug(this, "writing configuration frame [zyxd]: " +
@@ -61,6 +67,9 @@ public class AvrDrone extends AtmelDevice {
             out.writeByte(y);
             out.writeByte(x);
             out.writeByte(d);
+            if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
+            if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
+            cache[x & 0xff][y & 0xff][z & 0xff] = (byte)(d & 0xff);
         } catch (IOException e) { throw new DeviceException(e); }
     }
 

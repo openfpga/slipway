@@ -11,7 +11,7 @@ public interface Device {
     /** flush any commands issued so far, blocking until they have taken effect */
     public void flush() throws DeviceException;
 
-    public static class DeviceException extends Exception {
+    public static class DeviceException extends RuntimeException {
         public DeviceException(String s) { super(s); }
         public DeviceException(Throwable t) { super(t); }
     }
