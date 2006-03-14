@@ -33,6 +33,7 @@ Corrections
     2005.08.12  [gosset]  Initial revision
     2006.03.12  [megacz]  Swapped {L1,L0}->W, FB->{L0,L1}, {H0->L0,H1->L1}
     2006.03.13  [megacz]  Fixed lowest bit of z=00000000; it should be "1"
+    2006.03.13  [megacz]  Corrected meaning of z-octet bits 2-4 in IOBs
 
 Background
 
@@ -234,8 +235,10 @@ Block Memories
 I/O Blocks
 
   The Z octet for I/O resources always its most significant three bits
-  set to 011.  The next two bits are either 01 for a primary IOB or 10
-  for a secondary.
+  set to 011.  The next bit is 1 for North/South IO Blocks and 0 for
+  East/West IO Blocks.  The next bit is always 0, and the bit
+  following that is set to 0 for primary (orthogonally connected)
+  IOBs, 1 for secondary (diagonally connected) IOBs.
 
       S  = Sector wires of this cell
       S+ = Sector wires of next cell
@@ -253,15 +256,15 @@ I/O Blocks
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
   |Z octet |                         D  octet                                  |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
-  |011__000| Schmit |      Slew     |~G2->CR|       |       Pull      |        |
+  |011_0_00| Schmit |      Slew     |~G2->CR|       |       Pull      |        |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
-  |011__001|REG->OUT|        |  OE  |              Output Mux                  |
+  |011_0_01|REG->OUT|        |  OE  |              Output Mux                  |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
   |011_0010|      Added Delay (primary)     |PRI->S-| PRI->G+| PRI->G | PRI->S |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
-  |011_1010|      Added Delay (secondary)   |SND->S | SND->S+|PRI->REG|SND->REG|
+  |011_0110|      Added Delay (secondary)   |SND->S | SND->S+|PRI->REG|SND->REG|
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
-  |011__011|  OEM   | USEOEM |                   OEM                           |
+  |011_0_11|  OEM   | USEOEM |                   OEM                           |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
 
 
