@@ -34,6 +34,7 @@ Corrections
     2006.03.12  [megacz]  Swapped {L1,L0}->W, FB->{L0,L1}, {H0->L0,H1->L1}
     2006.03.13  [megacz]  Fixed lowest bit of z=00000000; it should be "1"
     2006.03.13  [megacz]  Corrected meaning of z-octet bits 2-4 in IOBs
+    2006.03.13  [megacz]  Added constant zeroes in IOB section
 
 Background
 
@@ -256,9 +257,9 @@ I/O Blocks
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
   |Z octet |                         D  octet                                  |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
-  |011_0_00| Schmit |      Slew     |~G2->CR|       |       Pull      |        |
+  |011_0_00| Schmit |      Slew     |~G2->CR|   0   |       Pull      |    0   |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
-  |011_0_01|REG->OUT|        |  OE  |              Output Mux                  |
+  |011_0_01|REG->OUT|    0   |  OE  |              Output Mux                  |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
   |011_0010|      Added Delay (primary)     |PRI->S-| PRI->G+| PRI->G | PRI->S |
   +--------+--------+--------+------+-------+-------+--------+--------+--------+
