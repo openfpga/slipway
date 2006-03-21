@@ -30,20 +30,32 @@ public abstract class AtmelDevice extends Bits implements Device {
         public static final int SW    = 21;
         public static final int NE    = 22;
         public static final int SE    = 23;
+
+        public static final int SLOW   = 24;
+        public static final int MEDIUM = 25;
+        public static final int FAST   = 26;
+
+        public static final int ALWAYS_ON  = 27;
+        public static final int ALWAYS_OFF = 28;
+
+        public static final int FB    = 29;
     }
 
     /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */
     public abstract void mode4(int z, int y, int x, int d) throws DeviceException;
     public abstract byte mode4(int z, int y, int x);
+    public          byte mode4zyx(int zyx) { return mode4(zyx>>24, (zyx>>16)&0xff, (zyx>>8)&0xff); }
+    public          void mode4zyx(int zyx, int d, int invmask) { mode4(zyx>>24, (zyx>>16)&0xff, (zyx>>8)&0xff, d, invmask); }
     public          void mode4(int z, int y, int x, int d, int invmask) {
         int old = mode4(z, y, x);
         old &= ~invmask;
         old |= d;
         mode4(z, y, x, old);
     }
+    public          void mode4zyx(int zyx, int bit, boolean set) { mode4(zyx>>24, (zyx>>16)&0xff, (zyx>>8)&0xff, bit, set); }
     public          void mode4(int z, int y, int x, int bit, boolean set) {
         int old = mode4(z, y, x);
-        old &= 1 << bit;
+        old &= ~(1 << bit);
         old |= set ? (1 << bit) : 0;
         mode4(z, y, x, old);
     }

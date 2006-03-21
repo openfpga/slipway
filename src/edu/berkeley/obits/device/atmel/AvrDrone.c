@@ -85,6 +85,8 @@ void init() {
   sei();
 }
 
+
+
 void conf(int z, int y, int x, int d) {
   FPGAX = x;
   FPGAY = y;
@@ -108,6 +110,19 @@ void doreset() {
   wdt_enable(WDTO_250MS);
   while(1) { }
 }
+
+#define TIMERVAL 100
+ISR(SIG_OVERFLOW0) { 
+  PORTD = ~FISUA;
+  TCNT0 = TIMERVAL;           // load the nearest-to-one-second value  into the timer0
+  TIMSK |= (1<<TOIE0);        //enable the compare match1 interrupt and the timer/counter0 overflow interrupt
+  sei();
+} 
+void init_timer()  { 
+  TCCR0 |= (1<<CS00);         // set the timer0 prescaler to CK
+  TCNT0 = TIMERVAL;           // load the nearest-to-one-second value  into the timer0
+  TIMSK |= (1<<TOIE0);        //enable the compare match1 interrupt and the timer/counter0 overflow interrupt
+} 
 
 ISR(SIG_INTERRUPT1) {   // use interrupt1 since interrupt0 is sent by the watchdog (I think)
   doreset();
@@ -154,6 +169,14 @@ int main() {
         portd(1,1);
         conf(z, y, x, d);
         portd(1,0);
+        break;
+      case 2:
+        portd(1,1);
+        send(FISUA);
+        portd(1,0);
+        break;
+      case 3:
+        init_timer();
         break;
       default: die();
     }

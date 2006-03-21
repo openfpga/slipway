@@ -35,7 +35,21 @@ public class AvrDrone extends AtmelDevice {
         Log.info(this, "device correctly identified itself; ready for operation");
     }
 
-    public void reset() throws DeviceException {
+    public synchronized void scanFPGA() throws DeviceException {
+        try {
+            out.writeByte(3);
+            out.flush();
+        } catch (IOException e) { throw new DeviceException(e); }
+    }
+    public synchronized byte readBus() throws DeviceException {
+        try {
+            out.writeByte(2);
+            out.flush();
+            return in.readByte();
+        } catch (IOException e) { throw new DeviceException(e); }
+    }
+
+    public synchronized void reset() throws DeviceException {
         try {
             Log.info(this, "resetting device");
             sp.setDTR(true);
@@ -49,19 +63,21 @@ public class AvrDrone extends AtmelDevice {
     }
 
     private byte[][][] cache = new byte[24][][];
-    public byte mode4(int z, int y, int x) throws DeviceException {
+    public synchronized byte mode4(int z, int y, int x) throws DeviceException {
         if (cache[x]==null) return 0;
         if (cache[x][y]==null) return 0;
         return cache[x][y][z];
     }
-    public void mode4(int z, int y, int x, int d) throws DeviceException {
+    public synchronized void mode4(int z, int y, int x, int d) throws DeviceException {
         try {
-            Log.debug(this, "writing configuration frame [zyxd]: " +
-                      pad(2, Integer.toString(z, 16)) + " " +
-                      pad(2, Integer.toString(y, 16)) + " " +
-                      pad(2, Integer.toString(x, 16)) + " " +
-                      pad(2, Integer.toString(d, 16))
+            /*
+            Log.info(this, "writing configuration frame [zyxd]: " +
+                      pad(1, Integer.toString(z&0xff, 16)) + " " +
+                      pad(1, Integer.toString(y&0xff, 16)) + " " +
+                      pad(1, Integer.toString(x&0xff, 16)) + " " +
+                      pad(1, Integer.toString(d&0xff, 16))
                       );
+            */
             out.writeByte(1);
             out.writeByte(z);
             out.writeByte(y);
@@ -73,7 +89,7 @@ public class AvrDrone extends AtmelDevice {
         } catch (IOException e) { throw new DeviceException(e); }
     }
 
-    public void flush() throws DeviceException {
+    public synchronized void flush() throws DeviceException {
         try {
             out.flush();
         } catch (IOException e) { throw new DeviceException(e); }
