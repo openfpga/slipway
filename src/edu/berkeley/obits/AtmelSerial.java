@@ -290,27 +290,39 @@ public class AtmelSerial {
             cell.oe(NONE);
             cell.ylut(0xff);
             */
-            for(int x=0; x<10; x++)
-                for(int y=20; y<23; y++) {
+            int fail = 0;
+            //int x = 5;
+            //int y = 11;
+
+            for(int x=0; x<24; x++)
+                for(int y=0; y<24; y++) {
+
+                    cell = at40k.cell(x,y);
                     scan(at40k, cell, YLUT, true);
                     //v.paint(img.getGraphics());
                     //v.getGraphics().drawImage(img, 0, 0, null);
-                    cell.ylut(0xff);
-                    cell.c(YLUT);
-                    cell.b(false);
-                    cell.f(false);
-                    cell.ylut(0xff);
-                    cell.ylut(0xff);
-                    cell.ylut(0xff);
-                    cell.ylut(0xff);
                     //try { Thread.sleep(1000); } catch (Exception e) { }
-                    int a = device.readBus();
+                    cell.ylut(0xff);
+                    boolean a = (device.readBus() & 0x80)!=0;
                     cell.ylut(0x00);
-                    int b = device.readBus();
+                    boolean b = (device.readBus() & 0x80)!=0;
+                    if (a & !b) {
+                        System.out.println("pass " + x+","+y);
+                        Graphics g = v.getGraphics();
+                        g.setColor(Color.green);
+                        g.drawString("pass", v.left(cell) + 10, v.top(cell) + 20);
+                    } else {
+                        System.out.println("FAIL!!!! " + x+","+y+" => " + a + " " + b);
+                        fail++;
+                        Graphics g = v.getGraphics();
+                        g.setColor(Color.red);
+                        g.drawString("FAIL", v.left(cell) + 10, v.top(cell) + 20);
+                    }
+
                     scan(at40k, cell, YLUT, false);
-                    System.out.println("scan " + x+","+y+" => " + a + " " + b);
                 }
 
+            System.out.println("failures: " + fail);
             for(int i=0; i<10000; i++) {
                 v.refresh();
                 try { Thread.sleep(100); } catch (Exception e) { }
@@ -410,14 +422,14 @@ public class AtmelSerial {
         cell.out(L3, setup);
 
         At40k.SectorWire sw = cell.vwire(L3);
-        //System.out.println("wire is: " + sw);
+        System.out.println("wire is: " + sw);
         while(sw.row > (12 & ~0x3) && sw.south() != null) {
-            //System.out.println(sw + " -> " + sw.south());
+            System.out.println(sw + " -> " + sw.south());
             sw.drives(sw.south(), setup);
             sw = sw.south();
         }
         while(sw.row < (12 & ~0x3) && sw.north() != null) {
-            //System.out.println(sw + " -> " + sw.north());
+            System.out.println(sw + " -> " + sw.north());
             sw.drives(sw.north(), setup);
             sw = sw.north();
         }
@@ -437,7 +449,7 @@ public class AtmelSerial {
         cell.v(L3, setup);
         sw = cell.hwire(L3);
         while(sw.east() != null) {
-            //System.out.println(sw + " -> " + sw.east());
+            System.out.println(sw + " -> " + sw.east());
             sw.drives(sw.east(), setup);
             sw = sw.east();
         }
@@ -532,8 +544,8 @@ public class AtmelSerial {
                 g.drawString("D"+i,  (24*(WIDTH+2))+20, ((23-(i+7))*(HEIGHT+2))+60-HEIGHT/2);
             }
         }
-        public int left(At40k.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
-        public int top(At40k.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
+        public static int left(At40k.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
+        public static int top(At40k.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
         public void drawSector(Graphics g, At40k.Sector sector) {
             g.setColor(Color.gray);
             ((Graphics2D)g).setStroke(new BasicStroke(1));

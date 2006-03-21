@@ -52,13 +52,13 @@ public class At40k {
             this.row=!horizontal ? (row & ~0x3) : row;
         }
         private int z(int z)       { return (horizontal ? 0x30 : 0x20) | z; }
-        public int code(boolean left) {
+        public int code(boolean topleft) {
             switch(plane) {
-                case 0: return z(6)+(left?0:1);
-                case 1: return z(8)+(left?0:1);
-                case 2: return z(2*(4-plane))+(left?0:1);
-                case 3: return z(2*(4-plane))+(left?0:1);
-                case 4: return z(2*(4-plane))+(left?0:1);
+                case 0: return z(6)+(topleft?0:1);
+                case 1: return z(8)+(topleft?0:1);
+                case 2: return z(2*(4-plane))+(topleft?0:1);
+                case 3: return z(2*(4-plane))+(topleft?0:1);
+                case 4: return z(2*(4-plane))+(topleft?0:1);
             }
             throw new Error();
         }
@@ -80,15 +80,18 @@ public class At40k {
                 "x"+plane;
         }
 
-        /** returns the ZYX0 coordinate of the byte controlling the switchbox that bridges this wire to <tt>w</tt> */
+        /** returns the ZYX0 coordinate of the byte controlling the switchbox that allows <tt>w</tt> to drive this wire */
         public int switchbox(SectorWire w) {
             if (w.horizontal==horizontal) {
                 if (w.plane!=plane) throw new Error();
                 if (Math.abs(w.coarse()-coarse())!=4) throw new Error(w.coarse() + " -- " + coarse());
-                if (w.coarse() < coarse()) return w.switchbox(this);
-                boolean topleft = w.coarse() < coarse();
+                boolean topleft = horizontal ? (w.coarse() < coarse()) : (w.coarse() > coarse());
+                //if (w.coarse() < coarse()) return w.switchbox(this);
+                //if (topleft) return w.switchbox(this);
                 int col = _col() + (( horizontal && !topleft) ? 1 : 0);
-                int row = _row() + ((!horizontal && !topleft) ? 1 : 0);
+                //if (!horizontal) topleft = !topleft;
+                int row = _row() + ((!horizontal &&  topleft) ? 1 : 0);
+                //if (!horizontal) topleft = !topleft;
                 return (code(topleft) << 24) | (row<<16) | (col<<8);
             }
             throw new Error("not implemented");
