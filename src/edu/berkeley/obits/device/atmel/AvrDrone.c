@@ -62,7 +62,7 @@ inline int read_nearlyFull() {
   if (read_buf_tail < read_buf_head) return (read_buf_head-read_buf_tail) < (BUFSIZE/2);
   return (read_buf_tail-read_buf_head) > (BUFSIZE/2);
 }
-/*
+
 inline int write_full() { return inc(write_buf_tail)==write_buf_head; }
 inline int write_empty() { return write_buf_head==write_buf_tail; }
 inline int write_nearlyFull() {
@@ -70,7 +70,7 @@ inline int write_nearlyFull() {
   if (write_buf_tail < write_buf_head) return (write_buf_head-write_buf_tail) < (BUFSIZE/2);
   return (write_buf_tail-write_buf_head) > (BUFSIZE/2);
 }
-*/
+
 inline char recv() {
   int q;
   char ret;
@@ -81,15 +81,26 @@ inline char recv() {
   return ret;
 }
 
+ISR(SIG_UART1_DATA) {
+  //if (write_empty()) return;
+  portd(1, 0);
+  _delay_ms(10);
+  portd(1, 1);
+  _delay_ms(10);
+  UCSR1B &= ~(1 << UDRIE1);
+  sei();
+}
+
 void send(char c) {
 
   write_buf[write_buf_tail] = c;
   write_buf_tail = inc(write_buf_tail);
 
-  char ret = write_buf[write_buf_head];
-  write_buf_head = inc(write_buf_head);
+  UCSR1B |= (1 << UDRIE1);
 
   while(!(UCSR1A & (1 << UDRE1)));           /* Wait for data Regiester to be empty */
+  char ret = write_buf[write_buf_head];
+  write_buf_head = inc(write_buf_head);
   UDR1 = (int)ret;
 }
 
