@@ -23,7 +23,7 @@ public class AtmelSerial {
         Log.info(AtmelSerial.class, "returning null...");
         return null;
     }
-
+    public static int PIPELEN=20;
     public static void main(String[] s) throws Exception {
         AvrDrone device = new AvrDrone(detectObitsPort());
         At40k at40k = new At40k.At40k10(device);
@@ -206,6 +206,53 @@ public class AtmelSerial {
             at40k.cell(05,22).v(L3, true);
             at40k.cell(05,22).out(L3, true);
             */
+            at40k.cell(4,23).ylut(~0xCC);
+            at40k.cell(4,23).xlut(~0xAA);
+            at40k.cell(5,23).ylut(~0xAA);
+            at40k.cell(5,23).xlut(~0xAA);
+            for(int i=6; i<PIPELEN+2; i++) {
+                at40k.cell(i, 23).ylut(0xAA);
+                at40k.cell(i, 23).xlut(0xCC);
+                at40k.cell(i, 23).yi(WEST);
+            }
+            for(int i=4; i<PIPELEN+2; i++) bounce(at40k.cell(i, 21));
+                
+
+            at40k.cell(4,22).ylut(0xB2);
+            //at40k.cell(5,22).xlut(0x44);
+            at40k.cell(4,22).xi(SE);
+            at40k.cell(4,22).yi(NORTH);
+            at40k.cell(4,22).c(YLUT);
+            at40k.cell(4,22).f(false);
+            at40k.cell(4,22).t(false, false, true);
+            at40k.cell(4,22).yo(false);
+            at40k.cell(4,22).xo(false);
+
+            for(int x=5; x<PIPELEN; x++) {
+                at40k.cell(x,22).ylut(0xB2);
+                //at40k.cell(x,22).xlut(0x44);
+                at40k.cell(x,22).c(YLUT);
+                at40k.cell(x,22).f(false);
+                at40k.cell(x,22).t(false, false, true);
+                at40k.cell(x,22).xi(SE);
+                at40k.cell(x,22).yi(WEST);
+                at40k.cell(x,22).yo(false);
+                at40k.cell(x,22).xo(false);
+            }
+            //at40k.cell(5,22).yi(WEST);
+            at40k.cell(4,22).yi(NORTH);
+            at40k.cell(4,22).ylut(0xAA);
+
+            at40k.cell(PIPELEN,22).c(YLUT);
+            at40k.cell(PIPELEN,22).ylut(0xB2);
+            //at40k.cell(PIPELEN,22).xlut(0x44);
+            at40k.cell(PIPELEN,22).xi(NE);
+            at40k.cell(PIPELEN,22).yi(WEST);
+            at40k.cell(PIPELEN,22).yo(false);
+            at40k.cell(PIPELEN,22).xo(false);
+            at40k.cell(PIPELEN,22).f(false);
+            at40k.cell(PIPELEN,22).t(false, false, true);
+
             at40k.cell(21,15).yi(WEST);
             at40k.cell(21,15).ylut(0xAA);
             at40k.cell(22,15).yi(WEST);
@@ -290,39 +337,11 @@ public class AtmelSerial {
             cell.oe(NONE);
             cell.ylut(0xff);
             */
-            int fail = 0;
             //int x = 5;
             //int y = 11;
 
-            for(int x=0; x<24; x++)
-                for(int y=0; y<24; y++) {
+            //selfTest(device, at40k, v);
 
-                    cell = at40k.cell(x,y);
-                    scan(at40k, cell, YLUT, true);
-                    //v.paint(img.getGraphics());
-                    //v.getGraphics().drawImage(img, 0, 0, null);
-                    //try { Thread.sleep(1000); } catch (Exception e) { }
-                    cell.ylut(0xff);
-                    boolean a = (device.readBus() & 0x80)!=0;
-                    cell.ylut(0x00);
-                    boolean b = (device.readBus() & 0x80)!=0;
-                    if (a & !b) {
-                        System.out.println("pass " + x+","+y);
-                        Graphics g = v.getGraphics();
-                        g.setColor(Color.green);
-                        g.drawString("pass", v.left(cell) + 10, v.top(cell) + 20);
-                    } else {
-                        System.out.println("FAIL!!!! " + x+","+y+" => " + a + " " + b);
-                        fail++;
-                        Graphics g = v.getGraphics();
-                        g.setColor(Color.red);
-                        g.drawString("FAIL", v.left(cell) + 10, v.top(cell) + 20);
-                    }
-
-                    scan(at40k, cell, YLUT, false);
-                }
-
-            System.out.println("failures: " + fail);
             for(int i=0; i<10000; i++) {
                 v.refresh();
                 try { Thread.sleep(100); } catch (Exception e) { }
@@ -414,22 +433,22 @@ public class AtmelSerial {
 
     public static void scan(At40k dev, At40k.Cell cell, int source, boolean setup) {
         if (setup) {
-            cell.c(source);
+            if (source != NONE) cell.c(source);
             cell.b(false);
             cell.f(false);
+            cell.out(L3, true);
         }
         cell.v(L3, setup);
-        cell.out(L3, setup);
 
         At40k.SectorWire sw = cell.vwire(L3);
-        System.out.println("wire is: " + sw);
+        //System.out.println("wire is: " + sw);
         while(sw.row > (12 & ~0x3) && sw.south() != null) {
-            System.out.println(sw + " -> " + sw.south());
+            //System.out.println(sw + " -> " + sw.south());
             sw.drives(sw.south(), setup);
             sw = sw.south();
         }
         while(sw.row < (12 & ~0x3) && sw.north() != null) {
-            System.out.println(sw + " -> " + sw.north());
+            //System.out.println(sw + " -> " + sw.north());
             sw.drives(sw.north(), setup);
             sw = sw.north();
         }
@@ -449,7 +468,7 @@ public class AtmelSerial {
         cell.v(L3, setup);
         sw = cell.hwire(L3);
         while(sw.east() != null) {
-            System.out.println(sw + " -> " + sw.east());
+            //System.out.println(sw + " -> " + sw.east());
             sw.drives(sw.east(), setup);
             sw = sw.east();
         }
@@ -468,8 +487,8 @@ public class AtmelSerial {
     }
 
     public static void bounce(At40k.Cell cell) {
-        cell.xlut((byte)0x33);
-        cell.ylut((byte)0x55);
+        cell.xlut((byte)0xCC);
+        cell.ylut((byte)0xCC);
         cell.xi(NE);
         cell.yi(NORTH);
         cell.xo(false);
@@ -483,7 +502,7 @@ public class AtmelSerial {
         cell.t(false, false, true);
     }
 
-    public static class Visualizer extends Frame implements MouseMotionListener {
+    public static class Visualizer extends Frame implements KeyListener, MouseMotionListener, MouseListener {
         public static final int WIDTH = 40;
         public static final int HEIGHT = 40;
         public static final int LW = 15;
@@ -494,18 +513,117 @@ public class AtmelSerial {
         private final AvrDrone drone;
         int selx = -1;
         int sely = -1;
-        public Visualizer(At40k dev, AvrDrone drone) {
+        public Visualizer(final At40k dev, final AvrDrone drone) {
             this.dev = dev;
             this.drone = drone;
             show();
             addMouseMotionListener(this);
+            addMouseListener(this);
+            addKeyListener(this);
+            new Thread() {
+                public void run() {
+                    try {
+                        while(true) {
+                            Thread.sleep(500);
+                            if (!enabled) continue;
+                            keyPressed(null);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
         }
+        public boolean enabled = false;
+        public void mouseClicked(MouseEvent e) { }
+        public void mouseEntered(MouseEvent e) { }
+        public void mouseExited(MouseEvent e) { }
+        public void mouseReleased(MouseEvent e) {
+        }
+        public void keyTyped(KeyEvent k) {
+        }
+        public void keyReleased(KeyEvent k) {
+        }
+        public void keyPressed(KeyEvent k) {
+            switch(k==null ? '_' : k.getKeyChar()) {
+                case '1': {
+                    if (selx==-1 || sely==-1) break;
+                    At40k.Cell cell = dev.cell(selx, sely);
+                    cell.xlut(0xff);
+                    cell.ylut(0xff);
+                    drawCell(getGraphics(), selx, sely);
+                    break;
+                }
+                case ' ': {
+                    enabled = !enabled;
+                }
+                case 'C': {
+                    if (selx==-1 || sely==-1) break;
+                    At40k.Cell cell = dev.cell(selx, sely);
+                    cell.ylut(0xB2);
+                    drawCell(getGraphics(), selx, sely);
+                    break;
+                }
+                case '0': {
+                    if (selx==-1 || sely==-1) break;
+                    At40k.Cell cell = dev.cell(selx, sely);
+                    cell.xlut(0x00);
+                    cell.ylut(0x00);
+                    drawCell(getGraphics(), selx, sely);
+                    break;
+                }
+            } 
+            for(int x=5; x<=PIPELEN; x++) {
+                At40k.Cell cell = dev.cell(x, 22);
+                scan(dev, cell, YLUT, true);
+                boolean y = (drone.readBus() & 0x80) != 0;
+                scan(dev, cell, YLUT, false);
+                
+                Graphics g = getGraphics();
+                g.setFont(new Font("sansserif", Font.BOLD, 24));
+                g.setColor(Color.white);
+                g.drawString("0", left(cell) + 12, top(cell) + 30);
+                g.drawString("1", left(cell) + 12, top(cell) + 30);
+                //g.setColor(RED);
+                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                
+                //g.drawString((y?"1":"0"), left(cell) + 12, top(cell) + 30);
+                drawCell(g, x, 22, y?new Color(0xff, 0x99, 0x99):new Color(0x99, 0xff, 0x99));
+            }
+        }
+        public void mousePressed(MouseEvent e) {
+                            At40k.Cell cell = dev.cell(selx, sely);
+                            if (cell==null) return;
+                            int old = cell.c();
+                            scan(dev, cell, YLUT, true);
+                            boolean y = (drone.readBus() & 0x80) != 0;
+                            //scan(dev, cell, XLUT, true);
+                            //boolean x = (drone.readBus() & 0x80) != 0;
+                            scan(dev, cell, YLUT, false);
+                            cell.c(old);
+                            Graphics g = getGraphics();
+                            g.setFont(new Font("sansserif", Font.BOLD, 14));
+                            g.setColor(Color.white);
+                            //g.drawString("X=0", left(cell) + 10, top(cell) + 20);
+                            //g.drawString("X=1", left(cell) + 10, top(cell) + 20);
+                            /*
+                            g.setColor(Color.white);
+                            g.drawString("Y=0", left(cell) + 8, top(cell) + 35);
+                            g.drawString("Y=1", left(cell) + 8, top(cell) + 35);
+                            */
+                            //g.setColor(RED);
+                            //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                            g.setColor(BLUE);
+                            g.drawString("Y="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
+        }
+
         public void mouseMoved(MouseEvent e) {
             int x = e.getX();
             int y = e.getY();
             if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
                 int cx = selx;
                 int cy = sely;
+                At40k.Cell cell = dev.cell(cx, cy);
                 selx = -1;
                 sely = -1;
                 drawCell(getGraphics(), cx, cy);
@@ -513,13 +631,13 @@ public class AtmelSerial {
             }
             selx = (x-20)/(WIDTH+2);
             sely = (23 - (y-20)/(HEIGHT+2))+1;
+            At40k.Cell cell = dev.cell(selx, sely);
             if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
                 drawCell(getGraphics(), selx, sely);
                 drawSector(getGraphics(), dev.cell(selx, sely).sector());
             }
         }
-        public void mouseDragged(MouseEvent e) {
-        }
+        public void mouseDragged(MouseEvent e) { mousePressed(e); }
         public void paint(Graphics g) {
             g.setColor(Color.white);
             g.fillRect(0, 0, getWidth(), getHeight());
@@ -603,20 +721,22 @@ public class AtmelSerial {
                     }
             }
         }
-        public void drawCell(Graphics g, int cx, int cy) {
+        public void drawCell(Graphics g, int cx, int cy) { drawCell(g, cx, cy, Color.white); }
+        public void drawCell(Graphics g, int cx, int cy, Color bg) {
             int x = (cx*(WIDTH+2))+20;
             int y = ((23-cy)*(HEIGHT+2))+60;
             if (g.getClipBounds() != null && !g.getClipBounds().intersects(new Rectangle(x, y, x+WIDTH, y+HEIGHT))) return;
 
+            System.out.println("drawcell " + cx + "," + cy);
             At40k.Cell cell = dev.cell(cx, cy);
-            g.setColor(Color.white);
+            g.setColor(bg);
             g.fillRect(x, y, WIDTH, HEIGHT);
 
             g.setColor((selx==cx && sely==cy) ? Color.red : Color.black);
             g.drawRect(x, y, WIDTH, HEIGHT);
 
-            g.setColor((selx==cx && sely==cy) ? Color.red : Color.gray);
-            g.drawRect(x+(WIDTH-(LW*2))/2-1,    y+(HEIGHT-LW)/2-1, LW*2+1, LH+1);
+            //g.setColor((selx==cx && sely==cy) ? Color.red : Color.gray);
+            //g.drawRect(x+(WIDTH-(LW*2))/2-1,    y+(HEIGHT-LW)/2-1, LW*2+1, LH+1);
 
             g.setColor(RED);
             //g.fillRect(x+(WIDTH-(LW*2))/2,    y+(HEIGHT-LW)/2, LW,   LH);
@@ -628,8 +748,9 @@ public class AtmelSerial {
             g.setColor(Color.white);
             //g.drawString("0", x+(WIDTH-(LW*2))/2+LW,    y+(HEIGHT-LW)/2);
 
-            g.setColor(BLUE);
-            ((Graphics2D)g).setStroke(new BasicStroke((float)1.5));
+            /*
+              g.setColor(BLUE);
+            ((Graphics2D)g).setStroke(new BasicStroke((float)1));
             switch(cell.yi()) {
                 case NORTH: g.drawLine(x+WIDTH/2+5,  y-10,        x+WIDTH/2+5, y+HEIGHT/2); break;
                 case SOUTH: g.drawLine(x+WIDTH/2-5,  y+HEIGHT+10, x+WIDTH/2-5, y+HEIGHT/2); break;
@@ -638,7 +759,7 @@ public class AtmelSerial {
                 case NONE:  break;
             }
             g.setColor(RED);
-            ((Graphics2D)g).setStroke(new BasicStroke((float)1.5));
+            ((Graphics2D)g).setStroke(new BasicStroke((float)1));
             switch(cell.xi()) {
                 case NW: g.drawLine(x-10+3,       y-10,        x+WIDTH/2+3, y+HEIGHT/2); break;
                 case SW: g.drawLine(x-10-3,       y+HEIGHT+10, x+WIDTH/2-3, y+HEIGHT/2); break;
@@ -647,6 +768,7 @@ public class AtmelSerial {
                 case NONE:  break;
             }
             ((Graphics2D)g).setStroke(new BasicStroke(1));
+            */
 
             if (selx==cx && sely==cy) {
                 int xp = 23 * (WIDTH+2) + 100;
@@ -660,6 +782,38 @@ public class AtmelSerial {
                 //g.drawString("Y-Lut: " + bin8(cell.ylut()), xp, (yp+=15));
                 g.drawString("Y-Lut: " + cell.printYLutX(), xp, (yp+=15));
             }
+
+            if ((cell.ylut()&0xff)==0xff && (cell.xlut()&0xff)==0xff) {
+                g.setFont(new Font("sansserif", Font.BOLD, 24));
+                g.setColor(Color.white);
+                g.drawString("0", left(cell) + 12, top(cell) + 30);
+                g.drawString("1", left(cell) + 12, top(cell) + 30);
+                //g.setColor(RED);
+                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                g.setColor(new Color(0x00, 0x00, 0xff));
+                g.drawString("1", left(cell) + 12, top(cell) + 30);
+            }
+            if ((cell.ylut()&0xff)==0x00 && (cell.xlut()&0xff)==0x00) {
+                g.setFont(new Font("sansserif", Font.BOLD, 24));
+                g.setColor(Color.white);
+                g.drawString("0", left(cell) + 12, top(cell) + 30);
+                g.drawString("1", left(cell) + 12, top(cell) + 30);
+                //g.setColor(RED);
+                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                g.setColor(new Color(0x00, 0x00, 0xff));
+                g.drawString("0", left(cell) + 12, top(cell) + 30);
+            }
+            if ((cell.ylut()&0xff)==0xB2) {
+                System.out.println("muller @ " + cell);
+                g.setFont(new Font("sansserif", Font.BOLD, 24));
+                g.setColor(Color.white);
+                g.drawString("0", left(cell) + 12, top(cell) + 30);
+                g.drawString("1", left(cell) + 12, top(cell) + 30);
+                //g.setColor(RED);
+                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                g.setColor(new Color(0x00, 0xaa, 0x00));
+                g.drawString("C", left(cell) + 12, top(cell) + 30);
+            }
         }
     }
 
@@ -670,6 +824,38 @@ public class AtmelSerial {
         for(int i=7; i>=0; i--)
             ret += (n & (1<<i))==0 ? "0" : "1";
         return ret;
+    }
+
+    public static void selfTest(AvrDrone device, At40k at40k, Visualizer v) {
+            int fail = 0;
+            long now = System.currentTimeMillis();
+            for(int x=0; x<24; x++)
+                for(int y=0; y<24; y++) {
+                    At40k.Cell cell = at40k.cell(x,y);
+                    scan(at40k, cell, YLUT, true);
+                    //v.paint(img.getGraphics());
+                    //v.getGraphics().drawImage(img, 0, 0, null);
+                    cell.ylut(0xff);
+                    boolean a = (device.readBus() & 0x80)!=0;
+                    cell.ylut(0x00);
+                    boolean b = (device.readBus() & 0x80)!=0;
+                    if (a & !b) {
+                        //System.out.println("pass " + x+","+y);
+                        Graphics g = v.getGraphics();
+                        g.setColor(Color.green);
+                        g.drawString("pass", v.left(cell) + 10, v.top(cell) + 20);
+                    } else {
+                        System.out.println("FAIL!!!! " + x+","+y+" => " + a + " " + b);
+                        fail++;
+                        Graphics g = v.getGraphics();
+                        g.setColor(Color.red);
+                        g.drawString("FAIL", v.left(cell) + 10, v.top(cell) + 20);
+                    }
+                    scan(at40k, cell, YLUT, false);
+                }
+
+            System.out.println("failures: " + fail);
+            System.out.println("scan time: " + (System.currentTimeMillis()-now) + "ms");
     }
 
 }
