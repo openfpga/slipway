@@ -19,8 +19,8 @@ obits.jar: $(shell find src -name \*.java)
 	cd build; jar cvf ../$@ .
 
 # -O3 is required; otherwise the poor AVR can't keep up with us!
-avrdrone.hex:
-	avr-gcc -O3 -mmcu=at94k src/edu/berkeley/obits/device/atmel/AvrDrone.c
+avrdrone.hex: src/edu/berkeley/obits/device/atmel/AvrDrone.c
+	avr-gcc -O3 -mmcu=at94k $<
 	avr-objcopy -O ihex a.out $@
 
 

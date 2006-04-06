@@ -41,6 +41,7 @@ public class AvrDrone extends AtmelDevice {
             out.flush();
         } catch (IOException e) { throw new DeviceException(e); }
     }
+
     public synchronized byte readBus() throws DeviceException {
         try {
             out.writeByte(2);
