@@ -86,12 +86,8 @@ public class At40k {
                 if (w.plane!=plane) throw new Error();
                 if (Math.abs(w.coarse()-coarse())!=4) throw new Error(w.coarse() + " -- " + coarse());
                 boolean topleft = horizontal ? (w.coarse() < coarse()) : (w.coarse() > coarse());
-                //if (w.coarse() < coarse()) return w.switchbox(this);
-                //if (topleft) return w.switchbox(this);
                 int col = _col() + (( horizontal && !topleft) ? 1 : 0);
-                //if (!horizontal) topleft = !topleft;
                 int row = _row() + ((!horizontal &&  topleft) ? 1 : 0);
-                //if (!horizontal) topleft = !topleft;
                 return (code(topleft) << 24) | (row<<16) | (col<<8);
             }
             throw new Error("not implemented");
@@ -156,8 +152,8 @@ public class At40k {
         /* bit positions mean:  [MSB] zxy z_y zx_ z__ _xy __y _x_ ___ [LSB] */
         public void xlut(int table)    { dev.mode4(7, row, col, (byte)(table & 0xff)); }
         public byte xlut()             { return (byte)(dev.mode4(7, row, col) & 0xff); }
-        public String printXLut()      { return printLut(xlut(), "y", "x", "t"); }
-        public String printXLutX()     { return printLut(xlut(), str(yi(), "y"), str(xi(), "x"), str(ti(), "t")); }
+        public String printXLut()      { return printLut(xlut(), "x", "y", "t"); }
+        public String printXLutX()     { return printLut(xlut(), str(xi(), "x"), str(yi(), "y"), str(ti(), "t")); }
 
         public String str(int x, String def) {
             switch(x) {
@@ -183,7 +179,7 @@ public class At40k {
         public void ylut(int table)    { dev.mode4(6, row, col, (byte)(table & 0xff)); }
         public byte ylut()             { return (byte)(dev.mode4(6, row, col) & 0xff); }
         public String printYLut()      { return printLut(ylut(), "y", "x", "t"); }
-        public String printYLutX()     { return printLut(ylut(), str(yi(), "y"), str(xi(), "x"), str(ti(), "t")); }
+        public String printYLutX()     { return printLut(ylut(), str(yi(), "y"), str(xi(), "x"), str(ti(), "t")) + Integer.toString(ylut() & 0xff, 16); }
 
         public void ff_reset_value(boolean value) {
             //dev.mode4( /* FIXME WRONG!!! */, row, col, 3, !value); return;
