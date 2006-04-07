@@ -82,26 +82,34 @@ inline char recv() {
 }
 
 ISR(SIG_UART1_DATA) {
-  //if (write_empty()) return;
+
+  if (write_empty()) {
+    UCSR1B &= ~(1 << UDRIE1);
+    return;
+  }
+  /*
   portd(1, 0);
   _delay_ms(10);
   portd(1, 1);
   _delay_ms(10);
-  UCSR1B &= ~(1 << UDRIE1);
+  */
+  char ret = write_buf[write_buf_head];
+  write_buf_head = inc(write_buf_head);
+  UDR1 = (int)ret;
+
   sei();
 }
 
 void send(char c) {
+
+  while (write_full());
 
   write_buf[write_buf_tail] = c;
   write_buf_tail = inc(write_buf_tail);
 
   UCSR1B |= (1 << UDRIE1);
 
-  while(!(UCSR1A & (1 << UDRE1)));           /* Wait for data Regiester to be empty */
-  char ret = write_buf[write_buf_head];
-  write_buf_head = inc(write_buf_head);
-  UDR1 = (int)ret;
+  //while(!(UCSR1A & (1 << UDRE1)));           /* Wait for data Regiester to be empty */
 }
 
 
@@ -145,10 +153,12 @@ void doreset() {
 }
 
 #define TIMERVAL 100
+static volatile int sending = 0;
 ISR(SIG_OVERFLOW0) { 
   PORTD = ~FISUA;
   TCNT0 = TIMERVAL;           // load the nearest-to-one-second value  into the timer0
-  TIMSK |= (1<<TOIE0);        //enable the compare match1 interrupt and the timer/counter0 overflow interrupt
+  TIMSK |= (1<<TOIE0);        // enable the compare match1 interrupt and the timer/counter0 overflow interrupt
+  if (sending) UDR1 = FISUA;
   sei();
 } 
 void init_timer()  { 
@@ -210,6 +220,12 @@ int main() {
         break;
       case 3:
         init_timer();
+        break;
+      case 4:
+        sending = 1;
+        break;
+      case 5:
+        sending = 0;
         break;
       default: die();
     }

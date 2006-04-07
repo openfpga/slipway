@@ -19,6 +19,7 @@ public class AvrDrone extends AtmelDevice {
         this.sp = sp;
         sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
         sp.setFlowControlMode(sp.FLOWCONTROL_RTSCTS_OUT);
+        sp.setInputBufferSize(1024);
         //sp.setFlowControlMode(sp.FLOWCONTROL_NONE);
         this.out = new DataOutputStream(sp.getOutputStream());
         this.in = new DataInputStream(sp.getInputStream());
@@ -35,18 +36,47 @@ public class AvrDrone extends AtmelDevice {
         Log.info(this, "device correctly identified itself; ready for operation");
     }
 
-    public synchronized void scanFPGA() throws DeviceException {
+    public synchronized void scanFPGA(boolean on) throws DeviceException {
         try {
-            out.writeByte(3);
-            out.flush();
+            if (on) {
+                out.writeByte(3);
+                out.flush();
+            } else {
+                // FIXME
+            }
         } catch (IOException e) { throw new DeviceException(e); }
     }
 
-    public synchronized byte readBus() throws DeviceException {
+    public static interface ByteCallback {
+        public void call(byte b) throws Exception;
+    }
+
+    private Vector callbacks = new Vector();
+
+    private Thread reader = new Thread() {
+            public void run() {
+                while(true) {
+                    try {
+                        byte b = in.readByte();
+                        ByteCallback bc = (ByteCallback)callbacks.remove(0);
+                        bc.call(b);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+
+    public synchronized void readBus(ByteCallback bc) throws DeviceException {
         try {
+            System.out.println("capacity: " + callbacks.size());
+            callbacks.add(bc);
             out.writeByte(2);
             out.flush();
-            return in.readByte();
+            if (reader != null) {
+                reader.start();
+                reader = null;
+            }
         } catch (IOException e) { throw new DeviceException(e); }
     }
 

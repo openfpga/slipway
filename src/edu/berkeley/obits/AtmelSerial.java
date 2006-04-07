@@ -320,7 +320,7 @@ public class AtmelSerial {
             //scan(at40k, cell, YLUT, true);
             //scan(at40k, cell, YLUT, false);
 
-            device.scanFPGA();
+            device.scanFPGA(true);
             Visualizer v = new Visualizer(at40k, device);
             v.show();
             v.setSize(1380, 1080);
@@ -556,6 +556,7 @@ public class AtmelSerial {
                 }
                 case ' ': {
                     enabled = !enabled;
+                    break;
                 }
                 case 'C': {
                     if (selx==-1 || sely==-1) break;
@@ -573,48 +574,57 @@ public class AtmelSerial {
                     break;
                 }
             } 
-            for(int x=5; x<=PIPELEN; x++) {
-                At40k.Cell cell = dev.cell(x, 22);
+            for(int xx=5; xx<=PIPELEN; xx++) {
+                final int x = xx;
+                final At40k.Cell cell = dev.cell(x, 22);
+                AvrDrone.ByteCallback bc = new AvrDrone.ByteCallback() {
+                        public void call(byte b) throws Exception {
+                            boolean y = (b & 0x80) != 0;
+                            
+                            Graphics g = getGraphics();
+                            g.setFont(new Font("sansserif", Font.BOLD, 24));
+                            g.setColor(Color.white);
+                            g.drawString("0", left(cell) + 12, top(cell) + 30);
+                            g.drawString("1", left(cell) + 12, top(cell) + 30);
+                            //g.setColor(RED);
+                            //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                            
+                            //g.drawString((y?"1":"0"), left(cell) + 12, top(cell) + 30);
+                            drawCell(g, x, 22, y?new Color(0xff, 0x99, 0x99):new Color(0x99, 0xff, 0x99));
+                        }
+                    };
+
                 scan(dev, cell, YLUT, true);
-                boolean y = (drone.readBus() & 0x80) != 0;
+                drone.readBus(bc);
                 scan(dev, cell, YLUT, false);
-                
-                Graphics g = getGraphics();
-                g.setFont(new Font("sansserif", Font.BOLD, 24));
-                g.setColor(Color.white);
-                g.drawString("0", left(cell) + 12, top(cell) + 30);
-                g.drawString("1", left(cell) + 12, top(cell) + 30);
-                //g.setColor(RED);
-                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
-                
-                //g.drawString((y?"1":"0"), left(cell) + 12, top(cell) + 30);
-                drawCell(g, x, 22, y?new Color(0xff, 0x99, 0x99):new Color(0x99, 0xff, 0x99));
             }
         }
         public void mousePressed(MouseEvent e) {
-                            At40k.Cell cell = dev.cell(selx, sely);
-                            if (cell==null) return;
-                            int old = cell.c();
-                            scan(dev, cell, YLUT, true);
-                            boolean y = (drone.readBus() & 0x80) != 0;
-                            //scan(dev, cell, XLUT, true);
-                            //boolean x = (drone.readBus() & 0x80) != 0;
-                            scan(dev, cell, YLUT, false);
-                            cell.c(old);
-                            Graphics g = getGraphics();
-                            g.setFont(new Font("sansserif", Font.BOLD, 14));
-                            g.setColor(Color.white);
-                            //g.drawString("X=0", left(cell) + 10, top(cell) + 20);
-                            //g.drawString("X=1", left(cell) + 10, top(cell) + 20);
-                            /*
-                            g.setColor(Color.white);
-                            g.drawString("Y=0", left(cell) + 8, top(cell) + 35);
-                            g.drawString("Y=1", left(cell) + 8, top(cell) + 35);
-                            */
-                            //g.setColor(RED);
-                            //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
-                            g.setColor(BLUE);
-                            g.drawString("Y="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
+            /*
+            At40k.Cell cell = dev.cell(selx, sely);
+            if (cell==null) return;
+            int old = cell.c();
+            scan(dev, cell, YLUT, true);
+            boolean y = (drone.readBus() & 0x80) != 0;
+            //scan(dev, cell, XLUT, true);
+            //boolean x = (drone.readBus() & 0x80) != 0;
+            scan(dev, cell, YLUT, false);
+            cell.c(old);
+            Graphics g = getGraphics();
+            g.setFont(new Font("sansserif", Font.BOLD, 14));
+            g.setColor(Color.white);
+            //g.drawString("X=0", left(cell) + 10, top(cell) + 20);
+            //g.drawString("X=1", left(cell) + 10, top(cell) + 20);
+            
+            //g.setColor(Color.white);
+            //g.drawString("Y=0", left(cell) + 8, top(cell) + 35);
+            //g.drawString("Y=1", left(cell) + 8, top(cell) + 35);
+            
+            //g.setColor(RED);
+            //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+            g.setColor(BLUE);
+            g.drawString("Y="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
+            */
         }
 
         public void mouseMoved(MouseEvent e) {
@@ -656,11 +666,13 @@ public class AtmelSerial {
         }
         public void refresh() {
             Graphics g = getGraphics();
+            /*
             int data = drone.readBus() & 0xff;
             for(int i=0; i<8; i++) {
                 g.setColor((data & (1<<i))==0 ? Color.black : Color.green);
                 g.drawString("D"+i,  (24*(WIDTH+2))+20, ((23-(i+7))*(HEIGHT+2))+60-HEIGHT/2);
             }
+            */
         }
         public static int left(At40k.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
         public static int top(At40k.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
@@ -827,6 +839,7 @@ public class AtmelSerial {
     }
 
     public static void selfTest(AvrDrone device, At40k at40k, Visualizer v) {
+        /*
             int fail = 0;
             long now = System.currentTimeMillis();
             for(int x=0; x<24; x++)
@@ -856,6 +869,7 @@ public class AtmelSerial {
 
             System.out.println("failures: " + fail);
             System.out.println("scan time: " + (System.currentTimeMillis()-now) + "ms");
+        */
     }
 
 }
