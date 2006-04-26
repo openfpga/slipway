@@ -6,6 +6,20 @@ import java.util.*;
 
 public abstract class AtmelDevice extends Bits implements Device {
 
+    public static class Util {
+        public static int lutSwap(int x) {
+            return
+                (x & 0x80)        |
+                ((x & 0x20) << 1) |
+                ((x & 0x40) >> 1) |
+                (x & 0x10) |
+                (x & 0x08)        |
+                ((x & 0x02) << 1) |
+                ((x & 0x04) >> 1) |
+                (x & 0x01);
+        }
+    }
+    
     public static class Constants {
         public static final int NONE  = -1;
         public static final int L0    = 0;
@@ -39,6 +53,10 @@ public abstract class AtmelDevice extends Bits implements Device {
         public static final int ALWAYS_OFF = 28;
 
         public static final int FB    = 29;
+
+        public static final int LUT_SELF  = 0xAA;
+        public static final int LUT_Z     = 0xF0;
+        public static final int LUT_OTHER = 0xCC;
     }
 
     /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */

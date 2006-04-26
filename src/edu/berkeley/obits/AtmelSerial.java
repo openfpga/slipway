@@ -1,6 +1,7 @@
 package edu.berkeley.obits;
 
 import static edu.berkeley.obits.device.atmel.AtmelDevice.Constants.*;
+import static edu.berkeley.obits.device.atmel.AtmelDevice.Util.*;
 import edu.berkeley.obits.device.atmel.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -12,6 +13,9 @@ import gnu.io.*;
 
 public class AtmelSerial {
 
+    //public static boolean mullers = false;
+    public static boolean mullers = true;
+    public static int masterx = 1;
     public static SerialPort detectObitsPort() throws Exception {
         Enumeration e = CommPortIdentifier.getPortIdentifiers();
         while(e.hasMoreElements()) {
@@ -206,6 +210,7 @@ public class AtmelSerial {
             at40k.cell(05,22).v(L3, true);
             at40k.cell(05,22).out(L3, true);
             */
+            /*
             at40k.cell(4,23).ylut(~0xCC);
             at40k.cell(4,23).xlut(~0xAA);
             at40k.cell(5,23).ylut(~0xAA);
@@ -215,52 +220,27 @@ public class AtmelSerial {
                 at40k.cell(i, 23).xlut(0xCC);
                 at40k.cell(i, 23).yi(WEST);
             }
-            for(int i=4; i<PIPELEN+2; i++) bounce(at40k.cell(i, 21));
-                
+            */
 
-            at40k.cell(4,22).ylut(0xB2);
-            //at40k.cell(5,22).xlut(0x44);
-            at40k.cell(4,22).xi(SE);
-            at40k.cell(4,22).yi(NORTH);
-            at40k.cell(4,22).c(YLUT);
-            at40k.cell(4,22).f(false);
-            at40k.cell(4,22).t(false, false, true);
-            at40k.cell(4,22).yo(false);
-            at40k.cell(4,22).xo(false);
-
-            for(int x=5; x<PIPELEN; x++) {
-                at40k.cell(x,22).ylut(0xB2);
-                //at40k.cell(x,22).xlut(0x44);
-                at40k.cell(x,22).c(YLUT);
-                at40k.cell(x,22).f(false);
-                at40k.cell(x,22).t(false, false, true);
-                at40k.cell(x,22).xi(SE);
-                at40k.cell(x,22).yi(WEST);
-                at40k.cell(x,22).yo(false);
-                at40k.cell(x,22).xo(false);
-            }
-            //at40k.cell(5,22).yi(WEST);
-            at40k.cell(4,22).yi(NORTH);
-            at40k.cell(4,22).ylut(0xAA);
-
-            at40k.cell(PIPELEN,22).c(YLUT);
-            at40k.cell(PIPELEN,22).ylut(0xB2);
-            //at40k.cell(PIPELEN,22).xlut(0x44);
-            at40k.cell(PIPELEN,22).xi(NE);
-            at40k.cell(PIPELEN,22).yi(WEST);
-            at40k.cell(PIPELEN,22).yo(false);
-            at40k.cell(PIPELEN,22).xo(false);
-            at40k.cell(PIPELEN,22).f(false);
-            at40k.cell(PIPELEN,22).t(false, false, true);
+            System.out.println("doit");
+            if (mullers) doitx(at40k, device);
+            //System.out.println("counter");
+            //counter(at40k, device);
 
             at40k.cell(21,15).yi(WEST);
             at40k.cell(21,15).ylut(0xAA);
+
             at40k.cell(22,15).yi(WEST);
             at40k.cell(22,15).ylut(0xAA);
+
             at40k.cell(23,15).h(3, true);
             at40k.cell(23,15).yi(L3);
             at40k.cell(23,15).ylut(0xAA);
             at40k.iob_right(15, true).enableOutput(WEST);
+            //for(int x=5; x<PIPELEN; x++) {
+            //at40k.cell(x,23).hwire(L0).drives(at40k.cell(x,23).hwire(L0).east());
+            //}
+
             /*
             at40k.cell(22,11).ylut(0xff);
             at40k.cell(23,11).yi(L3);
@@ -320,7 +300,7 @@ public class AtmelSerial {
             //scan(at40k, cell, YLUT, true);
             //scan(at40k, cell, YLUT, false);
 
-            device.scanFPGA(true);
+            //device.scanFPGA(true);
             Visualizer v = new Visualizer(at40k, device);
             v.show();
             v.setSize(1380, 1080);
@@ -341,6 +321,11 @@ public class AtmelSerial {
             //int y = 11;
 
             //selfTest(device, at40k, v);
+            System.out.println("save: " + AvrDrone.save + " of " + (AvrDrone.saveof*5));
+
+            at40k.iob_top(0, true).enableInput();
+            copy(at40k.cell(0, 23), NORTH, NORTH);
+            at40k.iob_bot(0, true).enableOutput(NORTH);
 
             for(int i=0; i<10000; i++) {
                 v.refresh();
@@ -434,24 +419,30 @@ public class AtmelSerial {
     public static void scan(At40k dev, At40k.Cell cell, int source, boolean setup) {
         if (setup) {
             if (source != NONE) cell.c(source);
-            cell.b(false);
-            cell.f(false);
-            cell.out(L3, true);
+            if (cell.b()) cell.b(false);
+            if (cell.f()) cell.f(false);
+            if (!cell.out(L3)) cell.out(L3, true);
         }
-        cell.v(L3, setup);
+        if (cell.vx(L3)!=setup) cell.v(L3, setup);
 
         At40k.SectorWire sw = cell.vwire(L3);
         //System.out.println("wire is: " + sw);
+
+        if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
+            sw.north().drives(sw, false);
         while(sw.row > (12 & ~0x3) && sw.south() != null) {
             //System.out.println(sw + " -> " + sw.south());
-            sw.drives(sw.south(), setup);
+            if (sw.drives(sw.south())!=setup) sw.drives(sw.south(), setup);
             sw = sw.south();
         }
+        if (sw.row < (12 & ~0x3) && sw.south() != null && sw.south().drives(sw))
+            sw.north().drives(sw, false);
         while(sw.row < (12 & ~0x3) && sw.north() != null) {
             //System.out.println(sw + " -> " + sw.north());
-            sw.drives(sw.north(), setup);
+            if (sw.drives(sw.north())!=setup) sw.drives(sw.north(), setup);
             sw = sw.north();
         }
+
         //cell = dev.cell(19, 15);
         cell = dev.cell(cell.col, 15);
         /*
@@ -464,36 +455,55 @@ public class AtmelSerial {
         cell.out(L3, true);
         cell.oe(NONE);
         */
-        cell.h(L3, setup);
-        cell.v(L3, setup);
+        if (cell.hx(L3) != setup) cell.h(L3, setup);
+        if (cell.vx(L3) != setup) cell.v(L3, setup);
         sw = cell.hwire(L3);
+
+        if (sw.west()!=null && sw.west().drives(sw)) { sw.west().drives(sw, false); }
         while(sw.east() != null) {
             //System.out.println(sw + " -> " + sw.east());
-            sw.drives(sw.east(), setup);
+            if (sw.drives(sw.east())!=setup) sw.drives(sw.east(), setup);
             sw = sw.east();
         }
+
     }
 
-    public static void copy(At40k.Cell cell, int xdir, int ydir) {
-        cell.xlut((byte)0x33);
-        cell.ylut((byte)0x55);
-        cell.xi(xdir);
-        cell.yi(ydir);
-        cell.xo(false);
-        cell.yo(false);
+    public static void copy(At40k.Cell c, int xdir, int ydir) {
+        switch(xdir) {
+            case NW: case NE: case SW: case SE: {
+                c.xi(xdir);
+                c.xlut(LUT_SELF);
+                break;
+            }
+            case NORTH: case SOUTH: case EAST: case WEST: {
+                c.yi(xdir);
+                c.xlut(LUT_OTHER);
+                break;
+            }
+            case NONE: break;
+            default: throw new Error();
+        }
+        switch(ydir) {
+            case NW: case NE: case SW: case SE: {
+                c.xi(ydir);
+                c.ylut(LUT_OTHER);
+                break;
+            }
+            case NORTH: case SOUTH: case EAST: case WEST: {
+                c.yi(ydir);
+                c.ylut(LUT_SELF);
+                break;
+            }
+            case NONE: break;
+            default: throw new Error();
+        }
+        c.xo(false);
+        c.yo(false);
     }
     public static String hex(int x) {
         return Long.toString(x & 0xffffffffL, 16);
     }
 
-    public static void bounce(At40k.Cell cell) {
-        cell.xlut((byte)0xCC);
-        cell.ylut((byte)0xCC);
-        cell.xi(NE);
-        cell.yi(NORTH);
-        cell.xo(false);
-        cell.yo(false);
-    }
     public static void handshaker(At40k.Cell cell) {
         cell.xlut(0x22);
         cell.ylut(0x71);
@@ -526,7 +536,16 @@ public class AtmelSerial {
                         while(true) {
                             Thread.sleep(500);
                             if (!enabled) continue;
+                            /*
+                            At40k.Cell cell = dev.cell(21, 22);
+                            cell.xlut(0xff);
+                            cell.ylut(0xff);
+                            */
                             keyPressed(null);
+                            /*
+                            cell.xlut(0x00);
+                            cell.ylut(0x00);
+                            */
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -544,8 +563,9 @@ public class AtmelSerial {
         }
         public void keyReleased(KeyEvent k) {
         }
-        public void keyPressed(KeyEvent k) {
-            switch(k==null ? '_' : k.getKeyChar()) {
+        public void keyPressed(KeyEvent keyevent) {
+            boolean scan = false;
+            switch(keyevent==null ? '_' : keyevent.getKeyChar()) {
                 case '1': {
                     if (selx==-1 || sely==-1) break;
                     At40k.Cell cell = dev.cell(selx, sely);
@@ -554,8 +574,100 @@ public class AtmelSerial {
                     drawCell(getGraphics(), selx, sely);
                     break;
                 }
+                case 'i': {
+                    System.out.println("interrupt_count: " + drone.readCount());
+                    break;
+                }
+                case 'x': {
+                    masterx+=2;
+                    if (mullers) {
+                        if (masterx <= 22) {
+                            int mx = masterx;
+                            System.out.println("low => " + mx);
+                            copy(dev.cell(mx, yofs-2), NORTH, NORTH);
+                            copy(dev.cell(mx, yofs-3), NORTH, NORTH);
+                            //dev.cell(mx, yofs-3).ylut(~dev.cell(mx, yofs-3).ylut());
+                            //dev.cell(mx, yofs-3).xlut(~dev.cell(mx, yofs-3).xlut());
+                        } else {
+                            int mx = 23-(masterx-23);
+                            System.out.println("high => " + mx);
+                            copy(dev.cell(mx, yofs), NW, NW);//NORTH, NORTH);
+                            copy(dev.cell(mx, yofs-1), NORTH, NORTH);
+                            //for(int x=mx-1; x>=1; x--)
+                            //copy(dev.cell(x, yofs), EAST, EAST);
+                            for(int y=yofs+1; y<=23; y++)
+                                copy(dev.cell(1, y), SOUTH, SOUTH);
+                            //dev.cell(mx, yofs-1).ylut(~dev.cell(mx, yofs-1).ylut());
+                            //dev.cell(mx, yofs-1).xlut(~dev.cell(mx, yofs-1).xlut());
+                        }
+                    } else {
+                        if (masterx <= 22) {
+                            int mx = masterx;
+                            System.out.println("low => " + mx);
+                            copy(dev.cell(mx, yofs-2), SOUTH, SOUTH);
+                            copy(dev.cell(mx, yofs-3), NORTH, NORTH);
+                            dev.cell(mx, yofs-3).ylut(~dev.cell(mx, yofs-3).ylut());
+                            dev.cell(mx, yofs-3).xlut(~dev.cell(mx, yofs-3).xlut());
+                        } else {
+                            int mx = 23-(masterx-23);
+                            System.out.println("high => " + mx);
+                            copy(dev.cell(mx, yofs), SOUTH, SOUTH);
+                            /*
+                            copy(dev.cell(mx, yofs-1), NORTH, NORTH);
+                            */
+                            copy(dev.cell(mx, yofs-1), NORTH, SW);
+                            boolean left = true;
+                            At40k.Cell lc = null;
+                            for(int k=0; k<10; k++) {
+                                int y = yofs-2-(k*2);
+                                copy(dev.cell(left?(mx-1):mx, y),        SOUTH, left?NE:NW);
+                                copy(lc = dev.cell(left?(mx-1):mx, y-1), NORTH, left?SE:SW); 
+                                left = !left;
+                            }
+                            copy(lc, NORTH, NORTH);
+
+                            //for(int x=mx-1; x>=1; x--)
+                            //copy(dev.cell(x, yofs), EAST, EAST);
+                            //for(int y=yofs+1; y<=23; y++)
+                            //copy(dev.cell(1, y), SOUTH, SOUTH);
+
+                            if (mx<21) {
+                                dev.cell(mx+2, yofs).ylut(0x00);
+                                dev.cell(mx+2, yofs).xlut(0x00);
+                            }
+
+                            /*
+                            dev.cell(mx, yofs-1).ylut(~LUT_Z);
+                            dev.cell(mx, yofs-1).xlut(LUT_Z);
+                            loopback(dev.cell(mx, yofs-1), YLUT);
+                            */
+                            dev.cell(mx, yofs).ylut(~LUT_SELF);
+                            dev.cell(mx, yofs).xlut(~LUT_OTHER);
+                        }
+                    }
+                    break;
+                }
                 case ' ': {
-                    enabled = !enabled;
+                    //enabled = !enabled;
+                    scan = true;
+                    break;
+                }
+                case '4': {
+                    //enabled = !enabled;
+                    try {
+                        for(int cap=0; cap<15; cap++) {
+                            drain(dev, drone);
+                            try { Thread.sleep(100); } catch (Exception e) { }
+                            //showit(dev, drone, this);
+                            fill(dev, drone, cap);
+                            drone.readCount();
+                            long now = System.currentTimeMillis();
+                            try { Thread.sleep(4000); } catch (Exception e) { }
+                            int count = drone.readCount();
+                            long now2 = System.currentTimeMillis();
+                            System.out.println(cap + " ,  " + (((float)count * (2*2*2*2*2*2*2*2*2*1000))/(now2-now)));
+                        }
+                    } catch (Exception e) { e.printStackTrace(); }
                     break;
                 }
                 case 'C': {
@@ -574,57 +686,37 @@ public class AtmelSerial {
                     break;
                 }
             } 
-            for(int xx=5; xx<=PIPELEN; xx++) {
-                final int x = xx;
-                final At40k.Cell cell = dev.cell(x, 22);
-                AvrDrone.ByteCallback bc = new AvrDrone.ByteCallback() {
-                        public void call(byte b) throws Exception {
-                            boolean y = (b & 0x80) != 0;
-                            
-                            Graphics g = getGraphics();
-                            g.setFont(new Font("sansserif", Font.BOLD, 24));
-                            g.setColor(Color.white);
-                            g.drawString("0", left(cell) + 12, top(cell) + 30);
-                            g.drawString("1", left(cell) + 12, top(cell) + 30);
-                            //g.setColor(RED);
-                            //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
-                            
-                            //g.drawString((y?"1":"0"), left(cell) + 12, top(cell) + 30);
-                            drawCell(g, x, 22, y?new Color(0xff, 0x99, 0x99):new Color(0x99, 0xff, 0x99));
-                        }
-                    };
-
-                scan(dev, cell, YLUT, true);
-                drone.readBus(bc);
-                scan(dev, cell, YLUT, false);
-            }
+            if (!scan) return;
+            showit(dev, drone, this);
         }
         public void mousePressed(MouseEvent e) {
-            /*
-            At40k.Cell cell = dev.cell(selx, sely);
+            final At40k.Cell cell = dev.cell(selx, sely);
             if (cell==null) return;
-            int old = cell.c();
-            scan(dev, cell, YLUT, true);
-            boolean y = (drone.readBus() & 0x80) != 0;
+            final int old = cell.c();
+            AvrDrone.ByteCallback bc = new AvrDrone.ByteCallback() {
+                    public void call(byte b) throws Exception {
+                        boolean y = (b & 0x80) != 0;
+                        //cell.c(old);
+                        Graphics g = getGraphics();
+                        g.setFont(new Font("sansserif", Font.BOLD, 14));
+                        g.setColor(Color.white);
+                        //g.drawString("X=0", left(cell) + 10, top(cell) + 20);
+                        //g.drawString("X=1", left(cell) + 10, top(cell) + 20);
+                        //g.setColor(Color.white);
+                        //g.drawString("Y=0", left(cell) + 8, top(cell) + 35);
+                        //g.drawString("Y=1", left(cell) + 8, top(cell) + 35);
+                        //g.setColor(RED);
+                        //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
+                        String v = (cell.c()==YLUT ? "Y" : cell.c()==XLUT ? "X" : "C");
+                        g.drawString(v+"="+(y?"0":"1"), left(cell) + 8, top(cell) + 35);
+                        g.setColor(BLUE);
+                        g.drawString(v+"="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
+                    } };
+            scan(dev, cell, NONE, true);
+            drone.readBus(bc);
             //scan(dev, cell, XLUT, true);
             //boolean x = (drone.readBus() & 0x80) != 0;
-            scan(dev, cell, YLUT, false);
-            cell.c(old);
-            Graphics g = getGraphics();
-            g.setFont(new Font("sansserif", Font.BOLD, 14));
-            g.setColor(Color.white);
-            //g.drawString("X=0", left(cell) + 10, top(cell) + 20);
-            //g.drawString("X=1", left(cell) + 10, top(cell) + 20);
-            
-            //g.setColor(Color.white);
-            //g.drawString("Y=0", left(cell) + 8, top(cell) + 35);
-            //g.drawString("Y=1", left(cell) + 8, top(cell) + 35);
-            
-            //g.setColor(RED);
-            //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
-            g.setColor(BLUE);
-            g.drawString("Y="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
-            */
+            scan(dev, cell, NONE, false);
         }
 
         public void mouseMoved(MouseEvent e) {
@@ -636,32 +728,40 @@ public class AtmelSerial {
                 At40k.Cell cell = dev.cell(cx, cy);
                 selx = -1;
                 sely = -1;
+                /*
                 drawCell(getGraphics(), cx, cy);
                 drawSector(getGraphics(), dev.cell(cx, cy).sector());
+                */
             }
             selx = (x-20)/(WIDTH+2);
             sely = (23 - (y-20)/(HEIGHT+2))+1;
+            /*
             At40k.Cell cell = dev.cell(selx, sely);
             if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
                 drawCell(getGraphics(), selx, sely);
                 drawSector(getGraphics(), dev.cell(selx, sely).sector());
             }
+            */
         }
         public void mouseDragged(MouseEvent e) { mousePressed(e); }
         public void paint(Graphics g) {
+            System.out.println("paintall");
             g.setColor(Color.white);
             g.fillRect(0, 0, getWidth(), getHeight());
+            g.setFont(new Font("sansserif", Font.BOLD, 24));
             for(int x=0; x<24; x++)
                 for(int y=0; y<24; y++)
                     drawCell(g,x,y);
             for(int x=0; x<=23; x+=4)
                 for(int y=23; y>=0; y-=4) 
                     drawSector(g, dev.cell(x, y).sector());
+            /*
             g.setColor(BLUE);
             g.drawString("Ready", (5*(WIDTH+2))+20, 40);
             g.setColor(RED);
             g.drawString("Send",  (3*(WIDTH+2))+20, 40);
             g.setColor(BLUE);
+            */
             refresh();
         }
         public void refresh() {
@@ -682,6 +782,7 @@ public class AtmelSerial {
             int px = ((sector.col)*(WIDTH+2))+20-1;
             int py = ((23-(sector.row+3))*(HEIGHT+2))+60-1;
             g.drawRect(px, py, (WIDTH+2)*4+2, (HEIGHT+2)*4+2);
+            /*
             for(int dir=0; dir<2; dir++) {
                 boolean h = dir==0;
                 for(int y=h?sector.row:sector.col; y<(h?sector.row+4:sector.col+4); y++)
@@ -732,14 +833,19 @@ public class AtmelSerial {
                         }
                     }
             }
+            */
         }
-        public void drawCell(Graphics g, int cx, int cy) { drawCell(g, cx, cy, Color.white); }
-        public void drawCell(Graphics g, int cx, int cy, Color bg) {
+        public void drawCell(Graphics g, int cx, int cy) {
             int x = (cx*(WIDTH+2))+20;
             int y = ((23-cy)*(HEIGHT+2))+60;
             if (g.getClipBounds() != null && !g.getClipBounds().intersects(new Rectangle(x, y, x+WIDTH, y+HEIGHT))) return;
+            drawCell(g, cx, cy, Color.white);
+        }
+        public void drawCell(Graphics g, int cx, int cy, Color bg) {
+            int x = (cx*(WIDTH+2))+20;
+            int y = ((23-cy)*(HEIGHT+2))+60;
 
-            System.out.println("drawcell " + cx + "," + cy);
+            //System.out.println("drawcell " + cx + "," + cy);
             At40k.Cell cell = dev.cell(cx, cy);
             g.setColor(bg);
             g.fillRect(x, y, WIDTH, HEIGHT);
@@ -750,14 +856,14 @@ public class AtmelSerial {
             //g.setColor((selx==cx && sely==cy) ? Color.red : Color.gray);
             //g.drawRect(x+(WIDTH-(LW*2))/2-1,    y+(HEIGHT-LW)/2-1, LW*2+1, LH+1);
 
-            g.setColor(RED);
+            //g.setColor(RED);
             //g.fillRect(x+(WIDTH-(LW*2))/2,    y+(HEIGHT-LW)/2, LW,   LH);
-            g.setColor(Color.white);
+            //g.setColor(Color.white);
             //g.drawString("1", x+(WIDTH-(LW*2))/2,    y+(HEIGHT-LW)/2);
 
-            g.setColor(BLUE);
+            //g.setColor(BLUE);
             //g.fillRect(x+(WIDTH-(LW*2))/2+LW, y+(HEIGHT-LW)/2, LW,   LH);
-            g.setColor(Color.white);
+            //g.setColor(Color.white);
             //g.drawString("0", x+(WIDTH-(LW*2))/2+LW,    y+(HEIGHT-LW)/2);
 
             /*
@@ -781,7 +887,7 @@ public class AtmelSerial {
             }
             ((Graphics2D)g).setStroke(new BasicStroke(1));
             */
-
+            /*
             if (selx==cx && sely==cy) {
                 int xp = 23 * (WIDTH+2) + 100;
                 int yp = 100;
@@ -794,38 +900,23 @@ public class AtmelSerial {
                 //g.drawString("Y-Lut: " + bin8(cell.ylut()), xp, (yp+=15));
                 g.drawString("Y-Lut: " + cell.printYLutX(), xp, (yp+=15));
             }
-
+            */
             if ((cell.ylut()&0xff)==0xff && (cell.xlut()&0xff)==0xff) {
-                g.setFont(new Font("sansserif", Font.BOLD, 24));
-                g.setColor(Color.white);
-                g.drawString("0", left(cell) + 12, top(cell) + 30);
-                g.drawString("1", left(cell) + 12, top(cell) + 30);
-                //g.setColor(RED);
-                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
                 g.setColor(new Color(0x00, 0x00, 0xff));
                 g.drawString("1", left(cell) + 12, top(cell) + 30);
             }
             if ((cell.ylut()&0xff)==0x00 && (cell.xlut()&0xff)==0x00) {
-                g.setFont(new Font("sansserif", Font.BOLD, 24));
-                g.setColor(Color.white);
-                g.drawString("0", left(cell) + 12, top(cell) + 30);
-                g.drawString("1", left(cell) + 12, top(cell) + 30);
-                //g.setColor(RED);
-                //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
                 g.setColor(new Color(0x00, 0x00, 0xff));
                 g.drawString("0", left(cell) + 12, top(cell) + 30);
             }
             if ((cell.ylut()&0xff)==0xB2) {
-                System.out.println("muller @ " + cell);
-                g.setFont(new Font("sansserif", Font.BOLD, 24));
-                g.setColor(Color.white);
-                g.drawString("0", left(cell) + 12, top(cell) + 30);
-                g.drawString("1", left(cell) + 12, top(cell) + 30);
+                //System.out.println("muller @ " + cell);
                 //g.setColor(RED);
                 //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
                 g.setColor(new Color(0x00, 0xaa, 0x00));
                 g.drawString("C", left(cell) + 12, top(cell) + 30);
             }
+
         }
     }
 
@@ -871,5 +962,407 @@ public class AtmelSerial {
             System.out.println("scan time: " + (System.currentTimeMillis()-now) + "ms");
         */
     }
+    
+    public static void bounce(At40k.Cell cell, int xi, int yi) {
+        cell.xlut((byte)0xCC);
+        cell.ylut((byte)0xCC);
+        cell.xi(xi);
+        cell.yi(yi);
+        cell.xo(false);
+        cell.yo(false);
+    }
+    public static void muller(At40k.Cell cell, int xi, int yi) {
+        cell.ylut(0xB2);
+        cell.c(YLUT);
+        cell.f(false);
+        cell.t(false, false, true);
+        cell.xi(xi);
+        cell.yi(yi);
+        cell.yo(false);
+        cell.xo(false);
+    }
 
+    /** watches for a rising/falling edge on Yin, emits a pulse on Xout */
+    public static void pulse_detect(At40k.Cell c, int in, boolean falling) {
+        c.ylut(0x00);
+        c.xlut(0x00);
+        switch(in) {
+            case NW: case NE: case SW: case SE: {
+                c.xi(in);
+                loopback(c, XLUT);
+                if (!falling) c.ylut(lutSwap(0x0C)); /* x & !z */
+                else          c.ylut(lutSwap(0x30)); /* !x & z */
+                c.xlut(LUT_SELF);
+                break;
+            }
+            case NORTH: case SOUTH: case EAST: case WEST: {
+                c.yi(in);
+                loopback(c, YLUT);
+                if (!falling) c.xlut(0x0C); /* y & !z */
+                else          c.xlut(0x30); /* !y & z */
+                c.ylut(LUT_SELF);
+                break;
+            }
+            default: throw new Error();
+        }
+    }
+
+    /** watches for a pulse on Xin, copies value of Yin */
+    public static void pulse_copy(At40k.Cell cell, int xi, int yi, boolean invert) {
+        loopback(cell, YLUT);
+        if (!invert) cell.ylut(0xB8);   /* yo = x ?  yi : z => 1011 1000 */
+        else         cell.ylut(0x74);   /* yo = x ? !yi : z => 0111 0100 */
+        if (!invert) cell.xlut(lutSwap(0xB8));   /* yo = x ?  yi : z => 1011 1000 */
+        else         cell.xlut(lutSwap(0x74));   /* yo = x ? !yi : z => 0111 0100 */
+        cell.xi(xi);
+        cell.yi(yi);
+    }
+
+    public static void loopback(At40k.Cell cell, int cin) {
+        cell.f(false);
+        cell.b(false);
+        cell.t(false, false, true);
+        cell.yo(false);
+        cell.xo(false);
+        cell.c(cin);
+    }
+    public static void doit(At40k at40k, AvrDrone device) throws Exception {
+
+        At40k.Cell led = at40k.cell(1, 23);
+        led.v(L2, true);
+        led.h(L2, false);
+        led.yi(L2);
+        led.ylut(~LUT_SELF);
+        led.xlut(LUT_SELF);
+        led.yo(false);
+
+        At40k.Cell c = at40k.cell(1, 22);
+        c.out(L1, true);
+        c.out(L0, true);
+        c.oe(V4);
+        c.ylut(0xff);
+        c.h(L1, true);
+        c.h(L0, false);
+
+        c.v(L0, /*false*/true);
+
+        c.v(L1, true);
+        c.f(false);
+        c.b(false);
+        c.c(YLUT);
+
+        for(int i=0; i<4; i++) at40k.cell(i, 20).h(L0, false);
+        At40k.Cell z = at40k.cell(1, 20);
+        z.out(L0, true);
+        z.xlut(0xff);
+        z.c(XLUT);
+        z.yi(L0);
+        z.ylut(~LUT_SELF);
+        z.v(L0, true);
+        //z.h(L0, true);
+        z.h(L0, false);
+        z.f(false);
+        z.b(false);
+        z.hwire(L0).east().drives(z.hwire(L0), false);
+        z.hwire(L1).east().drives(z.hwire(L1), false);
+        z.vwire(L0).south().drives(z.vwire(L0), false);
+        z.vwire(L1).south().drives(z.vwire(L1), false);
+        z.oe(H4);
+
+        z = at40k.cell(0, 20);
+        z.oe(NONE);
+        z.out(L0, true);
+        z.out(L1, true);
+        z.out(L2, true);
+        //z.out(L3, true);
+        z.out(L4, true);
+        z.h(L0, true);
+        z.h(L1, true);
+        z.h(L2, true);
+        //z.h(L3, true);
+        z.h(L4, true);
+        z.f(false);
+        z.b(false);
+        z.yi(EAST);
+        z.ylut(LUT_SELF);
+        z.c(YLUT);
+
+        for(int y=20; y<=22; y++)
+            for(int x=2; x<=5; x++) {
+                c = at40k.cell(x, y);
+                copy(c, NW, WEST);
+            }
+
+        //c = at40k.cell(2, 22);
+        //c.h(L0, true);
+        //c.yi(L0);
+
+        c = at40k.cell(1, 21);
+        c.v(L0, true);
+        c.v(L2, true);
+        c.yi(L0);
+        c.out(L2, true);
+        c.ylut(LUT_SELF);
+        c.c(YLUT);
+        c.b(false);
+        c.f(false);
+        c.oe(NONE);
+        c.yo(false);
+
+        
+
+        c = at40k.cell(13, 22);
+        c.xlut(LUT_OTHER | 0xF0);
+        c.c(XLUT);
+        c.t(false, false, true);
+        c.b(false);
+        c.f(false);
+        c.ylut(0xF0);
+        c.yi(EAST);
+        c.yo(false);
+        /*
+        // this gate detects a rising edge on its Xin (delayed copy on Yin); when viewed, it inverts its state
+        c = at40k.cell(14, 22);
+        c.ylut(0x00);
+        c.c(XLUT);
+        c.f(false);
+        c.b(false);
+        c.t(false, false, true);
+        c.xi(SE);
+        c.yi(SOUTH);
+        c.yo(false);
+        c.xo(false);
+        c.ylut(0xA6); // (x & !z) ? ~y : y
+        c.xlut(LUT_SELF); 
+
+        c = at40k.cell(14, 20);
+        c.ylut(LUT_OTHER);
+        c.xi(NE);
+        c = at40k.cell(14, 21);
+        c.ylut(LUT_SELF);
+        c.xi(SOUTH);
+
+        c = at40k.cell(13, 22);
+        c.xlut(0x00);
+        c.xlut(LUT_OTHER);// | 0xF0);
+*/
+        //c = at40k.cell(13, 22);
+        //copy(c, NW, EAST);
+        /*
+        c.ylut(0x00);
+        c.c(YLUT);
+        c.f(false);
+        c.b(false);
+        c.t(false, false, true);
+        c.xi(SE);
+        c.yi(NORTH);
+        c.yo(false);
+        c.xo(false);
+        c.ylut(0x54);  // (x || z) & !y
+        */
+
+        /*        
+        c = at40k.cell(2, 21);
+        c.ylut(0x00);
+        c.c(YLUT);
+        c.f(false);
+        c.b(false);
+        c.t(false, false, true);
+        c.xi(SE);
+        c.yi(WEST);
+        c.yo(false);
+        c.xo(false);
+        c.ylut(0xE8);
+ 
+       //at40k.cell(2, 21).xlut(0xF0);
+
+        at40k.cell(3, 22).ylut(LUT_OTHER);
+        at40k.cell(3, 22).xi(SW);
+        */
+        //at40k.iob_top(5, true).enableOutput(SOUTH);
+        //at40k.iob_top(5, false).enableOutput(SE);
+    }
+
+    public static int yofs = mullers ? 19 : 22;
+    public static void counter(At40k at40k, AvrDrone device) throws Exception {
+        // watch for rising edge from south, emit pulse on Xout (to NE)
+        //copy(at40k.cell(16,23), SW, WEST);
+        
+        for(int x=22; x>=1; x-=2) {
+            pulse_detect(at40k.cell(x, yofs), SE,      false);
+            pulse_detect(at40k.cell(x, yofs-1), EAST,    true);
+            pulse_copy(at40k.cell(x-1, yofs), SE, SOUTH, false);
+            pulse_copy(at40k.cell(x-1, yofs-1), NE, NORTH, true);
+
+            //pulse_detect(at40k.cell(15, 22), NORTH, false);
+            //pulse_detect(at40k.cell(16, 22), NW,    true);
+            //pulse_copy(at40k.cell(16, 21), NW, WEST, false);
+            //pulse_copy(at40k.cell(15, 21), NE, EAST, true);
+        }
+        for(int x=23; x>1; x-=2) {
+            pulse_detect(at40k.cell(x-1, yofs-2), SW,    false);
+            pulse_detect(at40k.cell(x-1, yofs-3), WEST,  true);
+            pulse_copy(at40k.cell(x, yofs-2), SW, SOUTH, false);
+            pulse_copy(at40k.cell(x, yofs-3), NW, NORTH, true);
+
+            //pulse_detect(at40k.cell(15, 22), NORTH, false);
+            //pulse_detect(at40k.cell(16, 22), NW,    true);
+            //pulse_copy(at40k.cell(16, 21), NW, WEST, false);
+            //pulse_copy(at40k.cell(15, 21), NE, EAST, true);
+        }
+        copy(at40k.cell(1, yofs-2), SOUTH, SOUTH);
+        copy(at40k.cell(1, yofs-3), NORTH, NORTH);
+        at40k.cell(1, yofs-3).ylut(~at40k.cell(1, yofs-3).ylut());
+        at40k.cell(1, yofs-3).xlut(~at40k.cell(1, yofs-3).xlut());
+
+        copy(at40k.cell(23, yofs), SOUTH, SOUTH);
+        copy(at40k.cell(23, yofs-1), SOUTH, SOUTH);
+
+        for(int i=23; i>yofs; i--) copy(at40k.cell(1, i), SOUTH, SOUTH);
+
+        //at40k.iob_top(1, true).slew(SLOW);
+        //at40k.iob_top(1, false).slew(SLOW);
+
+    }
+    public static void fill(At40k at40k, AvrDrone device, int num) throws Exception {
+        //muller(at40k.cell(PIPELEN,22), NE, WEST);
+        At40k.Cell a = at40k.cell(10,22);
+        At40k.Cell b = at40k.cell(11,22);
+        a.ylut(0x00);
+        for(int i=0; i<num; i++) {
+            //System.out.println(i);
+            b.lut(0xff, 0xff);
+            device.flush();
+            try { Thread.sleep(1); } catch (Exception e) { }
+            b.lut(0x00, 0x00);
+            device.flush();
+            try { Thread.sleep(1); } catch (Exception e) { }
+        }
+        b.ylut(0xB2);
+        a.ylut(0xB2);
+    }
+    public static void showit(At40k dev, AvrDrone drone, final Visualizer vis) {
+        final long then = System.currentTimeMillis();
+        final Graphics g = vis.getGraphics();
+        g.setFont(new Font("sansserif", Font.BOLD, 24));
+        final Color red = new Color(0xff, 0x99, 0x99);
+        final Color green = new Color(0x99, 0xff, 0x99);
+        for(int xx=0; xx<=22; xx++) {
+            for(int yy=23; yy>=0; yy--) {
+                //for(int xx=5; xx<=PIPELEN-1; xx++) {
+                //for(int yy=21; yy<=22; yy++) {
+                final int x = xx;
+                final int y = yy;
+                final At40k.Cell cell = dev.cell(x, y);
+                if ((cell.ylut()&0xff)!=0xB2) continue;
+                AvrDrone.ByteCallback bc = new AvrDrone.ByteCallback() {
+                        public void call(byte b) throws Exception {
+                            boolean v = (b & 0x80) != 0;
+                            vis.drawCell(g, x, y, v?red:green);
+                            //if (x==PIPELEN-1 && y==22) System.out.println("time: " + (System.currentTimeMillis()-then));
+                        }
+                    };
+                scan(dev, cell, NONE, true);
+                drone.readBus(bc);
+                //scan(dev, cell, YLUT, false);
+                cell.v(L3, false);
+                dev.cell(x, 15).h(L3, false);
+                dev.cell(x, 15).v(L3, false);
+            }
+        }
+    }
+    public static void drain(At40k at40k, AvrDrone device) throws Exception {
+        At40k.Cell a = at40k.cell(10,22);
+        At40k.Cell b = at40k.cell(11,22);
+        a.lut(0x00, 0x00);
+        b.lut(0x00, 0x00);
+        for(int i=0; i<30; i++) {
+            //System.out.println(i);
+            a.lut(0xff, 0xff);
+            device.flush();
+            try { Thread.sleep(1); } catch (Exception e) { }
+            a.lut(0x00, 0x00);
+            device.flush();
+            try { Thread.sleep(1); } catch (Exception e) { }
+        }
+        b.ylut(0xB2);
+        a.ylut(0xB2);
+    }
+    public static void doitx(At40k at40k, AvrDrone device) throws Exception {
+        for(int i=5; i<PIPELEN+1; i++) bounce(at40k.cell(i, 23), SE,                     SOUTH);
+        for(int x=5; x<PIPELEN;   x++) muller(at40k.cell(x, 22), x==PIPELEN-1 ? SE : NE, WEST);
+        
+        bounce(at40k.cell(PIPELEN,  21), NW, WEST);
+        
+        for(int x=5; x<PIPELEN;   x++) muller(at40k.cell(x, 21), SW,                     x==PIPELEN-1 ? NORTH : EAST);
+        for(int x=4; x<PIPELEN+1; x++) bounce(at40k.cell(x, 20), NW,                     NORTH);
+        
+        bounce(at40k.cell(4, 22), SE, EAST);
+        //muller(at40k.cell(4PIPELEN-1,21), SW, NORTH);
+        
+        //muller(at40k.cell(4,22), NE, WEST);
+        //at40k.cell(4,22).ylut(0xEE);
+        muller(at40k.cell(5, 22), NE, SOUTH);
+        muller(at40k.cell(5, 21), NW, EAST);
+        /*
+        for(int x=4; x>=0; x--) {
+            at40k.cell(x, 21).ylut(0xAA);
+            at40k.cell(x, 21).yi(EAST);
+            at40k.cell(x, 21).yo(false);
+        }
+
+        at40k.cell(0, 22).ylut(0xAA);
+        at40k.cell(0, 22).yi(SOUTH);
+        at40k.cell(0, 22).yo(false);
+
+        at40k.cell(0, 23).ylut(~0xAA);
+        at40k.cell(0, 23).xlut(~0xcc);
+        at40k.cell(0, 23).yi(SOUTH);
+        at40k.cell(0, 23).yo(false);
+        */
+        for(int x=3; x<=23; x+=2) {
+            pulse_detect(at40k.cell(x-1, 19), SW,    false);
+            pulse_detect(at40k.cell(x-1, 18), WEST,  true);
+            pulse_copy(at40k.cell(x, 19), SW, SOUTH, false);
+            pulse_copy(at40k.cell(x, 18), NW, NORTH, true);
+
+            if (x<17) {
+                pulse_detect(at40k.cell(x-1, 16), SW,    false);
+                pulse_detect(at40k.cell(x-1, 15), WEST,  true);
+                pulse_copy(at40k.cell(x, 16), SW, SOUTH, false);
+                pulse_copy(at40k.cell(x, 15), NW, NORTH, true);
+            }
+            //pulse_detect(at40k.cell(15, 22), NORTH, false);
+            //pulse_detect(at40k.cell(16, 22), NW,    true);
+            //pulse_copy(at40k.cell(16, 21), NW, WEST, false);
+            //pulse_copy(at40k.cell(15, 21), NE, EAST, true);
+        }
+        for(int x=14; x>=1; x--)
+            copy(at40k.cell(x, 17), EAST, EAST);
+        for(int x=4; x>=0; x--)
+            copy(at40k.cell(x, 21), EAST, EAST);
+        copy(at40k.cell(13, 17), SOUTH, SOUTH);
+
+        copy(at40k.cell(0, 20), NORTH, NORTH);
+        copy(at40k.cell(0, 19), NORTH, NORTH);
+        copy(at40k.cell(0, 18), NORTH, NORTH);
+        copy(at40k.cell(0, 17), NORTH, NORTH);
+        copy(at40k.cell(0, 16), NORTH, NORTH);
+        copy(at40k.cell(1, 16), WEST, WEST);
+        copy(at40k.cell(1, 15), NORTH, NORTH);
+
+        copy(at40k.cell(1, 20), SOUTH, SOUTH);
+        copy(at40k.cell(1, 19), SOUTH, SOUTH);
+        copy(at40k.cell(1, 18), SOUTH, SOUTH);
+
+        for(int y=20; y<=23; y++)
+            copy(at40k.cell(23, y), SOUTH, SOUTH);
+
+
+        //for(int x=19; x<=23; x++)
+        //copy(at40k.cell(x, 0), WEST, WEST);
+        //copy(at40k.cell(18, 19), NW, NW);
+        //at40k.iob_top(5, true).enableOutput(SOUTH);
+        //at40k.iob_top(5, false).enableOutput(SOUTH);
+    }
 }

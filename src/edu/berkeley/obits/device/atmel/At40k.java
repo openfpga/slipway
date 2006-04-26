@@ -150,6 +150,7 @@ public class At40k {
         }
 
         /* bit positions mean:  [MSB] zxy z_y zx_ z__ _xy __y _x_ ___ [LSB] */
+        public void lut(int xlut, int ylut) { xlut(xlut); ylut(ylut); }
         public void xlut(int table)    { dev.mode4(7, row, col, (byte)(table & 0xff)); }
         public byte xlut()             { return (byte)(dev.mode4(7, row, col) & 0xff); }
         public String printXLut()      { return printLut(xlut(), "x", "y", "t"); }
@@ -187,8 +188,8 @@ public class At40k {
 
         public void out(int plane, boolean enable) {
             switch(plane) {
-                case L0: dev.mode4(0x00, row, col, 3, enable); return;
-                case L1: dev.mode4(0x00, row, col, 2, enable); return;
+                case L0: dev.mode4(0x00, row, col, 2, enable); return;
+                case L1: dev.mode4(0x00, row, col, 3, enable); return;
                 case L2: dev.mode4(0x00, row, col, 5, enable); return;
                 case L3: dev.mode4(0x00, row, col, 4, enable); return;
                 case L4: dev.mode4(0x00, row, col, 1, enable); return;
@@ -198,8 +199,8 @@ public class At40k {
 
         public boolean out(int plane) {
             switch(plane) {
-                case L0: return (dev.mode4(0x00, row, col) & (1<<3)) != 0;
-                case L1: return (dev.mode4(0x00, row, col) & (1<<2)) != 0;
+                case L0: return (dev.mode4(0x00, row, col) & (1<<2)) != 0;
+                case L1: return (dev.mode4(0x00, row, col) & (1<<3)) != 0;
                 case L2: return (dev.mode4(0x00, row, col) & (1<<5)) != 0;
                 case L3: return (dev.mode4(0x00, row, col) & (1<<4)) != 0;
                 case L4: return (dev.mode4(0x00, row, col) & (1<<1)) != 0;
@@ -379,14 +380,15 @@ public class At40k {
         }
 
         public int wi() {
-            switch(dev.mode4(0x03, row, col) & 0xff) {
+            int who = dev.mode4(0x03, row, col) & 0xff;
+            switch(who) {
                 case (1<<5): return L4;
                 case (1<<6): return L3;
                 case (1<<7): return L2;
                 case (1<<3): return L1;
                 case (1<<2): return L0;
                 case (0):    return NONE;
-                default: throw new RuntimeException("invalid argument");
+                default: throw new RuntimeException("invalid argument: " + who);
             }
         }
 
@@ -415,8 +417,8 @@ public class At40k {
 
     }
 
-    public IOB iob_top(int col, boolean primary)   { return new IOB(col, 0, primary, true); }
-    public IOB iob_bot(int col, boolean primary)   { return new IOB(col, 1, primary, true); }
+    public IOB iob_bot(int col, boolean primary)   { return new IOB(col, 0, primary, true); }
+    public IOB iob_top(int col, boolean primary)   { return new IOB(col, 1, primary, true); }
     public IOB iob_left(int row, boolean primary)  { return new IOB(0, row, primary, false); }
     public IOB iob_right(int row, boolean primary) { return new IOB(1, row, primary, false); }
     /*

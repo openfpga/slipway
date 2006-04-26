@@ -2,7 +2,8 @@
 // YOU MUST COMPILE THIS WITH -O3 OR THE AVR WILL NOT BE ABLE TO KEEP UP!!!!
 //
 
-#define F_CPU 3960000
+//#define F_CPU 3960000
+#define F_CPU 4000000
 
 #if !defined(__AVR_AT94K__)
 #error you forgot to put -mmcu=at94k on the command line
@@ -17,9 +18,10 @@ void initUART1(unsigned int baudRate, unsigned int doubleRate) {
   UBRRHI = (((baudRate) >> 8) & 0x000F); 
   UBRR1  = ((baudRate) & 0x00FF); 
   UCSR1B |= ((1 << RXEN1) | (1 << TXEN1) | (1 << RXCIE1)); 
-  /*
+
   if (doubleRate)
     UCSR1A |= (1 << U2X1);
+  /*
   else
     UCSR1A &= ~(1 << U2X1);
   */
@@ -28,11 +30,13 @@ void initUART1(unsigned int baudRate, unsigned int doubleRate) {
 #define BUFSIZE (1024)
 
 inline void portd(int bit, int on) {
+  /*
   if (on) {
     PORTD &= ~(1<<bit);
   } else {
     PORTD |= (1<<bit);
   }
+  */
 }
 inline void cts(int c) {
   if (c) {
@@ -44,6 +48,9 @@ inline void cts(int c) {
   }
 }
 
+
+static volatile int sending = 0;
+static volatile int32_t interrupt_count = 0;
 
 // RECV //////////////////////////////////////////////////////////////////////////////
 
@@ -113,6 +120,17 @@ void send(char c) {
 }
 
 
+void fpga_interrupts(int on) {
+  if (on/* && interrupt_count<301*/) {
+    //FISUA = 0x1;
+    FISCR = 0x80;
+    FISUD = 0x08;
+  } else {
+    FISUD = 0;
+    FISCR = 0;
+  }
+}
+
 void init() {
   read_buf_head = 0;
   read_buf_tail = 0;
@@ -121,7 +139,9 @@ void init() {
   EIMF  = 0xFF;                          /* Enalbe External Interrrupt*/  
   DDRD = 0xFF;                           /* Configure PORTD as Output */
   DDRE = 1 << 4;                         /* ability to write to E */
-  initUART1(1, 0);
+  initUART1(12, 1);  //for slow board
+  //initUART1(1, 0);
+  fpga_interrupts(1);
   SREG |= 0x80;
   sei();
 }
@@ -153,12 +173,22 @@ void doreset() {
 }
 
 #define TIMERVAL 100
-static volatile int sending = 0;
+int portdc = 0;
+ISR(SIG_FPGA_INTERRUPT15) { 
+  PORTD = portdc++;
+  interrupt_count++;
+  //PORTD = ~(interrupt_count & 0xff);
+  //if (interrupt_count >= 301) fpga_interrupts(0);
+  //sei();
+  fpga_interrupts(1);
+}
 ISR(SIG_OVERFLOW0) { 
+  fpga_interrupts(0);
   PORTD = ~FISUA;
   TCNT0 = TIMERVAL;           // load the nearest-to-one-second value  into the timer0
   TIMSK |= (1<<TOIE0);        // enable the compare match1 interrupt and the timer/counter0 overflow interrupt
   if (sending) UDR1 = FISUA;
+  fpga_interrupts(1);
   sei();
 } 
 void init_timer()  { 
@@ -201,9 +231,11 @@ int main() {
   send('S');
   send('\n');
   cts(1);
+  int x=0, y=0, z=0;
   for(;;) {
-    int i, x=0, y=0, z=0, d=0;
-    switch(recv()) {
+    int i, d=0;
+    int r = recv();
+    switch(r) {
       case 1:
         z = recv();
         y = recv();
@@ -214,9 +246,11 @@ int main() {
         portd(1,0);
         break;
       case 2:
+        fpga_interrupts(0);
         portd(1,1);
         send(FISUA);
         portd(1,0);
+        fpga_interrupts(1);
         break;
       case 3:
         init_timer();
@@ -227,7 +261,41 @@ int main() {
       case 5:
         sending = 0;
         break;
-      default: die();
+      case 6: {
+        int32_t local_interrupt_count = interrupt_count;
+        interrupt_count = 0;
+        send((local_interrupt_count >> 24) & 0xff);
+        send((local_interrupt_count >> 16) & 0xff);
+        send((local_interrupt_count >>  8) & 0xff);
+        send((local_interrupt_count >>  0) & 0xff);
+        fpga_interrupts(1);
+        break;
+      }
+      default: {
+        if ((r & 0x80) == 0x80) {
+          switch (r & 0x44) {
+            case 0x44: z = recv(); break;
+            case 0x40: z++;        break;
+            case 0x04: z--;        break;
+          }
+          switch (r & 0x22) {
+            case 0x22: y = recv(); break;
+            case 0x20: y++;        break;
+            case 0x02: y--;        break;
+          }
+          switch (r & 0x11) {
+            case 0x11: x = recv(); break;
+            case 0x10: x++;        break;
+            case 0x01: x--;        break;
+          }
+          d = recv();
+          portd(1,1);
+          conf(z, y, x, d);
+          portd(1,0);
+          break;
+        }
+        die();
+      }
     }
   }
   return 0;

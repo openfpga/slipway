@@ -17,7 +17,8 @@ public class AvrDrone extends AtmelDevice {
 
     public AvrDrone(SerialPort sp) throws IOException, UnsupportedCommOperationException, InterruptedException, DeviceException {
         this.sp = sp;
-        sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+        //sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+        sp.setSerialPortParams(38400, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
         sp.setFlowControlMode(sp.FLOWCONTROL_RTSCTS_OUT);
         sp.setInputBufferSize(1024);
         //sp.setFlowControlMode(sp.FLOWCONTROL_NONE);
@@ -46,6 +47,33 @@ public class AvrDrone extends AtmelDevice {
             }
         } catch (IOException e) { throw new DeviceException(e); }
     }
+    // fixme!
+    public static int retval = 0;
+    public synchronized int readCount() throws DeviceException {
+        try {
+            if (reader != null) {
+                reader.start();
+                reader = null;
+            }
+            ByteCallback bc = new ByteCallback() {
+                    public synchronized void call(byte b) throws Exception {
+                        retval =
+                            ((b & 0xff) << 24) |
+                            ((in.read() & 0xff) << 16) |
+                            ((in.read() & 0xff) << 8) |
+                            ((in.read() & 0xff) << 0);
+                        this.notify();
+                    }
+                };
+            synchronized(bc) {
+                callbacks.add(bc);
+                out.writeByte(6);
+                out.flush();
+                bc.wait();
+            }
+            return retval;
+        } catch (Exception e) { throw new DeviceException(e); }
+    }
 
     public static interface ByteCallback {
         public void call(byte b) throws Exception;
@@ -69,9 +97,20 @@ public class AvrDrone extends AtmelDevice {
 
     public synchronized void readBus(ByteCallback bc) throws DeviceException {
         try {
-            System.out.println("capacity: " + callbacks.size());
             callbacks.add(bc);
             out.writeByte(2);
+            out.flush();
+            if (reader != null) {
+                reader.start();
+                reader = null;
+            }
+        } catch (IOException e) { throw new DeviceException(e); }
+    }
+
+    public synchronized void readInterrupts(ByteCallback bc) throws DeviceException {
+        try {
+            callbacks.add(bc);
+            out.writeByte(6);
             out.flush();
             if (reader != null) {
                 reader.start();
@@ -99,6 +138,12 @@ public class AvrDrone extends AtmelDevice {
         if (cache[x][y]==null) return 0;
         return cache[x][y][z];
     }
+
+    int lastz = 0;
+    int lastx = 0;
+    int lasty = 0;
+    public static int save = 0;
+    public static int saveof = 0;
     public synchronized void mode4(int z, int y, int x, int d) throws DeviceException {
         try {
             /*
@@ -109,10 +154,28 @@ public class AvrDrone extends AtmelDevice {
                       pad(1, Integer.toString(d&0xff, 16))
                       );
             */
-            out.writeByte(1);
-            out.writeByte(z);
-            out.writeByte(y);
-            out.writeByte(x);
+            boolean zchange = z!=lastz;
+            boolean ychange = y!=lasty;
+            boolean xchange = x!=lastx;
+            boolean zinc    = z==lastz+1;
+            boolean yinc    = y==lasty+1;
+            boolean xinc    = x==lastx+1;
+            boolean zdec    = z==lastz-1;
+            boolean ydec    = y==lasty-1;
+            boolean xdec    = x==lastx-1;
+            
+            //System.out.println(zchange + " " + ychange + " " + xchange);
+            out.writeByte(0x80
+                          | (zinc?0x40:zdec?0x04:zchange?0x44:0x00)
+                          | (yinc?0x20:ydec?0x02:ychange?0x22:0x00)
+                          | (xinc?0x10:xdec?0x01:xchange?0x11:0x00));
+            if (!zinc && !zdec && zchange) out.writeByte(z); else save++;
+            if (!yinc && !ydec && ychange) out.writeByte(y); else save++;
+            if (!xinc && !xdec && xchange) out.writeByte(x); else save++;
+            saveof++;
+            lastz = z;
+            lastx = x;
+            lasty = y;
             out.writeByte(d);
             if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
             if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
