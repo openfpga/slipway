@@ -142,6 +142,10 @@ public class At40k {
 
         public SectorWire hwire(int plane)  { return new SectorWire(true, plane, col, row); }
         public SectorWire vwire(int plane)  { return new SectorWire(false, plane, col, row); }
+        public Cell east() { return cell(col+1, row); }
+        public Cell west() { return cell(col-1, row); }
+        public Cell north() { return cell(col,   row+1); }
+        public Cell south() { return cell(col,   row-1); }
 
         public Sector sector() { return new Sector(this); }
         public Cell(int col, int row) {
@@ -260,15 +264,41 @@ public class At40k {
                 default: throw new Error("ack!");
             }
         }
-        public void t(boolean z, boolean w, boolean fb) {
+        public void t(int code) {
+            int result = 0;
+            switch(code) {
+                case TMUX_Z: throw new Error("not implemented, but should be possible");
+                case TMUX_W_AND_Z: result = 0x20; break;
+
+                case TMUX_FB: result = 0x04; break; /* I think this is actually W_AND_FB, sadly */
+                case TMUX_W_AND_FB: result = 0x14; break;
+                case TMUX_W: result = 0x00; break;
+            }
+            dev.mode4(1, row, col, result, 0x34);
+        }
+        public void t(boolean ignore_z_and_fb, boolean zm_drives_fb, boolean fb_drives_wm) {
             // still not totally satisfied...
             //     how to we distinguish between z&w vs z or w&fb vs fb? ==> you can't!  this is a false connection in my diagram
             //     what does it mean for both bits (0x30) to be set to 1?
-            if (fb && z) throw new RuntimeException("invalid combination");
+            //if (fb && z) throw new RuntimeException("invalid combination");
             int result = 0;
-            if (z)  result |= 0x20;
-            if (fb) result |= 0x10;
-            dev.mode4(1, row, col, result, 0x30);
+            // ZM->FB = 0x04
+            // FB->WM = 0x10
+            // WZ->WM = 0x20
+ 
+            // tff => w&z
+            // fff => w
+            // ttt => fb&w
+            // ftt => fb&w
+            // fft => fb&w
+
+            // ttf => w&z
+            // ftf => w
+            // tft => fb&w
+            if (ignore_z_and_fb) result |= 0x20;
+            if (zm_drives_fb) result |= 0x04;
+            if (fb_drives_wm) result |= 0x10;
+            dev.mode4(1, row, col, result, 0x34);
         }
 
         public void c(int source) {

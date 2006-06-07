@@ -222,6 +222,7 @@ public class AtmelSerial {
             }
             */
 
+            /* LAST
             System.out.println("doit");
             if (mullers) doitx(at40k, device);
             //System.out.println("counter");
@@ -232,11 +233,133 @@ public class AtmelSerial {
 
             at40k.cell(22,15).yi(WEST);
             at40k.cell(22,15).ylut(0xAA);
-
+            */
             at40k.cell(23,15).h(3, true);
             at40k.cell(23,15).yi(L3);
             at40k.cell(23,15).ylut(0xAA);
             at40k.iob_right(15, true).enableOutput(WEST);
+
+
+            At40k.Cell c = at40k.cell(10,10);
+            c.ylut(~LUT_SELF);
+            c.xlut(LUT_Z);
+            c.yi(WEST);
+            c.c(YLUT);
+            c.f(false);
+            c.t(TMUX_FB);
+            copy(c.west(), EAST, NW);
+            copy(c.west().north().west(), SE, SE);
+
+            c = c.east();
+            c.ylut(~LUT_SELF);
+            c.xlut(LUT_Z);
+            c.yi(EAST);
+            c.c(YLUT);
+            c.f(false);
+            c.t(TMUX_FB);
+            copy(c.east(), WEST, SE);
+            copy(c.east().south().east(), NW, NW);
+
+            c = c.north();
+            copy(c.north(), SOUTH, SOUTH);
+            c.xlut((LUT_SELF & ~LUT_OTHER) | LUT_Z);
+            c.ylut(LUT_Z);
+            c.yi(SOUTH);
+            c.c(XLUT);
+            c.xi(SW);
+            c.wi(L4);
+            c.f(false);
+            c.t(TMUX_W_AND_FB);
+            c.v(L4, false);
+            c.h(L4, true);
+            c.v(L2, false);
+            c.h(L2, true);
+
+            c = c.west();
+            copy(c.north(), SOUTH, SOUTH);
+            c.xlut((LUT_SELF & ~LUT_OTHER) | LUT_Z);
+            c.ylut(~LUT_Z);
+            c.yi(SOUTH);
+            c.xi(SE);
+            c.c(XLUT);
+            c.wi(L4);
+            c.f(false);
+            c.t(TMUX_W_AND_FB);
+            c.v(L4, false);
+            c.h(L4, true);
+            c.v(L2, false);
+            c.h(L2, true);
+
+            c = c.west();
+            c.v(L4, false);
+            c.h(L4, true);
+            c.out(L4, true);
+            c.f(false);
+            c.b(false);
+            c.oe(NONE);
+            c.c(YLUT);
+            c.hwire(L4).west().drives(c.hwire(L4), false);
+            c.hwire(L4).east().drives(c.hwire(L4), false);
+
+            c = c.south();
+            c = c.south();
+            c.v(L4, false);
+            c.h(L4, true);
+            c.out(L4, true);
+            c.f(false);
+            c.b(false);
+            c.oe(NONE);
+            c.c(YLUT);
+            c.hwire(L4).west().drives(c.hwire(L4), false);
+            c.hwire(L4).east().drives(c.hwire(L4), false);
+
+            c = c.east();
+            c = c.east();
+            copy(c.south(), NORTH, NORTH);
+            c.xlut(((~LUT_SELF) & (~LUT_OTHER)) | LUT_Z);
+            c.ylut(LUT_Z);
+            c.yi(NORTH);
+            c.c(XLUT);
+            c.xi(NW);
+            c.wi(L4);
+            c.f(false);
+            c.t(TMUX_W_AND_FB);
+            c.v(L4, false);
+            c.h(L4, true);
+            c.v(L2, false);
+            c.h(L2, true);
+
+            c = c.west();
+            copy(c.south(), NORTH, NORTH);
+            c.xlut((LUT_SELF & LUT_OTHER) | LUT_Z);
+            c.ylut(LUT_Z);
+            c.yi(NORTH);
+            c.xi(NE);
+            c.c(XLUT);
+            c.wi(L4);
+            c.f(false);
+            c.t(TMUX_W_AND_FB);
+            c.v(L4, false);
+            c.h(L4, true);
+            c.v(L2, false);
+            c.h(L2, true);
+
+
+
+            // catch a rising transition
+            /*
+            c = c.west();
+            c.v(L2, false);
+            c.h(L2, true);
+            c.out(L2, true);
+            c.f(false);
+            c.b(false);
+            c.oe(NONE);
+            c.c(YLUT);
+            */
+            c.hwire(L2).west().drives(c.hwire(L2), false);
+            c.hwire(L2).east().drives(c.hwire(L2), false);
+
             //for(int x=5; x<PIPELEN; x++) {
             //at40k.cell(x,23).hwire(L0).drives(at40k.cell(x,23).hwire(L0).east());
             //}

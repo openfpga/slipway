@@ -57,6 +57,12 @@ public abstract class AtmelDevice extends Bits implements Device {
         public static final int LUT_SELF  = 0xAA;
         public static final int LUT_Z     = 0xF0;
         public static final int LUT_OTHER = 0xCC;
+
+        public static final int TMUX_W_AND_Z   = 0x00001001;
+        public static final int TMUX_W         = 0x00001002;
+        public static final int TMUX_Z         = 0x00001004;
+        public static final int TMUX_W_AND_FB  = 0x00001008;
+        public static final int TMUX_FB        = 0x00001010;
     }
 
     /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */
