@@ -29,9 +29,9 @@ public abstract class AtmelDevice extends Bits implements Device {
         public static final int L4    = 4;
 
         public static final int NORTH = 8;
-        public static final int SOUTH = 9;
-        public static final int EAST  = 10;
-        public static final int WEST  = 11;
+        public static final int WEST  = 9;
+        public static final int SOUTH = 10;
+        public static final int EAST  = 11;
 
         public static final int XLUT  = 12;
         public static final int YLUT  = 13;

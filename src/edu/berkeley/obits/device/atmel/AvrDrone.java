@@ -15,6 +15,7 @@ public class AvrDrone extends AtmelDevice {
 
     final SerialPort sp;
 
+    public AvrDrone() { sp = null; in = null; out = null; } 
     public AvrDrone(SerialPort sp) throws IOException, UnsupportedCommOperationException, InterruptedException, DeviceException {
         this.sp = sp;
         //sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
@@ -38,6 +39,7 @@ public class AvrDrone extends AtmelDevice {
     }
 
     public synchronized void scanFPGA(boolean on) throws DeviceException {
+        if (sp==null) return;
         try {
             if (on) {
                 out.writeByte(3);
@@ -50,6 +52,7 @@ public class AvrDrone extends AtmelDevice {
     // fixme!
     public static int retval = 0;
     public synchronized int readCount() throws DeviceException {
+        if (sp==null) return 0;
         try {
             if (reader != null) {
                 reader.start();
@@ -85,7 +88,7 @@ public class AvrDrone extends AtmelDevice {
             public void run() {
                 while(true) {
                     try {
-                        byte b = in.readByte();
+                        byte b = sp==null ? 0 : in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
                         bc.call(b);
                     } catch (Exception e) {
@@ -98,8 +101,10 @@ public class AvrDrone extends AtmelDevice {
     public synchronized void readBus(ByteCallback bc) throws DeviceException {
         try {
             callbacks.add(bc);
-            out.writeByte(2);
-            out.flush();
+            if (sp!=null) {
+                out.writeByte(2);
+                out.flush();
+            }
             if (reader != null) {
                 reader.start();
                 reader = null;
@@ -110,8 +115,10 @@ public class AvrDrone extends AtmelDevice {
     public synchronized void readInterrupts(ByteCallback bc) throws DeviceException {
         try {
             callbacks.add(bc);
-            out.writeByte(6);
-            out.flush();
+            if (sp!=null) {
+                out.writeByte(6);
+                out.flush();
+            }
             if (reader != null) {
                 reader.start();
                 reader = null;
@@ -120,6 +127,7 @@ public class AvrDrone extends AtmelDevice {
     }
 
     public synchronized void reset() throws DeviceException {
+        if (sp==null) return;
         try {
             Log.info(this, "resetting device");
             sp.setDTR(true);
@@ -165,18 +173,20 @@ public class AvrDrone extends AtmelDevice {
             boolean xdec    = x==lastx-1;
             
             //System.out.println(zchange + " " + ychange + " " + xchange);
-            out.writeByte(0x80
-                          | (zinc?0x40:zdec?0x04:zchange?0x44:0x00)
-                          | (yinc?0x20:ydec?0x02:ychange?0x22:0x00)
-                          | (xinc?0x10:xdec?0x01:xchange?0x11:0x00));
-            if (!zinc && !zdec && zchange) out.writeByte(z); else save++;
-            if (!yinc && !ydec && ychange) out.writeByte(y); else save++;
-            if (!xinc && !xdec && xchange) out.writeByte(x); else save++;
-            saveof++;
-            lastz = z;
-            lastx = x;
-            lasty = y;
-            out.writeByte(d);
+            if (sp!=null) {
+                out.writeByte(0x80
+                              | (zinc?0x40:zdec?0x04:zchange?0x44:0x00)
+                              | (yinc?0x20:ydec?0x02:ychange?0x22:0x00)
+                              | (xinc?0x10:xdec?0x01:xchange?0x11:0x00));
+                if (!zinc && !zdec && zchange) out.writeByte(z); else save++;
+                if (!yinc && !ydec && ychange) out.writeByte(y); else save++;
+                if (!xinc && !xdec && xchange) out.writeByte(x); else save++;
+                saveof++;
+                lastz = z;
+                lastx = x;
+                lasty = y;
+                out.writeByte(d);
+            }
             if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
             if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
             cache[x & 0xff][y & 0xff][z & 0xff] = (byte)(d & 0xff);
@@ -184,6 +194,7 @@ public class AvrDrone extends AtmelDevice {
     }
 
     public synchronized void flush() throws DeviceException {
+        if (sp==null) return;
         try {
             out.flush();
         } catch (IOException e) { throw new DeviceException(e); }

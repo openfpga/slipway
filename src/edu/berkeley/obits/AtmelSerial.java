@@ -29,7 +29,8 @@ public class AtmelSerial {
     }
     public static int PIPELEN=20;
     public static void main(String[] s) throws Exception {
-        AvrDrone device = new AvrDrone(detectObitsPort());
+        //AvrDrone device = new AvrDrone(detectObitsPort());
+        AvrDrone device = new AvrDrone();
         At40k at40k = new At40k.At40k10(device);
         int count = 0;
         try {
@@ -424,6 +425,12 @@ public class AtmelSerial {
             //scan(at40k, cell, YLUT, false);
 
             //device.scanFPGA(true);
+
+            Visual vis = new Visual(at40k);
+            vis.show();
+            vis.setSize(600, 600);
+            synchronized(AtmelSerial.class) { AtmelSerial.class.wait(); }
+
             Visualizer v = new Visualizer(at40k, device);
             v.show();
             v.setSize(1380, 1080);

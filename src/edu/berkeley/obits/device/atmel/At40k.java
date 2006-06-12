@@ -51,6 +51,14 @@ public class At40k {
             this.col= horizontal ? (col & ~0x3) : col;
             this.row=!horizontal ? (row & ~0x3) : row;
         }
+        public boolean isDriven() {
+            // FIXME: bridging connections (horiz-to-vert)
+            for(int i=0; i<4; i++)
+                if (cell(horizontal ? col+i : col,
+                         horizontal ? row   : row+i).out(plane)) return true;
+            // FIXME: sector switchbox drivers
+            return false;
+        }
         private int z(int z)       { return (horizontal ? 0x30 : 0x20) | z; }
         public int code(boolean topleft) {
             switch(plane) {
@@ -146,6 +154,10 @@ public class At40k {
         public Cell west() { return cell(col-1, row); }
         public Cell north() { return cell(col,   row+1); }
         public Cell south() { return cell(col,   row-1); }
+        public Cell ne() { return cell(col+1, row+1); }
+        public Cell nw() { return cell(col-1, row+1); }
+        public Cell se() { return cell(col+1, row-1); }
+        public Cell sw() { return cell(col-1, row-1); }
 
         public Sector sector() { return new Sector(this); }
         public Cell(int col, int row) {
@@ -301,6 +313,32 @@ public class At40k {
             dev.mode4(1, row, col, result, 0x34);
         }
 
+        public boolean xlut_relevant() {
+            if ((c()==XLUT || c()==ZMUX) && c_relevant()) return true;
+            if (xo()) return false;
+            if (nw() != null && nw().xi()==SE) return true;
+            if (ne() != null && ne().xi()==SW) return true;
+            if (sw() != null && sw().xi()==NE) return true;
+            if (se() != null && se().xi()==NW) return true;
+            return false;
+        }
+        public boolean ylut_relevant() {
+            if ((c()==YLUT || c()==ZMUX) && c_relevant()) return true;
+            if (yo()) return false;
+            if (north() != null && north().yi()==SOUTH) return true;
+            if (east() != null  && east().yi()==WEST) return true;
+            if (south() != null && south().yi()==NORTH) return true;
+            if (west() != null  && west().yi()==EAST) return true;
+            return false;
+        }
+        public boolean c_relevant() {
+            // FIXME: feedback line!
+            for(int i=0; i<5; i++)
+                if (out(i)) return true;
+            if (xo() || yo()) return true;
+            return false;
+        }
+
         public void c(int source) {
             switch(source) {
                 case XLUT: dev.mode4(1, row, col, 0x00, 0xc0); break;
@@ -319,6 +357,8 @@ public class At40k {
         }
         public void b(boolean registered) { dev.mode4(1, row, col, 3, !registered); }
         public void f(boolean registered) { dev.mode4(1, row, col, 2, !registered); }
+        public boolean xo()    { return (dev.mode4(1, row, col) & 0x01) != 0; }
+        public boolean yo()    { return (dev.mode4(1, row, col) & 0x02) != 0; }
         public void xo(boolean center)    { dev.mode4(1, row, col, 1, center); }
         public void yo(boolean center)    { dev.mode4(1, row, col, 0, center); }
         public boolean b() { return (dev.mode4(1, row, col) >> 3)!=1; }
@@ -326,6 +366,14 @@ public class At40k {
         public boolean x() { return (dev.mode4(1, row, col) >> 1)==1; }
         public boolean y() { return (dev.mode4(1, row, col) >> 0)==1; }
 
+        public int oe() {
+            switch (dev.mode4(0x02, row, col) & 0x3) {
+                case 0: return NONE;
+                case 1: return H4;
+                case 2: return V4;
+                default: throw new RuntimeException("invalid argument");                    
+            }
+        }
         public void oe(int source) {
             switch(source) {
                 case NONE: dev.mode4(0x02, row, col, 0, 0x3); break;
