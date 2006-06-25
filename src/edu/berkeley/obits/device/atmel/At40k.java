@@ -282,11 +282,14 @@ public class At40k {
                 case TMUX_Z: throw new Error("not implemented, but should be possible");
                 case TMUX_W_AND_Z: result = 0x20; break;
 
-                case TMUX_FB: result = 0x04; break; /* I think this is actually W_AND_FB, sadly */
+                case TMUX_FB: result = 0x34; break; /* I think this is actually W_AND_FB, sadly */
                 case TMUX_W_AND_FB: result = 0x14; break;
                 case TMUX_W: result = 0x00; break;
             }
             dev.mode4(1, row, col, result, 0x34);
+        }
+        public int t() {
+            return dev.mode4(1, row, col) & 0x34;
         }
         public void t(boolean ignore_z_and_fb, boolean zm_drives_fb, boolean fb_drives_wm) {
             // still not totally satisfied...
@@ -297,30 +300,63 @@ public class At40k {
             // ZM->FB = 0x04
             // FB->WM = 0x10
             // WZ->WM = 0x20
- 
-            // tff => w&z
-            // fff => w
-            // ttt => fb&w
-            // ftt => fb&w
-            // fft => fb&w
 
-            // ttf => w&z
-            // ftf => w
-            // tft => fb&w
+            // tff => w&z      [0x20]
+            // fff => w        [0x00]
+            // ttt => fb&w     [0x34]
+            // ftt => fb&w     [0x14]
+            // fft => fb&w     [0x10]
+
+            // ttf => w&z      [0x24]
+            // ftf => w        [0x04]
+            // tft => fb&w     [0x30]
             if (ignore_z_and_fb) result |= 0x20;
             if (zm_drives_fb) result |= 0x04;
             if (fb_drives_wm) result |= 0x10;
             dev.mode4(1, row, col, result, 0x34);
         }
 
-        public boolean xlut_relevant() {
+        public boolean xlut_relevant() { return xlut_relevant(true); }
+        public boolean xlut_relevant(boolean recurse) {
             if ((c()==XLUT || c()==ZMUX) && c_relevant()) return true;
             if (xo()) return false;
-            if (nw() != null && nw().xi()==SE) return true;
-            if (ne() != null && ne().xi()==SW) return true;
-            if (sw() != null && sw().xi()==NE) return true;
-            if (se() != null && se().xi()==NW) return true;
+            if (nw() != null && nw().xi()==SE && nw().xi_relevant() && (recurse || nw().xlut_relevant())) return true;
+            if (ne() != null && ne().xi()==SW && ne().xi_relevant() && (recurse || ne().xlut_relevant())) return true;
+            if (sw() != null && sw().xi()==NE && sw().xi_relevant() && (recurse || sw().xlut_relevant())) return true;
+            if (se() != null && se().xi()==NW && se().xi_relevant() && (recurse || se().xlut_relevant())) return true;
             return false;
+        }
+        public boolean xi_to_ylut_relevant() {
+            int lut = ylut();
+            if (((lut & 0xcc) >> 2) == (lut & 0x33)) return false;
+            return true;
+        }
+        public boolean yi_to_xlut_relevant() {
+            int lut = xlut();
+            if (((lut & 0xcc) >> 2) == (lut & 0x33)) return false;
+            return true;
+        }
+        public boolean xi_relevant() { return xi_to_xlut_relevant() || xi_to_ylut_relevant(); }
+        public boolean yi_relevant() { return yi_to_xlut_relevant() || yi_to_ylut_relevant(); }
+        public boolean zi_to_xlut_relevant() {
+            int lut = xlut();
+            if (((lut & LUT_Z) >> 4) == (lut & LUT_Z)) return false;
+            return true;
+        }
+        public boolean zi_to_ylut_relevant() {
+            int lut = ylut();
+            if (((lut & LUT_Z) >> 4) == (lut & LUT_Z)) return false;
+            return true;
+        }
+        public boolean xi_to_xlut_relevant() {
+            int lut = xlut();
+            if (((lut & LUT_SELF) >> 1) == (lut & (LUT_SELF >> 1))) return false;
+            return true;
+        }
+        public boolean yi_to_ylut_relevant() {
+            int lut = ylut();
+            if (((lut & LUT_SELF) >> 1) == (lut & (LUT_SELF >> 1))) return false;
+            return true;
         }
         public boolean ylut_relevant() {
             if ((c()==YLUT || c()==ZMUX) && c_relevant()) return true;
@@ -339,6 +375,37 @@ public class At40k {
             return false;
         }
 
+        public boolean register_relevant() {
+            if (!c_relevant() && !fb_relevant()) return false;
+            if (f() && out_relevant()) return true;
+            if (f() && fb_relevant()) return true;
+            if (b() && xo()) return true;
+            if (b() && yo()) return true;
+            return false;
+        }
+        public boolean out_relevant() {
+            boolean out = false;
+            boolean connect = false;
+            for(int i=0; i<4; i++) {
+                if (out(L0+i)) out = true;
+                if (hx(L0+i)) connect = true;
+                if (vx(L0+i)) connect = true;
+            }
+            return out && connect;
+        }
+        public boolean fb_relevant() {
+            //if (!c_relevant()) return false;
+            if (!(zi_to_xlut_relevant() && xlut_relevant()) ||
+                !(zi_to_ylut_relevant() && ylut_relevant())) return false;
+            switch(t()) {
+                case 0x34: return true;
+                case 0x14: return true;
+                case 0x10: return true;
+                case 0x30: return true;
+            }
+            return false;
+        }
+
         public void c(int source) {
             switch(source) {
                 case XLUT: dev.mode4(1, row, col, 0x00, 0xc0); break;
@@ -348,12 +415,13 @@ public class At40k {
             }
         }
         public int c() {
-            switch (dev.mode4(1, row, col) >> 6) {
+            int cval = dev.mode4(1, row, col) & 0xc0;
+            switch (cval) {
                 case 0x00: return XLUT;
-                case 0x01: return YLUT;
-                case 0x02: return ZMUX;
+                case 0x40: return YLUT;
+                case 0x80: return ZMUX;
             }
-            throw new Error();
+            throw new Error("c() => " + cval);
         }
         public void b(boolean registered) { dev.mode4(1, row, col, 3, !registered); }
         public void f(boolean registered) { dev.mode4(1, row, col, 2, !registered); }
@@ -361,10 +429,10 @@ public class At40k {
         public boolean yo()    { return (dev.mode4(1, row, col) & 0x02) != 0; }
         public void xo(boolean center)    { dev.mode4(1, row, col, 1, center); }
         public void yo(boolean center)    { dev.mode4(1, row, col, 0, center); }
-        public boolean b() { return (dev.mode4(1, row, col) >> 3)!=1; }
-        public boolean f() { return (dev.mode4(1, row, col) >> 2)!=1; }
-        public boolean x() { return (dev.mode4(1, row, col) >> 1)==1; }
-        public boolean y() { return (dev.mode4(1, row, col) >> 0)==1; }
+        public boolean b() { return (dev.mode4(1, row, col) & (1 << 3)) == 0; }
+        public boolean f() { return (dev.mode4(1, row, col) & (1 << 2)) == 0; }
+        public boolean x() { return (dev.mode4(1, row, col) & (1 << 1)) != 0; }
+        public boolean y() { return (dev.mode4(1, row, col) & (1 << 0)) != 0; }
 
         public int oe() {
             switch (dev.mode4(0x02, row, col) & 0x3) {
@@ -458,13 +526,14 @@ public class At40k {
         }
 
         public int wi() {
-            int who = dev.mode4(0x03, row, col) & 0xff;
+            int who = dev.mode4(0x03, row, col) & 0xEC;
             switch(who) {
                 case (1<<5): return L4;
                 case (1<<6): return L3;
                 case (1<<7): return L2;
                 case (1<<3): return L1;
                 case (1<<2): return L0;
+                case (1<<0): return NONE;  /* huh? */
                 case (0):    return NONE;
                 default: throw new RuntimeException("invalid argument: " + who);
             }
@@ -482,14 +551,15 @@ public class At40k {
         }
 
         public int zi() {
-            switch(dev.mode4(0x02, row, col) & 0xff) {
+            switch(dev.mode4(0x02, row, col) & 0xDB) {
                 case (1<<7): return L4;
                 case (1<<5): return L3;
                 case (1<<4): return L2;
                 case (1<<3): return L1;
                 case (1<<2): return L0;
+                case (1<<0): return NONE;  /* huh? */
                 case 0:      return NONE;
-                default: throw new RuntimeException("invalid argument");
+                default: throw new RuntimeException("invalid argument: zi=="+(dev.mode4(0x02, row, col) & 0xDB));
             }
         }
 

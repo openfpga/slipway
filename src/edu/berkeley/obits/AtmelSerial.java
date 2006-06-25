@@ -3,6 +3,7 @@ package edu.berkeley.obits;
 import static edu.berkeley.obits.device.atmel.AtmelDevice.Constants.*;
 import static edu.berkeley.obits.device.atmel.AtmelDevice.Util.*;
 import edu.berkeley.obits.device.atmel.*;
+import edu.berkeley.obits.gui.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.color.*;
@@ -346,7 +347,6 @@ public class AtmelSerial {
             c.h(L2, true);
 
 
-
             // catch a rising transition
             /*
             c = c.west();
@@ -360,6 +360,49 @@ public class AtmelSerial {
             */
             c.hwire(L2).west().drives(c.hwire(L2), false);
             c.hwire(L2).east().drives(c.hwire(L2), false);
+
+
+
+            //////
+
+            c = at40k.cell(20,20);
+            c.yi(WEST);
+            c.ylut(LUT_SELF);
+            c.c(YLUT);
+            c.oe(H4);
+            c.h(L4, true);
+            c.b(false);
+            c.f(false);
+            c.out(L4);
+
+            c = at40k.cell(21,20);
+            c.c(YLUT);
+            c.oe(NONE);
+            c.h(L4, true);
+            c.b(false);
+            c.f(false);
+
+
+            c = at40k.cell(8,8);
+            c.f(true);
+            c.b(true);
+            c.xo(true);
+            c.xi(NE);
+            c.zi(L3);
+            c.wi(L0);
+            c.yi(NORTH);
+            c.oe(H4);
+            c.h(L0, true);
+            c.h(L2, true);
+            c.h(L4, true);
+            c.v(L1, true);
+            c.v(L3, true);
+            c.out(L0, true);
+            c.out(L1, true);
+            c.out(L2, true);
+            c.out(L3, true);
+            c.out(L4, true);
+            c.c(ZMUX);
 
             //for(int x=5; x<PIPELEN; x++) {
             //at40k.cell(x,23).hwire(L0).drives(at40k.cell(x,23).hwire(L0).east());
@@ -426,10 +469,39 @@ public class AtmelSerial {
 
             //device.scanFPGA(true);
 
-            Visual vis = new Visual(at40k);
-            vis.show();
-            vis.setSize(600, 600);
+            at40k.cell(10,10).f(true);
+            at40k.cell(10,10).c(ZMUX);
+
+            at40k.cell(8,7).xlut(LUT_SELF);
+            at40k.cell(8,7).xi(NW);
+
+            at40k.cell(7,8).xlut(LUT_SELF & LUT_Z);
+            at40k.cell(7,8).xi(SE);
+            at40k.cell(7,8).c(XLUT);
+            at40k.cell(7,8).f(false);
+            at40k.cell(7,8).b(false);
+            at40k.cell(7,8).t(TMUX_FB);
+            at40k.cell(7,8).xo(false);
+            System.out.println(at40k.cell(7,8).fb_relevant());
+
+            at40k.cell(6,13).xi(SE);
+            at40k.cell(6,13).c(ZMUX);
+            at40k.cell(6,13).xlut(LUT_SELF);
+            at40k.cell(6,13).ylut(LUT_OTHER);
+            at40k.cell(6,13).xo(false);
+            at40k.cell(6,13).yo(false);
+            at40k.cell(7,12).xi(SE);
+
+            Gui vis = new Gui(at40k);
+            Frame fr = new Frame();
+            fr.setLayout(new BorderLayout());
+            fr.add(vis, BorderLayout.CENTER);
+            fr.pack();
+            fr.show();
+            fr.setSize(600, 600);
+            fr.addKeyListener(vis);
             synchronized(AtmelSerial.class) { AtmelSerial.class.wait(); }
+
 
             Visualizer v = new Visualizer(at40k, device);
             v.show();
@@ -1051,7 +1123,7 @@ public class AtmelSerial {
     }
 
     private static String pad(int i, String s) { if (s.length()>i) return s; return "0"+pad((i-1),s); }
-    private static String bin8(byte b) {
+    public static String bin8(byte b) {
         int n = b & 0xff;
         String ret = "";
         for(int i=7; i>=0; i--)
