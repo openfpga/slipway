@@ -150,6 +150,16 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                     route(new P(17 - 2*(plane-L0), 8), p1, 3);
             }
         }
+            public P corner(int corner, int ring) {
+                switch(corner) {
+                    case NW: return new P(0    +2*ring,  SIZE -2*xring);
+                    case SW: return new P(0    +2*ring,  0    +2*xring);
+                    case NE: return new P(SIZE -2*ring,  SIZE -2*xring);
+                    case SE: return new P(SIZE -2*ring,  0    +2*xring);
+                    default: return null;
+                }
+            }
+
         public void drawInternalRouting() {
             gg.color(new Color(0, 107, 51));
             if (cell.fb_relevant()) {
@@ -193,14 +203,13 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                     break;
             }
 
-            P xi  = null;
+            P xi  = corner(cell.xi(), xring);
             P xi2 = null;
             gg.color(new Color(0xff, 0x00, 0x00));
             int xring = 4;
             if (cell.xi_relevant() && cell.xlut_relevant())
                 switch(cell.xi()) {
                     case NW:
-                        xi = new P(0+2*xring, SIZE-2*xring);
                         xi2 = new P(-BEVEL, SIZE+BEVEL);
                         xi = translate(xi, 0, -3);
                         xi2 = translate(xi2, 0, -3);
@@ -208,7 +217,6 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         break;
                         
                     case SW:
-                        xi = new P(0+2*xring, 0+2*xring);
                         xi2 = new P(-BEVEL, -BEVEL);
                         xi = translate(xi, 0, 3);
                         xi2 = translate(xi2, 0, 3);
@@ -216,7 +224,6 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         break;
                         
                     case NE:
-                        xi = new P(SIZE-2*xring, SIZE-2*xring);
                         xi2 = new P(SIZE+BEVEL, SIZE+BEVEL);
                         xi = translate(xi, 0, -3);
                         xi2 = translate(xi2, 0, -3);
@@ -224,7 +231,6 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         break;
                         
                     case SE:
-                        xi = new P(SIZE-2*xring, 0+2*xring);
                         xi2 = new P(SIZE+BEVEL, -BEVEL);
                         xi = translate(xi, 0, 3);
                         xi2 = translate(xi2, 0, 3);
