@@ -148,6 +148,13 @@ public class At40k {
         public final int col;
         public final int row;
 
+        public Cell(int col, int row) {
+            this.row = row;
+            this.col = col;
+        }
+        
+        // Accessors for Neighbors //////////////////////////////////////////////////////////////////////////////
+
         public SectorWire hwire(int plane)  { return new SectorWire(true, plane, col, row); }
         public SectorWire vwire(int plane)  { return new SectorWire(false, plane, col, row); }
         public Cell east() { return cell(col+1, row); }
@@ -158,12 +165,7 @@ public class At40k {
         public Cell nw() { return cell(col-1, row+1); }
         public Cell se() { return cell(col+1, row-1); }
         public Cell sw() { return cell(col-1, row-1); }
-
         public Sector sector() { return new Sector(this); }
-        public Cell(int col, int row) {
-            this.row = row;
-            this.col = col;
-        }
 
         /* bit positions mean:  [MSB] zxy z_y zx_ z__ _xy __y _x_ ___ [LSB] */
         public void lut(int xlut, int ylut) { xlut(xlut); ylut(ylut); }
@@ -200,6 +202,11 @@ public class At40k {
 
         public void ff_reset_value(boolean value) {
             //dev.mode4( /* FIXME WRONG!!! */, row, col, 3, !value); return;
+        }
+        /** FIXME!!! */
+        public boolean ff_reset_value() { return false; }
+        public boolean columnClocked() {
+            return false;
         }
 
         public void out(int plane, boolean enable) {
@@ -288,12 +295,25 @@ public class At40k {
             }
             dev.mode4(1, row, col, result, 0x34);
         }
+        /*
+        private void fmux(int source) {
+            switch(source) {
+                case ZMUX:      
+                case FB:        
+                case ALWAYS_ON: 
+                default: throw new Error("unknown argument to fmux()");
+            }
+        }
+
+        public boolean win_easable() {
+        }
+        */
         public int t() {
             return dev.mode4(1, row, col) & 0x34;
         }
         public void t(boolean ignore_z_and_fb, boolean zm_drives_fb, boolean fb_drives_wm) {
             // still not totally satisfied...
-            //     how to we distinguish between z&w vs z or w&fb vs fb? ==> you can't!  this is a false connection in my diagram
+            //     need to find the bit that sets the w-mux off
             //     what does it mean for both bits (0x30) to be set to 1?
             //if (fb && z) throw new RuntimeException("invalid combination");
             int result = 0;
@@ -316,95 +336,6 @@ public class At40k {
             dev.mode4(1, row, col, result, 0x34);
         }
 
-        public boolean xlut_relevant() { return xlut_relevant(true); }
-        public boolean xlut_relevant(boolean recurse) {
-            if ((c()==XLUT || c()==ZMUX) && c_relevant()) return true;
-            if (xo()) return false;
-            if (nw() != null && nw().xi()==SE && nw().xi_relevant() && (recurse || nw().xlut_relevant())) return true;
-            if (ne() != null && ne().xi()==SW && ne().xi_relevant() && (recurse || ne().xlut_relevant())) return true;
-            if (sw() != null && sw().xi()==NE && sw().xi_relevant() && (recurse || sw().xlut_relevant())) return true;
-            if (se() != null && se().xi()==NW && se().xi_relevant() && (recurse || se().xlut_relevant())) return true;
-            return false;
-        }
-        public boolean xi_to_ylut_relevant() {
-            int lut = ylut();
-            if (((lut & 0xcc) >> 2) == (lut & 0x33)) return false;
-            return true;
-        }
-        public boolean yi_to_xlut_relevant() {
-            int lut = xlut();
-            if (((lut & 0xcc) >> 2) == (lut & 0x33)) return false;
-            return true;
-        }
-        public boolean xi_relevant() { return xi_to_xlut_relevant() || xi_to_ylut_relevant(); }
-        public boolean yi_relevant() { return yi_to_xlut_relevant() || yi_to_ylut_relevant(); }
-        public boolean zi_to_xlut_relevant() {
-            int lut = xlut();
-            if (((lut & LUT_Z) >> 4) == (lut & LUT_Z)) return false;
-            return true;
-        }
-        public boolean zi_to_ylut_relevant() {
-            int lut = ylut();
-            if (((lut & LUT_Z) >> 4) == (lut & LUT_Z)) return false;
-            return true;
-        }
-        public boolean xi_to_xlut_relevant() {
-            int lut = xlut();
-            if (((lut & LUT_SELF) >> 1) == (lut & (LUT_SELF >> 1))) return false;
-            return true;
-        }
-        public boolean yi_to_ylut_relevant() {
-            int lut = ylut();
-            if (((lut & LUT_SELF) >> 1) == (lut & (LUT_SELF >> 1))) return false;
-            return true;
-        }
-        public boolean ylut_relevant() {
-            if ((c()==YLUT || c()==ZMUX) && c_relevant()) return true;
-            if (yo()) return false;
-            if (north() != null && north().yi()==SOUTH) return true;
-            if (east() != null  && east().yi()==WEST) return true;
-            if (south() != null && south().yi()==NORTH) return true;
-            if (west() != null  && west().yi()==EAST) return true;
-            return false;
-        }
-        public boolean c_relevant() {
-            // FIXME: feedback line!
-            for(int i=0; i<5; i++)
-                if (out(i)) return true;
-            if (xo() || yo()) return true;
-            return false;
-        }
-
-        public boolean register_relevant() {
-            if (!c_relevant() && !fb_relevant()) return false;
-            if (f() && out_relevant()) return true;
-            if (f() && fb_relevant()) return true;
-            if (b() && xo()) return true;
-            if (b() && yo()) return true;
-            return false;
-        }
-        public boolean out_relevant() {
-            boolean out = false;
-            boolean connect = false;
-            for(int i=0; i<4; i++) {
-                if (out(L0+i)) out = true;
-                if (hx(L0+i)) connect = true;
-                if (vx(L0+i)) connect = true;
-            }
-            return out && connect;
-        }
-        public boolean fb_relevant() {
-            //if (!c_relevant()) return false;
-            if (!(zi_to_xlut_relevant() && xlut_relevant()) ||
-                !(zi_to_ylut_relevant() && ylut_relevant())) return false;
-            switch(t()) {
-                case 0x34: return true;
-                case 0x14: return true;
-                case 0x10: return true;
-                case 0x30: return true;
-            }
-            return false;
-        }
 
         public void c(int source) {
             switch(source) {
@@ -425,10 +356,10 @@ public class At40k {
         }
         public void b(boolean registered) { dev.mode4(1, row, col, 3, !registered); }
         public void f(boolean registered) { dev.mode4(1, row, col, 2, !registered); }
-        public boolean xo()    { return (dev.mode4(1, row, col) & 0x01) != 0; }
-        public boolean yo()    { return (dev.mode4(1, row, col) & 0x02) != 0; }
-        public void xo(boolean center)    { dev.mode4(1, row, col, 1, center); }
-        public void yo(boolean center)    { dev.mode4(1, row, col, 0, center); }
+        public boolean xo()               { return (dev.mode4(1, row, col) & 0x01) != 0; }
+        public boolean yo()               { return (dev.mode4(1, row, col) & 0x02) != 0; }
+        public void xo(boolean center)    { dev.mode4(1, row, col, 0, center); }
+        public void yo(boolean center)    { dev.mode4(1, row, col, 1, center); }
         public boolean b() { return (dev.mode4(1, row, col) & (1 << 3)) == 0; }
         public boolean f() { return (dev.mode4(1, row, col) & (1 << 2)) == 0; }
         public boolean x() { return (dev.mode4(1, row, col) & (1 << 1)) != 0; }
@@ -453,16 +384,16 @@ public class At40k {
 
         public int xi() {
             // FIXME: can be multiple
-            if ((dev.mode4(0x03, row, col) & (1<<4))!=0) return L3;
+            if ((dev.mode4(0x03, row, col) & (1<<4))!=0) return L4;
             switch(dev.mode4(0x05, row, col) & 0xff) {
                 case 0x80: return SW;
                 case (1<<6): return NE;
                 case (1<<5): return SE;
                 case (1<<4): return NW;
-                case (1<<3): return L3;
-                case (1<<2): return L2;
-                case (1<<1): return L1;
-                case (1<<0): return L0;
+                case (1<<3): return L0;
+                case (1<<2): return L1;
+                case (1<<1): return L2;
+                case (1<<0): return L3;
                 case 0: return NONE;
                 default: throw new Error();
             }
@@ -490,10 +421,10 @@ public class At40k {
                 case (1<<5): return SOUTH;
                 case (1<<6): return WEST;
                 case (1<<4): return EAST;
-                case (1<<3): return L3;
-                case (1<<2): return L2;
-                case (1<<1): return L1;
-                case (1<<0): return L0;
+                case (1<<3): return L0;
+                case (1<<2): return L1;
+                case (1<<1): return L2;
+                case (1<<0): return L3;
                 case 0: return NONE;
                 default: throw new Error();
             }
@@ -539,6 +470,7 @@ public class At40k {
             }
         }
 
+       
         public void zi(int source) {
             switch(source) {
                 case L4:    dev.mode4(0x02, row, col, 1<<7, 0xDB); break;
@@ -557,11 +489,98 @@ public class At40k {
                 case (1<<4): return L2;
                 case (1<<3): return L1;
                 case (1<<2): return L0;
+                case (1<<1): return NONE;  /* huh? */
                 case (1<<0): return NONE;  /* huh? */
                 case 0:      return NONE;
                 default: throw new RuntimeException("invalid argument: zi=="+(dev.mode4(0x02, row, col) & 0xDB));
             }
         }
+
+
+        // Relevance //////////////////////////////////////////////////////////////////////////////
+
+        public boolean xo_relevant() { return xo_relevant(NE) || xo_relevant(SE) || xo_relevant(NW) || xo_relevant(SW); }
+        public boolean xo_relevant(int direction) {
+            switch(direction) {
+                case NE: return ne() != null && ne().xi()==SW /*&& ne().xi_relevant()*/;
+                case NW: return nw() != null && nw().xi()==SE /*&& nw().xi_relevant()*/;
+                case SE: return se() != null && se().xi()==NW /*&& se().xi_relevant()*/;
+                case SW: return sw() != null && sw().xi()==NE /*&& sw().xi_relevant()*/;
+                default: return false;
+            }
+        }
+        public boolean yo_relevant() { return yo_relevant(NORTH) || yo_relevant(SOUTH) || yo_relevant(EAST) || yo_relevant(WEST); }
+        public boolean yo_relevant(int direction) {
+            switch(direction) {
+                case NORTH: return north() != null && north().yi()==SOUTH  /*&& north().yi_relevant()*/;
+                case EAST: return east() != null  && east().yi()==WEST     /*&& east().yi_relevant()*/;
+                case SOUTH: return south() != null && south().yi()==NORTH  /*&& south().yi_relevant()*/;
+                case WEST: return west() != null  && west().yi()==EAST     /*&& west().yi_relevant()*/;
+                default: return false;
+            }
+        }
+        public boolean xi_relevant() { return xi_to_xlut_relevant() || xi_to_ylut_relevant(); }
+        public boolean yi_relevant() { return yi_to_xlut_relevant() || yi_to_ylut_relevant(); }
+        public boolean xi_to_ylut_relevant() { return (((ylut() & 0xcc) >> 2) != (ylut() & 0x33)); }
+        public boolean yi_to_xlut_relevant() { return (((xlut() & 0xcc) >> 2) != (xlut() & 0x33)); }
+        public boolean zi_to_xlut_relevant() { return (((xlut() & LUT_Z) >> 4) != (xlut() & LUT_Z)); }
+        public boolean zi_to_ylut_relevant() { return (((ylut() & LUT_Z) >> 4) != (ylut() & LUT_Z)); }
+        public boolean xi_to_xlut_relevant() { return (((xlut() & LUT_SELF) >> 1) != (xlut() & (LUT_SELF >> 1))); }
+        public boolean yi_to_ylut_relevant() { return (((ylut() & LUT_SELF) >> 1) != (ylut() & (LUT_SELF >> 1))); }
+        public boolean xlut_relevant() {
+            if ((c()==XLUT || c()==ZMUX) && c_relevant()) return true;
+            if (xo()) return false;
+            return xo_relevant();
+        }
+        public boolean ylut_relevant() {
+            if ((c()==YLUT || c()==ZMUX) && c_relevant()) return true;
+            if (yo()) return false;
+            return yo_relevant();
+        }
+        public boolean c_relevant() {
+            switch(t()) {
+                case 0x34: return true;
+                case 0x14: return true;
+                case 0x10: return true;
+                case 0x30: return true;
+            }
+            for(int i=0; i<5; i++)
+                if (out(i))
+                    return true;
+            if (xo() || yo()) return true;
+            return false;
+        }
+
+        public boolean register_relevant() {
+            if (!c_relevant()) return false;
+            if (f() && out_relevant()) return true;
+            if (f() && fb_relevant()) return true;
+            if (b() && xo()) return true;
+            if (b() && yo()) return true;
+            return false;
+        }
+        public boolean out_relevant() {
+            boolean out = false;
+            boolean connect = false;
+            for(int i=0; i<4; i++) {
+                if (out(L0+i)) out = true;
+                if (hx(L0+i)) connect = true;
+                if (vx(L0+i)) connect = true;
+            }
+            return out && connect;
+        }
+        public boolean fb_relevant() {
+            if (!(zi_to_xlut_relevant()) ||
+                !(zi_to_ylut_relevant())) return false;
+            switch(t()) {
+                case 0x34: return true;
+                case 0x14: return true;
+                case 0x10: return true;
+                case 0x30: return true;
+            }
+            return false;
+        }
+
 
     }
 

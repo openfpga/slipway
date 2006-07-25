@@ -86,6 +86,7 @@ public class AvrDrone extends AtmelDevice {
 
     private Thread reader = new Thread() {
             public void run() {
+                System.out.println("*** reader thread begun");
                 while(true) {
                     try {
                         byte b = sp==null ? 0 : in.readByte();

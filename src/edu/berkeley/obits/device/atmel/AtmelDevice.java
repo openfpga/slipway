@@ -3,6 +3,8 @@ package edu.berkeley.obits.device.atmel;
 import edu.berkeley.obits.*;
 //import static edu.berkeley.cs.obits.device.atmel.Wires.*;
 import java.util.*;
+import java.io.*;
+import org.ibex.util.Log;
 
 public abstract class AtmelDevice extends Bits implements Device {
 
@@ -63,9 +65,55 @@ public abstract class AtmelDevice extends Bits implements Device {
         public static final int TMUX_Z         = 0x00001004;
         public static final int TMUX_W_AND_FB  = 0x00001008;
         public static final int TMUX_FB        = 0x00001010;
+
+
     }
 
     /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */
+    public int getWidth() { return 24; }
+    public int getHeight() { return 24; }
+
+    private static String hex2(int i) {
+        String ret = Integer.toString(i, 16);
+        while(ret.length() < 2) ret = "0"+ret;
+        return ret.toUpperCase();
+    }
+
+    public void readMode4(InputStream in) throws IOException {
+        int count = 0;
+        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+        for(String str = br.readLine(); str != null; str = br.readLine()) {
+            long foo = Long.parseLong(str, 16);
+            mode4((int)(foo >> 24), (int)(foo >> 16), (int)(foo >>  8), (int)(foo >>  0));
+            count++;
+            if (count % 100 == 0) Log.info(AtmelSerial.class, "wrote " + count + " configuration octets");
+        }
+        flush();
+    }
+
+    public void writeMode4(Writer w) throws IOException {
+        for(int x=0; x<getWidth(); x++)
+            for(int y=0; y<getWidth(); y++)
+                for(int z=0; z<255; z++) {
+                    if ((z > 0x09 && z < 0x10) ||
+                        (z > 0x11 && z < 0x20) ||
+                        (z > 0x29 && z < 0x30) ||
+                        (z > 0x39 && z < 0x40) ||
+                        (z > 0x41 && z < 0x60) ||
+                        (z > 0x67 && z < 0x70) ||
+                        (z > 0x77 && z < 0xD0) ||
+                        (z > 0xD3))
+                        continue;
+                    w.write(hex2(z));
+                    w.write(hex2(y));
+                    w.write(hex2(x));
+                    w.write(hex2(mode4(z, y, x) & 0xff));
+                    w.write('\n');
+                }
+        w.flush();
+    }
+
+
     public abstract void mode4(int z, int y, int x, int d) throws DeviceException;
     public abstract byte mode4(int z, int y, int x);
     public          byte mode4zyx(int zyx) { return mode4(zyx>>24, (zyx>>16)&0xff, (zyx>>8)&0xff); }

@@ -37,4 +37,8 @@ public class P {
         }
     }
 
+    public P translate(double dx, double dy) {
+        return new P(dx+x, dy+y);
+    }
+
 }

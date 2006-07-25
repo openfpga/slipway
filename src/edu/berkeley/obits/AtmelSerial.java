@@ -22,28 +22,22 @@ public class AtmelSerial {
         while(e.hasMoreElements()) {
             CommPortIdentifier cpi = (CommPortIdentifier)e.nextElement();
             Log.info(AtmelSerial.class, "trying " + cpi.getName());
-            if (cpi.getName().startsWith("/dev/cu.usbserial-")) return new RXTXPort(cpi.getName());
-            if (cpi.getName().startsWith("/dev/ttyS0")) return new RXTXPort(cpi.getName());
+            if (cpi.getName().startsWith("/dev/cu.usbserial-"))
+                return new RXTXPort(cpi.getName());
+            if (cpi.getName().startsWith("/dev/ttyS0"))
+                return new RXTXPort(cpi.getName());
         }
         Log.info(AtmelSerial.class, "returning null...");
         return null;
     }
     public static int PIPELEN=20;
     public static void main(String[] s) throws Exception {
-        //AvrDrone device = new AvrDrone(detectObitsPort());
+      //AvrDrone device = new AvrDrone(detectObitsPort());
         AvrDrone device = new AvrDrone();
         At40k at40k = new At40k.At40k10(device);
-        int count = 0;
         try {
             long begin = System.currentTimeMillis();
-            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-            for(String str = br.readLine(); str != null; str = br.readLine()) {
-                long foo = Long.parseLong(str, 16);
-                device.mode4((int)(foo >> 24), (int)(foo >> 16), (int)(foo >>  8), (int)(foo >>  0));
-                count++;
-                if (count % 100 == 0) Log.info(AtmelSerial.class, "wrote " + count + " configuration octets");
-            }
-            device.flush();
+            device.readMode4(System.in);
             long end = System.currentTimeMillis();
             Log.info(AtmelSerial.class, "finished in " + ((end-begin)/1000) + "s");
             Thread.sleep(1000);
@@ -402,7 +396,14 @@ public class AtmelSerial {
             c.out(L2, true);
             c.out(L3, true);
             c.out(L4, true);
+            c.xo(true);
+            c.yo(true);
             c.c(ZMUX);
+
+            at40k.cell(9,10).xo(true);
+            at40k.cell(9,10).yo(true);
+            at40k.cell(9,10).c(YLUT);
+            at40k.cell(9,10).b(false);
 
             //for(int x=5; x<PIPELEN; x++) {
             //at40k.cell(x,23).hwire(L0).drives(at40k.cell(x,23).hwire(L0).east());
@@ -492,14 +493,16 @@ public class AtmelSerial {
             at40k.cell(6,13).yo(false);
             at40k.cell(7,12).xi(SE);
 
-            Gui vis = new Gui(at40k);
+            Gui vis = new Gui(at40k, device);
             Frame fr = new Frame();
+            fr.addKeyListener(vis);
             fr.setLayout(new BorderLayout());
             fr.add(vis, BorderLayout.CENTER);
             fr.pack();
+            fr.setSize(900, 900);
+            vis.repaint();
+            fr.repaint();
             fr.show();
-            fr.setSize(600, 600);
-            fr.addKeyListener(vis);
             synchronized(AtmelSerial.class) { AtmelSerial.class.wait(); }
 
 
@@ -623,8 +626,8 @@ public class AtmelSerial {
             if (source != NONE) cell.c(source);
             if (cell.b()) cell.b(false);
             if (cell.f()) cell.f(false);
-            if (!cell.out(L3)) cell.out(L3, true);
         }
+        if (cell.out(L3)!=setup) cell.out(L3, setup);
         if (cell.vx(L3)!=setup) cell.v(L3, setup);
 
         At40k.SectorWire sw = cell.vwire(L3);
