@@ -212,9 +212,9 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
             // x-input to cell
             gg.color(RED);
             P xi  = corner(cell.xi(), SIZE, 4);
-            if ((cell.xlut_relevant() && cell.xi_to_xlut_relevant()) ||
-                (cell.ylut_relevant() && cell.xi_to_ylut_relevant())
-                && (cell.xi() != NONE)
+            if (((cell.xlut_relevant() && cell.xi_to_xlut_relevant()) ||
+                (cell.ylut_relevant() && cell.xi_to_ylut_relevant()))
+                && (cell.xi() != NONE) && (cell.xi() < L0 || cell.xi() > L4)
                 ) {
                 P xi2 = corner(cell.xi(), SIZE + 2*BEVEL, -1).translate(-BEVEL, -BEVEL);
                 switch(cell.xi()) {
@@ -512,6 +512,34 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         }
     }
 
+    public void pressed() {
+        dragFrom = oldcell;
+    }
+    public void released() {
+        if (dragFrom == null || oldcell == null) return;
+        if (Math.abs(dragFrom._y - oldcell._y) > 1) return;
+        if (Math.abs(dragFrom._x - oldcell._x) > 1) return;
+        if (dragFrom._x == oldcell._x   && dragFrom._y == oldcell._y+1) oldcell.cell.yi(NORTH);
+        if (dragFrom._x == oldcell._x   && dragFrom._y == oldcell._y-1) oldcell.cell.yi(SOUTH);
+        if (dragFrom._x == oldcell._x+1 && dragFrom._y == oldcell._y)   oldcell.cell.yi(EAST);
+        if (dragFrom._x == oldcell._x-1 && dragFrom._y == oldcell._y)   oldcell.cell.yi(WEST);
+        if (dragFrom._x == oldcell._x+1 && dragFrom._y == oldcell._y+1) oldcell.cell.xi(NE);
+        if (dragFrom._x == oldcell._x+1 && dragFrom._y == oldcell._y-1) oldcell.cell.xi(SE);
+        if (dragFrom._x == oldcell._x-1 && dragFrom._y == oldcell._y+1) oldcell.cell.xi(NW);
+        if (dragFrom._x == oldcell._x-1 && dragFrom._y == oldcell._y-1) oldcell.cell.xi(SW);
+        repaint();
+    }
+    public void drawKeyboard(Image keyboardImage, Graphics2D g) {
+                int width = 300;
+                int height = (keyboardImage.getHeight(null) * width) / keyboardImage.getWidth(null);
+                g.drawImage(keyboardImage,
+                            0, getHeight() - height,
+                            width, getHeight(),
+                            0, 0,
+                            keyboardImage.getWidth(null), keyboardImage.getHeight(null),
+                            null);
+    }
+
     public void _paint(Graphics2D g) {
 
         this.g = g;
@@ -545,12 +573,9 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         int line = 10;
         g.setFont(new Font("monospaced", 0, 14));
         if (newcell != null && newcell.cell != null) {
-            g.drawString("selected: " + newcell._x + ","+newcell._y,
-                         getWidth() - 200 + 10, (line += 15));
-            g.drawString("    xlut: " + XLUT_EQUATIONS[newcell.cell.xlut() & 0xff],
-                         getWidth() - 200 + 10, (line += 15));
-            g.drawString("    ylut: " + YLUT_EQUATIONS[newcell.cell.ylut() & 0xff],
-                         getWidth() - 200 + 10, (line += 15));
+            g.drawString("selected: " + newcell._x + "," + newcell._y, getWidth() - 200 + 10, (line += 15));
+            g.drawString("    xlut: " + XLUT_EQUATIONS[newcell.cell.xlut() & 0xff], getWidth() - 200 + 10, (line += 15));
+            g.drawString("    ylut: " + YLUT_EQUATIONS[newcell.cell.ylut() & 0xff], getWidth() - 200 + 10, (line += 15));
             String xi = "??";
             switch(newcell.cell.xi()) {
                 case NW : xi = "NW"; break;
@@ -560,7 +585,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 case NONE  : xi = "."; break;
                 default:  xi = "L"+(newcell.cell.xi()-L0); break;
             }
-            g.drawString("      xi: " + xi, getWidth() - 200 + 10, (line += 15));
+            g.drawString("x-in mux: " + xi, getWidth() - 200 + 10, (line += 15));
 
             String yi = "??";
             switch(newcell.cell.yi()) {
@@ -571,14 +596,15 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 case NONE  : yi = "."; break;
                 default:     yi = "L"+(newcell.cell.yi()-L0); break;
             }
-            g.drawString("      yi: " + yi, getWidth() - 200 + 10, (line += 15));
+            g.drawString("y-in mux: " + yi, getWidth() - 200 + 10, (line += 15));
 
-            g.drawString("      wi: " + (newcell.cell.wi()==NONE ? "." : ("L"+(newcell.cell.wi()-L0))),
+            g.drawString("w-in mux: " + (newcell.cell.wi()==NONE ? "." : ("L"+(newcell.cell.wi()-L0))),
                          getWidth() - 200 + 10, (line += 15));
-            g.drawString("      zi: " + (newcell.cell.zi()==NONE ? "." : ("L"+(newcell.cell.zi()-L0))),
+            g.drawString("z-in mux: " + (newcell.cell.zi()==NONE ? "." : ("L"+(newcell.cell.zi()-L0))),
                          getWidth() - 200 + 10, (line += 15));
+            g.drawString("t-in mux: ", getWidth() - 200 + 10, (line += 15));
 
-            g.drawString("      FF: " + (newcell.cell.ff_reset_value() ? "reset=SET" : "."),
+            g.drawString(" set/rst: " + (newcell.cell.ff_reset_value() ? "reset=SET" : "."),
                          getWidth() - 200 + 10, (line += 15));
 
             String outs = "";
@@ -587,17 +613,17 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                          getWidth() - 200 + 10, (line += 15));
             String hs = "";
             for(int i=0; i<5; i++) hs += (newcell.cell.hx(L0+i) ? (i+" ") : ". ");
-            g.drawString("       H: " + hs,
+            g.drawString("  h conn: " + hs,
                          getWidth() - 200 + 10, (line += 15));
             String vs = "";
             for(int i=0; i<5; i++) vs += (newcell.cell.vx(L0+i) ? (i+" ") : ". ");
-            g.drawString("       V: " + vs,
+            g.drawString("  v conn: " + vs,
                          getWidth() - 200 + 10, (line += 15));
-            g.drawString("      OE: " + (newcell.cell.oe()==H4 ? "H4" : newcell.cell.oe()==V4 ? "V4" : "."),
+            g.drawString("out enab: " + (newcell.cell.oe()==H4 ? "H4" : newcell.cell.oe()==V4 ? "V4" : "."),
                          getWidth() - 200 + 10, (line += 15));
-            g.drawString("  center: " + (newcell.cell.c()==ZMUX ? "zmux" : newcell.cell.c()==XLUT ? "x-lut" : "y-lut"),
+            g.drawString("   c-mux: " + (newcell.cell.c()==ZMUX ? "zmux" : newcell.cell.c()==XLUT ? "x-lut" : "y-lut"),
                          getWidth() - 200 + 10, (line += 15));
-            g.drawString("  fb/out: " + (newcell.cell.f() ? "clocked" : "."),
+            g.drawString(" fb src: " + (newcell.cell.f() ? "clocked" : "."),
                          getWidth() - 200 + 10, (line += 15));
             g.drawString("  bypass: " + (newcell.cell.b() ? "clocked" : "."),
                          getWidth() - 200 + 10, (line += 15));
@@ -607,10 +633,45 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                          getWidth() - 200 + 10, (line += 15));
 
         }
+        if (shiftkey) {
+            drawKeyboard(keyboard2, g);
+        } else switch(lastChar) {
+            case 'x':
+            case 'y':
+            case 'z':
+            case 'w':
+            case 'o':
+            case 'h':
+            case 'v':
+                drawKeyboard(keyboard3, g);
+                break;
+            default:
+                drawKeyboard(keyboard1, g);
+                break;
+        }
+
+        while (mousebutton) {
+
+            if (dragFrom == null || oldcell == null) break;
+            if (Math.abs(dragFrom._y - oldcell._y) > 1) break;
+            if (Math.abs(dragFrom._x - oldcell._x) > 1) break;
+            g.setTransform(t);
+            if (dragFrom._x == oldcell._x || dragFrom._y == oldcell._y)
+                gg.color(BLUE);
+            else
+                gg.color(RED);
+
+            gg.line( oldcell._x * SIZE + SIZE/2,
+                     oldcell._y * SIZE + SIZE/2,
+                     dragFrom._x * SIZE + SIZE/2,
+                     dragFrom._y * SIZE + SIZE/2, 5);
+            break;
+        }
+
         this.g = null;
         this.gg = null;
     }
-
+    Cell dragFrom = null;
 
     public void clear() {
         Graphics2D g = (Graphics2D)getGraphics();
@@ -866,5 +927,9 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public class Z extends Buf {
         public boolean result(boolean x, boolean y, boolean z) { return z; }
     }
+
+    private static Image keyboard1 = Toolkit.getDefaultToolkit().createImage("keyboard1.png");
+    private static Image keyboard2 = Toolkit.getDefaultToolkit().createImage("keyboard2.png");
+    private static Image keyboard3 = Toolkit.getDefaultToolkit().createImage("keyboard3.png");
 
 }

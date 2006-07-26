@@ -29,6 +29,11 @@ public class G {
     public void line(double x1, double y1, double x2, double y2) {
         g.draw(new Line2D.Double(x1, y1, x2, y2));
     }
+    public void line(double x1, double y1, double x2, double y2, int stroke) {
+        g.setStroke(new BasicStroke(stroke));
+        g.draw(new Line2D.Double(x1, y1, x2, y2));
+        g.setStroke(new BasicStroke(1));
+    }
 
     public void color(Color c) { g.setColor(c); }
     public void color(int color) {

@@ -71,6 +71,7 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
     public void keyTyped(KeyEvent k) {
     }
     public void keyReleased(KeyEvent k) {
+        shiftkey = (k.getModifiers() & k.SHIFT_MASK) != 0;
         if (k.getKeyCode() == k.VK_ALT) {
             if (drag) {
                 drag = false;
@@ -84,13 +85,17 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
         }
     }
     public char lastChar;
+    public int keyMode;
     public void keyPressed(KeyEvent k) {
+        shiftkey = (k.getModifiers() & k.SHIFT_MASK) != 0;
         keyPressed0(k);
         char c = k.getKeyChar();
         if (c=='q') c = 'y';
         lastChar = c;
     }
+    public boolean shiftkey = false;
     public void keyPressed0(KeyEvent k) {
+        repaint();
         if (k.getKeyCode() == k.VK_ALT) {
             drag = true;
             dragx = mousex;
@@ -104,64 +109,43 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
         }
         Gui.Cell cell = whichCell(mousex, mousey);
         At40k.Cell c = cell == null ? null : cell.cell;
-        switch(k.getKeyCode()) {
-            case VK_PLUS:
-                if (xkey) {
-                    c.xlut(LUT_SELF | LUT_OTHER | LUT_Z);
-                    repaint();
-                    return;
-                } else if (ykey) {
-                    c.ylut(LUT_SELF | LUT_OTHER | LUT_Z);
-                    repaint();
-                    return;
-                }
-                scale += 0.1; repaint(); return;
-            case VK_MULTIPLY:
-                if (xkey) {
-                    c.xlut(LUT_SELF & LUT_OTHER & LUT_Z);
-                    repaint();
-                    return;
-                } else if (ykey) {
-                    c.ylut(LUT_SELF & LUT_OTHER & LUT_Z);
-                    repaint();
-                    return;
-                }
-                scale += 0.1; repaint(); return;
-            case VK_MINUS: scale -= 0.1; repaint(); return;
-            case VK_ESCAPE: scale = 1.0; recenter = null; repaint(); return;
-            case VK_NUMPAD7: whichCell(mousex, mousey).cell.xi(NW); repaint(); return;
-            case VK_NUMPAD8: whichCell(mousex, mousey).cell.yi(NORTH); repaint(); return;
-            case VK_NUMPAD9: whichCell(mousex, mousey).cell.xi(NE); repaint(); return;
-            case VK_NUMPAD4: whichCell(mousex, mousey).cell.yi(WEST); repaint(); return;
-            case VK_NUMPAD6: whichCell(mousex, mousey).cell.yi(EAST); repaint(); return;
-            case VK_NUMPAD1: whichCell(mousex, mousey).cell.xi(SW); repaint(); return;
-            case VK_NUMPAD2: whichCell(mousex, mousey).cell.yi(SOUTH); repaint(); return;
-            case VK_NUMPAD3: whichCell(mousex, mousey).cell.xi(SE); repaint(); return;
+        if ((k.getModifiers() & k.ALT_MASK) != 0)
+            switch(k.getKeyCode()) {
+                case VK_S:
+                    writeMode4();
+                    break;
+                case VK_O:
+                    readMode4();
+                    break;
+            }
 
-            case VK_0:
-            case VK_1:
-            case VK_2:
-            case VK_3:
-            case VK_4: {
+        else switch(k.getKeyCode()) {
+            case VK_ESCAPE: scale = 1.0; recenter = null; repaint(); return;
+
+            case VK_0: case VK_1: case VK_2: case VK_3: case VK_4: {
                 int i = L0 + (k.getKeyChar() - '0');
                 switch(lastChar) {
                     case 'x': c.xi(i); break;
-                    case 'y': c.yi(i); break;
+                    case 'y': case 'q': c.yi(i); break;
                     case 'w': c.wi(i); break;
                     case 'z': c.zi(i); break;
-                    case ' ': c.out(i, !c.out(i)); break;
+                    case 'o': c.out(i, !c.out(i)); break;
+                    case 'h': c.h(i, !c.hx(i)); break;
+                    case 'v': c.v(i, !c.vx(i)); break;
                 }
                 repaint();
                 return;
                 }
 
-                //case VK_F: c.t(TMUX_W_AND_FB); repaint(); return;
-            case VK_W: c.t(TMUX_W); repaint(); return;
-                //case VK_Z: c.t(TMUX_W_AND_Z); repaint(); return;
+            case VK_W: if (lastChar == 'w') c.wi(NONE); repaint(); return;
+            case VK_X: if (lastChar == 'x') c.xi(NONE); repaint(); return;
+            case VK_Y: if (lastChar == 'y') c.yi(NONE); repaint(); return;
+            case VK_Z: if (lastChar == 'z') c.zi(NONE); repaint(); return;
+            case VK_Q: if (lastChar == 'q') c.yi(NONE); repaint(); return;
 
             case VK_C:
                 if (lastChar == 'x') { c.xo(true); repaint(); return; }
-                if (lastChar == 'y') { c.yo(true); repaint(); return; }
+                if (lastChar == 'y' || lastChar == 'q') { c.yo(true); repaint(); return; }
                 switch(c.c()) {
                     case XLUT: c.c(YLUT); break;
                     case YLUT: c.c(ZMUX); break;
@@ -172,38 +156,22 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 return;
 
             case VK_F: c.f(!c.f()); repaint(); return;
-            case VK_B: c.b(!c.b()); repaint(); return;
+            case VK_S: c.ff_reset_value(!c.ff_reset_value()); repaint(); return;
+            case VK_R: c.b(!c.b()); repaint(); return;
 
-            case VK_X:
-                if (lastChar == 'x') { c.xo(false); repaint(); return; }
-                xkey = true;
-                return; 
-
-            case VK_Q:
-            case VK_Y:
-                if (lastChar == 'y') { c.yo(false); repaint(); return; }
-                ykey = true;
-                return; 
-
-            case VK_R:
-                boolean reg = c.f();
-                c.f(!reg);
-                c.b(!reg);
+            case VK_T:
+                switch(c.t()) {
+                    case TMUX_FB: c.t(TMUX_W_AND_FB); break;
+                    case TMUX_W_AND_FB: c.t(TMUX_W); break;
+                    case TMUX_W: c.t(TMUX_W_AND_Z); break;
+                    case TMUX_W_AND_Z: c.t(TMUX_Z); break;
+                    case TMUX_Z: c.t(TMUX_FB); break;
+                }
+                System.err.println("set " + c.t());
                 repaint();
                 return;
 
-            case VK_SPACE:
-                scan();
-                break;
-
-            case VK_S:
-                writeMode4();
-                break;
-            case VK_L:
-                readMode4();
-                break;
-
-            case VK_O:
+            case VK_E:
                 switch(c.oe()) {
                     case H4:   c.oe(V4); break;
                     case V4:   c.oe(NONE); break;
@@ -212,8 +180,6 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 repaint();
                 return;
 
-                // xlut table
-                // ylut table
                 // ff reset polarity
                 // h0..h5, v0..v5
                 // xi=0..5
@@ -221,10 +187,11 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 // zi=0..5
                 // wi=0..5
                 // t-mux
+                
         }
     }
 
-    Gui.Cell oldcell = null;
+    public Gui.Cell oldcell = null;
     public abstract Gui.Cell whichCell(int x, int y);
     public void mouseMoved(MouseEvent m) {
 
@@ -259,10 +226,15 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
 
     public void mouseDragged(MouseEvent m) {
         mouseMoved(m);
-        dragx = m.getX();
-        dragy = m.getY();
+        //dragx = m.getX();
+        //dragy = m.getY();
+
     }
+    public abstract void pressed();
+    public abstract void released();
     public void mousePressed(MouseEvent m) {
+        mousebutton = true;
+
         /*
         recenter = new Point2D.Float(m.getX(), m.getY());
         try {
@@ -272,14 +244,16 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
         }
         repaint();
         */
+        pressed();
     }
     public void mouseEntered(MouseEvent e) { }
     public void mouseExited(MouseEvent e) { }
     public void mouseClicked(MouseEvent e) { }
     public void mouseReleased(MouseEvent e) {
-        
+        mousebutton = false;
+        released();
     }
-
+    public boolean mousebutton = false;
     public boolean xkey = false;
     public boolean ykey = false;
 

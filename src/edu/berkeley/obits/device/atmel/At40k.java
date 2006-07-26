@@ -172,7 +172,7 @@ public class At40k {
         public void xlut(int table)    { dev.mode4(7, row, col, (byte)(table & 0xff)); }
         public byte xlut()             { return (byte)(dev.mode4(7, row, col) & 0xff); }
         public String printXLut()      { return printLut(xlut(), "x", "y", "t"); }
-        public String printXLutX()     { return printLut(xlut(), str(xi(), "x"), str(yi(), "y"), str(ti(), "t")); }
+        public String printXLutX()     { return printLut(xlut(), str(xi(), "x"), str(yi(), "y"), str(ti_source(), "t")); }
 
         public String str(int x, String def) {
             switch(x) {
@@ -198,7 +198,7 @@ public class At40k {
         public void ylut(int table)    { dev.mode4(6, row, col, (byte)(table & 0xff)); }
         public byte ylut()             { return (byte)(dev.mode4(6, row, col) & 0xff); }
         public String printYLut()      { return printLut(ylut(), "y", "x", "t"); }
-        public String printYLutX()     { return printLut(ylut(), str(yi(), "y"), str(xi(), "x"), str(ti(), "t")) + Integer.toString(ylut() & 0xff, 16); }
+        public String printYLutX()     { return printLut(ylut(), str(yi(), "y"), str(xi(), "x"), str(ti_source(), "t")) + Integer.toString(ylut() & 0xff, 16); }
 
         public void ff_reset_value(boolean value) {
             //dev.mode4( /* FIXME WRONG!!! */, row, col, 3, !value); return;
@@ -275,7 +275,8 @@ public class At40k {
             }
         }
         
-        public int ti() {
+
+        public int ti_source() {
             switch(dev.mode4(1, row, col) & 0x30) {
                 case 0x20: return zi();
                 case 0x10: return FB;
@@ -283,15 +284,30 @@ public class At40k {
                 default: throw new Error("ack!");
             }
         }
+
+        public int t() {
+            System.err.println("found " + (dev.mode4(1, row, col) & 0x34));
+            switch(dev.mode4(1, row, col) & 0x34) {
+                case 0x20: return TMUX_Z;
+                case 0x24: return TMUX_W_AND_Z;
+                case 0x34: return TMUX_FB;
+                case 0x14: return TMUX_W_AND_FB;
+                case 0x00: return TMUX_W;
+                    //default: throw new RuntimeException("unknown!");
+                default: return TMUX_W; 
+            }
+        }
+
         public void t(int code) {
             int result = 0;
             switch(code) {
-                case TMUX_Z: throw new Error("not implemented, but should be possible");
-                case TMUX_W_AND_Z: result = 0x20; break;
-
-                case TMUX_FB: result = 0x34; break; /* I think this is actually W_AND_FB, sadly */
+                case TMUX_Z:        result = 0x20; break; // TOTALLYBOGUS throw new Error("not implemented, but should be possible");
+                case TMUX_W_AND_Z:  result = 0x24; break;
+                case TMUX_FB:       result = 0x34; break; /* I think this is actually W_AND_FB, sadly */
                 case TMUX_W_AND_FB: result = 0x14; break;
-                case TMUX_W: result = 0x00; break;
+                case TMUX_W:        result = 0x00; break;
+                    //default: throw new RuntimeException("unknown code! " + code);
+                default: result = 0x00; break;
             }
             dev.mode4(1, row, col, result, 0x34);
         }
@@ -308,9 +324,11 @@ public class At40k {
         public boolean win_easable() {
         }
         */
-        public int t() {
+
+        public int ti() {
             return dev.mode4(1, row, col) & 0x34;
         }
+
         public void t(boolean ignore_z_and_fb, boolean zm_drives_fb, boolean fb_drives_wm) {
             // still not totally satisfied...
             //     need to find the bit that sets the w-mux off
@@ -410,6 +428,7 @@ public class At40k {
                 case L2: dev.mode4(0x03, row, col, 4, false); dev.mode4(0x05, row, col, 1<<1); break;
                 case L1: dev.mode4(0x03, row, col, 4, false); dev.mode4(0x05, row, col, 1<<2); break;
                 case L0: dev.mode4(0x03, row, col, 4, false); dev.mode4(0x05, row, col, 1<<3); break;
+                case NONE: dev.mode4(0x03, row, col, 4, false); dev.mode4(0x05, row, col, 0); break;
                 default: throw new RuntimeException("invalid argument");
             }
         }
@@ -441,6 +460,7 @@ public class At40k {
                 case L2:    dev.mode4(0x02, row, col, 6, false); dev.mode4(0x04, row, col, 1<<1); break;
                 case L1:    dev.mode4(0x02, row, col, 6, false); dev.mode4(0x04, row, col, 1<<2); break;
                 case L0:    dev.mode4(0x02, row, col, 6, false); dev.mode4(0x04, row, col, 1<<3); break;
+                case NONE:  dev.mode4(0x02, row, col, 6, false); dev.mode4(0x04, row, col,    0); break;
                 default: throw new RuntimeException("invalid argument");
             }
         }
@@ -452,6 +472,7 @@ public class At40k {
                 case L2:    dev.mode4(0x03, row, col, 1<<7, 0xEC); break;
                 case L1:    dev.mode4(0x03, row, col, 1<<3, 0xEC); break;
                 case L0:    dev.mode4(0x03, row, col, 1<<2, 0xEC); break;
+                case NONE:  dev.mode4(0x03, row, col,    0, 0xEC); break;
                 default: throw new RuntimeException("invalid argument");
             }
         }
@@ -478,6 +499,7 @@ public class At40k {
                 case L2:    dev.mode4(0x02, row, col, 1<<4, 0xDB); break;
                 case L1:    dev.mode4(0x02, row, col, 1<<3, 0xDB); break;
                 case L0:    dev.mode4(0x02, row, col, 1<<2, 0xDB); break;
+                case NONE:  dev.mode4(0x02, row, col,    0, 0xDB); break;
                 default: throw new RuntimeException("invalid argument");
             }
         }
@@ -538,7 +560,7 @@ public class At40k {
             return yo_relevant();
         }
         public boolean c_relevant() {
-            switch(t()) {
+            switch(ti()) {
                 case 0x34: return true;
                 case 0x14: return true;
                 case 0x10: return true;
@@ -572,7 +594,7 @@ public class At40k {
         public boolean fb_relevant() {
             if (!(zi_to_xlut_relevant()) ||
                 !(zi_to_ylut_relevant())) return false;
-            switch(t()) {
+            switch(ti()) {
                 case 0x34: return true;
                 case 0x14: return true;
                 case 0x10: return true;
