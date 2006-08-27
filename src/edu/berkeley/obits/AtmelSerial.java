@@ -33,7 +33,8 @@ public class AtmelSerial {
     public static int PIPELEN=20;
     public static void main(String[] s) throws Exception {
       //AvrDrone device = new AvrDrone(detectObitsPort());
-        AvrDrone device = new AvrDrone();
+        //AvrDrone device = new AvrDrone();
+        AvrDrone device = Demo.main2();
         At40k at40k = new At40k.At40k10(device);
         try {
             long begin = System.currentTimeMillis();
@@ -493,6 +494,7 @@ public class AtmelSerial {
             at40k.cell(6,13).yo(false);
             at40k.cell(7,12).xi(SE);
 
+            /*
             Gui vis = new Gui(at40k, device);
             Frame fr = new Frame();
             fr.addKeyListener(vis);
@@ -504,7 +506,7 @@ public class AtmelSerial {
             fr.repaint();
             fr.show();
             synchronized(AtmelSerial.class) { AtmelSerial.class.wait(); }
-
+            */
 
             Visualizer v = new Visualizer(at40k, device);
             v.show();

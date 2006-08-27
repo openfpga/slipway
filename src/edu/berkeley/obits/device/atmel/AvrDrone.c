@@ -1,3 +1,9 @@
+// FIXMEs for SLIPWAY:
+//  - use INT3 instead of INT1
+//  - use PORTE[0:1] instead of PORTE[2:3]
+//  - use UART0 instead of UART1
+//  - clock frequency
+
 //
 // YOU MUST COMPILE THIS WITH -O3 OR THE AVR WILL NOT BE ABLE TO KEEP UP!!!!
 //
@@ -138,7 +144,7 @@ void init() {
   write_buf_tail = 0;
   EIMF  = 0xFF;                          /* Enalbe External Interrrupt*/  
   DDRD = 0xFF;                           /* Configure PORTD as Output */
-  DDRE = 1 << 4;                         /* ability to write to E */
+  DDRE = 1 << 4;                         /* ability to write to E4 */
   initUART1(12, 1);  //for slow board
   //initUART1(1, 0);
   fpga_interrupts(1);

@@ -14,8 +14,18 @@ public class AvrDrone extends AtmelDevice {
     final DataOutputStream out;
 
     final SerialPort sp;
+    final boolean isFake;
 
-    public AvrDrone() { sp = null; in = null; out = null; } 
+    public AvrDrone() { sp = null; in = null; out = null; isFake = true; } 
+
+    public AvrDrone(InputStream is, OutputStream os) throws IOException {
+        this.out = new DataOutputStream(os);
+        this.in = new DataInputStream(is);
+        this.sp = null;
+        isFake = false;
+        init();
+    } 
+    
     public AvrDrone(SerialPort sp) throws IOException, UnsupportedCommOperationException, InterruptedException, DeviceException {
         this.sp = sp;
         //sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
@@ -28,6 +38,11 @@ public class AvrDrone extends AtmelDevice {
         Log.debug(this, "consuming any leftover data on the serial port");
         while(in.available() > 0) in.read();
         reset();
+        isFake = false;
+        init();
+    }
+
+    private void init() throws IOException {
         Log.debug(this, "waiting for device to identify itself");
         if (in.readByte() != (byte)'O')  throw new RuntimeException("didn't get the proper signature");
         if (in.readByte() != (byte)'B')  throw new RuntimeException("didn't get the proper signature");
@@ -39,7 +54,7 @@ public class AvrDrone extends AtmelDevice {
     }
 
     public synchronized void scanFPGA(boolean on) throws DeviceException {
-        if (sp==null) return;
+        if (isFake) return;
         try {
             if (on) {
                 out.writeByte(3);
@@ -52,7 +67,7 @@ public class AvrDrone extends AtmelDevice {
     // fixme!
     public static int retval = 0;
     public synchronized int readCount() throws DeviceException {
-        if (sp==null) return 0;
+        if (isFake) return 0;
         try {
             if (reader != null) {
                 reader.start();
@@ -89,7 +104,7 @@ public class AvrDrone extends AtmelDevice {
                 System.out.println("*** reader thread begun");
                 while(true) {
                     try {
-                        byte b = sp==null ? 0 : in.readByte();
+                        byte b = isFake ? 0 : in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
                         bc.call(b);
                     } catch (Exception e) {
@@ -102,7 +117,7 @@ public class AvrDrone extends AtmelDevice {
     public synchronized void readBus(ByteCallback bc) throws DeviceException {
         try {
             callbacks.add(bc);
-            if (sp!=null) {
+            if (!isFake) {
                 out.writeByte(2);
                 out.flush();
             }
@@ -116,7 +131,7 @@ public class AvrDrone extends AtmelDevice {
     public synchronized void readInterrupts(ByteCallback bc) throws DeviceException {
         try {
             callbacks.add(bc);
-            if (sp!=null) {
+            if (!isFake) {
                 out.writeByte(6);
                 out.flush();
             }
@@ -174,7 +189,8 @@ public class AvrDrone extends AtmelDevice {
             boolean xdec    = x==lastx-1;
             
             //System.out.println(zchange + " " + ychange + " " + xchange);
-            if (sp!=null) {
+            if (!isFake) {
+                /*
                 out.writeByte(0x80
                               | (zinc?0x40:zdec?0x04:zchange?0x44:0x00)
                               | (yinc?0x20:ydec?0x02:ychange?0x22:0x00)
@@ -182,6 +198,11 @@ public class AvrDrone extends AtmelDevice {
                 if (!zinc && !zdec && zchange) out.writeByte(z); else save++;
                 if (!yinc && !ydec && ychange) out.writeByte(y); else save++;
                 if (!xinc && !xdec && xchange) out.writeByte(x); else save++;
+                */
+                out.writeByte(1);
+                out.writeByte(z);
+                out.writeByte(y);
+                out.writeByte(x);
                 saveof++;
                 lastz = z;
                 lastx = x;
@@ -195,7 +216,7 @@ public class AvrDrone extends AtmelDevice {
     }
 
     public synchronized void flush() throws DeviceException {
-        if (sp==null) return;
+        if (isFake) return;
         try {
             out.flush();
         } catch (IOException e) { throw new DeviceException(e); }
