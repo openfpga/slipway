@@ -24,10 +24,9 @@ public class FtdiBoard extends Board {
         chip.porte(4, true);
 
         boot(new InputStreamReader(new FileInputStream("bitstreams/usbdrone.bst")));
-        System.out.println("       pins: " + pad(Integer.toString(chip.readPins()&0xff,2),8));
 
-        in = new BufferedInputStream(chip.getInputStream());
-        out = new BufferedOutputStream(chip.getOutputStream());
+        in = chip.getInputStream();
+        out = chip.getOutputStream();
         for(int i=0; i<255; i++) out.write(0);
         out.flush();
     }
@@ -105,7 +104,6 @@ public class FtdiBoard extends Board {
             if (!d.initErr())
                 throw new RuntimeException("initialization failed at " + bytes);
             try { Thread.sleep(20); } catch (Exception e) { }
-            System.out.print("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8)+"      \r");
             d.config(0,1);
         }
 

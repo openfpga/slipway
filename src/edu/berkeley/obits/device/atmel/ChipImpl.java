@@ -53,7 +53,7 @@ public class ChipImpl extends FtdiChip implements Chip {
         }
     }
 
-    protected static int dmask =
+    protected int dmask =
         //(1<<0) |
         (1<<1) |
         (1<<2) |
@@ -68,10 +68,10 @@ public class ChipImpl extends FtdiChip implements Chip {
         uart();
     }
     public void avrrst(boolean on) { dbang(7, on); }
-    public boolean initErr()       { return (readPins() & (1<<4))!=0; }
     public void clk(boolean on)    { dbang(6, on); }
     public void data(boolean on)   { dbang(5, on); }
 
+    public boolean initErr()       { return (readPins() & (1<<4))!=0; }
     public boolean con() {
         dmask &= ~(1<<0);
         dbangmode(dmask);
@@ -82,5 +82,4 @@ public class ChipImpl extends FtdiChip implements Chip {
         dbangmode(dmask);
         dbang(0, on);
     }
-
 }

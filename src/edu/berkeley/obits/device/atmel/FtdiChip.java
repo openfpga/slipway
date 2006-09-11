@@ -95,7 +95,7 @@ public class FtdiChip {
             }
         };
 
-    private final OutputStream out = new OutputStream() {
+    private final OutputStream out = new BufferedOutputStream(new OutputStream() {
             public void write(int b) throws IOException {
                 byte[] d = new byte[1];
                 d[0] = (byte)b;
@@ -113,5 +113,5 @@ public class FtdiChip {
                     len -= result;
                 }
             }
-        };
+        });
 }
