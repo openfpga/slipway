@@ -19,13 +19,6 @@ public class ChipImpl extends FtdiChip implements Chip {
         doReset();
     }
 
-    public boolean buffered = true;
-    public void buffered() { buffered = true; }
-    public void buffered(boolean buf) {
-        if (!buf) flush();
-        buffered = buf;
-    }
-
     public void doReset() {
 
         flush();
@@ -46,16 +39,6 @@ public class ChipImpl extends FtdiChip implements Chip {
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
 
-System.out.println("\ndisagree:"+(dmask ^ (        //(1<<0) |
-        (1<<1) |
-        (1<<2) |
-        //(1<<3) |
-        //(1<<4) |
-        (1<<5) |
-        (1<<6) |
-        (1<<7)))+"\n");
-
-//dmask &= ~(1<<7);
         dbangmode(dmask);
         flush();
     }

@@ -77,7 +77,6 @@ public class FtdiBoard extends Board {
         BufferedReader br = new BufferedReader(r);
         br.readLine();
         int bytes = 0;
-        d.buffered();
         //System.out.println("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8));
         while(true) {
             String s = br.readLine();

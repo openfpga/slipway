@@ -15,8 +15,6 @@ public interface Chip {
     public boolean con();
 
     //remove
-    public void buffered();
-    public void buffered(boolean buf);
     public void flush();
     public int readPins();
 }
