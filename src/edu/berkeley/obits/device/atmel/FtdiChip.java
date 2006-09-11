@@ -16,6 +16,7 @@ public class FtdiChip {
         example.ftdi_usb_reset(context);
         example.ftdi_set_baudrate(context, 750 * 1000);
         example.ftdi_set_line_property(context, 8, 0, 0);
+        purge();
     }
 
     public synchronized int readPins() {
@@ -62,7 +63,6 @@ public class FtdiChip {
         dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
         try {
             out.write((byte)dbits);
-            if (!buffered) out.flush();
         } catch (IOException e) { throw new RuntimeException(e); }
     }
 
