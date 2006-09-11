@@ -5,17 +5,12 @@ import java.io.*;
 public interface Chip {
     
     public void doReset();
-
-
     public void reset(boolean on);
     public void avrrst(boolean on);
-
     public void config(boolean bit);
     public void config(int data, int numbits);
-
     public boolean initErr();
     public void    porte(int pin, boolean b);
-
     public void    con(boolean b);
     public boolean con();
 
