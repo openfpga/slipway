@@ -62,6 +62,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         for(int x=7; x<17; x++)
             for(int y=7; y<17; y++)
                 new Cell(x-7,y-7, at40k.cell(x, y));
+
+        scan();
         /*
         At40k.Cell c = at40k.cell(0,0);
         for(int i=0; i<256; i++) {
@@ -704,16 +706,15 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
 
     public void mouseClicked(MouseEvent e) {
-        System.out.println("click");
         final Cell c = whichCell(e.getX(), e.getY());
         if (c==null) return;
-        System.out.println("click at " + c._x + "," + c._y);
         scan(c);
     }
 
     public void scan() {
-        for(int x=0; x<ca.length; x++)
-            for(int y=0; y<ca[x].length; y++)
+        System.out.println("scan");
+        for(int x=2; x<6; x++)
+            for(int y=2; y<6; y++)
                 if (ca[x][y] != null)
                     scan(ca[x][y]);
     }
@@ -747,10 +748,16 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         AtmelSerial.scan(at40k, cell, NONE, false);
     }
 
+
+    int made = 0;
     private class BCB implements AvrDrone.ByteCallback {
         Gui.Cell c;
         int who;
-        public BCB(Gui.Cell c, int who) { this.who = who; this.c = c; }
+        public BCB(Gui.Cell c, int who) {
+            this.who = who; this.c = c;
+            made++;
+            System.out.println("made="+made);
+        }
         public void call(byte b) throws Exception {
             System.out.println("callback: " + b);
             boolean on = (b & 0x80) != 0;
@@ -768,6 +775,9 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                     repaint();
                     break;
             }
+            made--;
+            System.out.println("made="+made);
+            if (made==0) scan();
         }
     }
 

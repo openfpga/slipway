@@ -59,7 +59,6 @@ int ftdi_read_pins(struct ftdi_context *ftdi, signed char pins[]);
 
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
 
-
 int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency);
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency);
 

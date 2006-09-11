@@ -34,6 +34,6 @@ public abstract class Chip {
     //remove
     public abstract void buffered();
     public abstract void buffered(boolean buf);
-    public abstract void flush();
+    protected abstract void flush();
     public abstract int readPins();
 }

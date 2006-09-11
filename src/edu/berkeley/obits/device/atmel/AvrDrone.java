@@ -9,40 +9,21 @@ import gnu.io.*;
 /** the "host" side of the AVR Drone; see AvrDrone.c for the other side */
 public class AvrDrone extends AtmelDevice {
 
-    final DataInputStream in;
+    private final DataInputStream in;
+    private final DataOutputStream out;
+    private final Board board;
 
-    final DataOutputStream out;
-
-    final SerialPort sp;
-    final boolean isFake;
-
-    public AvrDrone() { sp = null; in = null; out = null; isFake = true; } 
-
-    public AvrDrone(InputStream is, OutputStream os) throws IOException {
-        this.out = new DataOutputStream(os);
-        this.in = new DataInputStream(is);
-        this.sp = null;
-        isFake = false;
+    public AvrDrone(Board b) throws IOException {
+        this.board = b;
+        this.out = new DataOutputStream(b.getOutputStream());
+        this.in = new DataInputStream(b.getInputStream());
         init();
     } 
-    
-    public AvrDrone(SerialPort sp) throws IOException, UnsupportedCommOperationException, InterruptedException, DeviceException {
-        this.sp = sp;
-        //sp.setSerialPortParams(115200, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-        sp.setSerialPortParams(38400, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-        sp.setFlowControlMode(sp.FLOWCONTROL_RTSCTS_OUT);
-        sp.setInputBufferSize(1024);
-        //sp.setFlowControlMode(sp.FLOWCONTROL_NONE);
-        this.out = new DataOutputStream(sp.getOutputStream());
-        this.in = new DataInputStream(sp.getInputStream());
-        Log.debug(this, "consuming any leftover data on the serial port");
-        while(in.available() > 0) in.read();
-        reset();
-        isFake = false;
-        init();
-    }
+
+    public void reset() { board.reset(); }
 
     private void init() throws IOException {
+        //board.reset();
         Log.debug(this, "waiting for device to identify itself");
         if (in.readByte() != (byte)'O')  throw new RuntimeException("didn't get the proper signature");
         if (in.readByte() != (byte)'B')  throw new RuntimeException("didn't get the proper signature");
@@ -54,7 +35,6 @@ public class AvrDrone extends AtmelDevice {
     }
 
     public synchronized void scanFPGA(boolean on) throws DeviceException {
-        if (isFake) return;
         try {
             if (on) {
                 out.writeByte(3);
@@ -67,7 +47,6 @@ public class AvrDrone extends AtmelDevice {
     // fixme!
     public static int retval = 0;
     public synchronized int readCount() throws DeviceException {
-        if (isFake) return 0;
         try {
             if (reader != null) {
                 reader.start();
@@ -104,7 +83,7 @@ public class AvrDrone extends AtmelDevice {
                 System.out.println("*** reader thread begun");
                 while(true) {
                     try {
-                        byte b = isFake ? 0 : in.readByte();
+                        byte b = in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
                         bc.call(b);
                     } catch (Exception e) {
@@ -117,10 +96,8 @@ public class AvrDrone extends AtmelDevice {
     public synchronized void readBus(ByteCallback bc) throws DeviceException {
         try {
             callbacks.add(bc);
-            if (!isFake) {
-                out.writeByte(2);
-                out.flush();
-            }
+            out.writeByte(2);
+            out.flush();
             if (reader != null) {
                 reader.start();
                 reader = null;
@@ -131,10 +108,8 @@ public class AvrDrone extends AtmelDevice {
     public synchronized void readInterrupts(ByteCallback bc) throws DeviceException {
         try {
             callbacks.add(bc);
-            if (!isFake) {
-                out.writeByte(6);
-                out.flush();
-            }
+            out.writeByte(6);
+            out.flush();
             if (reader != null) {
                 reader.start();
                 reader = null;
@@ -142,22 +117,8 @@ public class AvrDrone extends AtmelDevice {
         } catch (IOException e) { throw new DeviceException(e); }
     }
 
-    public synchronized void reset() throws DeviceException {
-        if (sp==null) return;
-        try {
-            Log.info(this, "resetting device");
-            sp.setDTR(true);
-            sp.setRTS(true);
-            Thread.sleep(500);
-            Log.info(this, "deasserting reset signal");
-            sp.setDTR(false);
-            sp.setRTS(false);
-            Thread.sleep(100);
-        } catch (InterruptedException e) { throw new DeviceException(e); }
-    }
-
     private byte[][][] cache = new byte[24][][];
-    public synchronized byte mode4(int z, int y, int x) throws DeviceException {
+    public /*synchronized*/ byte mode4(int z, int y, int x) throws DeviceException {
         if (cache[x]==null) return 0;
         if (cache[x][y]==null) return 0;
         return cache[x][y][z];
@@ -168,7 +129,7 @@ public class AvrDrone extends AtmelDevice {
     int lasty = 0;
     public static int save = 0;
     public static int saveof = 0;
-    public synchronized void mode4(int z, int y, int x, int d) throws DeviceException {
+    public /*synchronized*/ void mode4(int z, int y, int x, int d) throws DeviceException {
         try {
             /*
             Log.info(this, "writing configuration frame [zyxd]: " +
@@ -188,35 +149,23 @@ public class AvrDrone extends AtmelDevice {
             boolean ydec    = y==lasty-1;
             boolean xdec    = x==lastx-1;
             
-            //System.out.println(zchange + " " + ychange + " " + xchange);
-            if (!isFake) {
-                /*
-                out.writeByte(0x80
-                              | (zinc?0x40:zdec?0x04:zchange?0x44:0x00)
-                              | (yinc?0x20:ydec?0x02:ychange?0x22:0x00)
-                              | (xinc?0x10:xdec?0x01:xchange?0x11:0x00));
-                if (!zinc && !zdec && zchange) out.writeByte(z); else save++;
-                if (!yinc && !ydec && ychange) out.writeByte(y); else save++;
-                if (!xinc && !xdec && xchange) out.writeByte(x); else save++;
-                */
-                out.writeByte(1);
-                out.writeByte(z);
-                out.writeByte(y);
-                out.writeByte(x);
-                saveof++;
-                lastz = z;
-                lastx = x;
-                lasty = y;
-                out.writeByte(d);
-            }
+            out.writeByte(1);
+            out.writeByte(z);
+            out.writeByte(y);
+            out.writeByte(x);
+            saveof++;
+            lastz = z;
+            lastx = x;
+            lasty = y;
+            out.writeByte(d);
+
             if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
             if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
             cache[x & 0xff][y & 0xff][z & 0xff] = (byte)(d & 0xff);
         } catch (IOException e) { throw new DeviceException(e); }
     }
 
-    public synchronized void flush() throws DeviceException {
-        if (isFake) return;
+    public /*synchronized*/ void flush() throws DeviceException {
         try {
             out.flush();
         } catch (IOException e) { throw new DeviceException(e); }

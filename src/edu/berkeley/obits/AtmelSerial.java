@@ -34,7 +34,7 @@ public class AtmelSerial {
     public static void main(String[] s) throws Exception {
       //AvrDrone device = new AvrDrone(detectObitsPort());
         //AvrDrone device = new AvrDrone();
-        AvrDrone device = Demo.main2();
+        AvrDrone device = new AvrDrone(new FtdiBoard());
         At40k at40k = new At40k.At40k10(device);
         try {
             long begin = System.currentTimeMillis();
@@ -494,7 +494,15 @@ public class AtmelSerial {
             at40k.cell(6,13).yo(false);
             at40k.cell(7,12).xi(SE);
 
-            /*
+            for(int i=0; i<24; i++) {
+                at40k.iob_bot(i, true).enableOutput(NORTH);
+                at40k.iob_bot(i, false).enableOutput(NW);
+                at40k.cell(i, 0).xlut(0xff);
+                at40k.cell(i, 0).ylut(0xff);
+            }
+
+            device.flush();
+
             Gui vis = new Gui(at40k, device);
             Frame fr = new Frame();
             fr.addKeyListener(vis);
@@ -506,12 +514,14 @@ public class AtmelSerial {
             fr.repaint();
             fr.show();
             synchronized(AtmelSerial.class) { AtmelSerial.class.wait(); }
-            */
+
+
 
             Visualizer v = new Visualizer(at40k, device);
             v.show();
             v.setSize(1380, 1080);
             At40k.Cell cell = at40k.cell(4, 23);
+
             Image img = v.createImage(v.getWidth(), v.getHeight());
             /*
             int x = 1;
@@ -779,6 +789,7 @@ public class AtmelSerial {
                     cell.xlut(0xff);
                     cell.ylut(0xff);
                     drawCell(getGraphics(), selx, sely);
+                    drone.flush();
                     break;
                 }
                 case 'i': {
@@ -890,6 +901,7 @@ public class AtmelSerial {
                     cell.xlut(0x00);
                     cell.ylut(0x00);
                     drawCell(getGraphics(), selx, sely);
+                    drone.flush();
                     break;
                 }
             } 
