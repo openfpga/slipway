@@ -13,6 +13,10 @@ public class FtdiChip {
     public FtdiChip() {
         example.ftdi_init(context);
         example.ftdi_usb_open(context, 0x6666, 0x3133);
+        reset();
+    }
+
+    public void reset() {
         example.ftdi_usb_reset(context);
         example.ftdi_set_baudrate(context, 750 * 1000);
         example.ftdi_set_line_property(context, 8, 0, 0);
