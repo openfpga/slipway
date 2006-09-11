@@ -19,6 +19,7 @@ public class FtdiChip {
     }
 
     public synchronized int readPins() {
+        flush();
         byte[] b = new byte[1];
         example.ftdi_read_pins(context, b);
         return b[0];
