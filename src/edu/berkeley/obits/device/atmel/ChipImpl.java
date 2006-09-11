@@ -9,21 +9,21 @@ public class ChipImpl extends FtdiChip implements Chip {
         doReset();
     }
 
-    public void doReset() {
-        flush();
+    public boolean buffered = true;
+    public void buffered() { buffered = true; }
+    public void buffered(boolean buf) {
+        if (!buf) flush();
+        buffered = buf;
+    }
 
-        buffered(false);
+    public void doReset() {
         flush();
 
         dbangmode(dmask);
         flush();
 
         clk(false);
-        flush();
-
         data(false);
-        flush();
-
         con(false);
         flush();
 

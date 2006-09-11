@@ -52,13 +52,6 @@ public class FtdiChip {
 
     protected int dbits = 0;
 
-    public boolean buffered = true;
-    public void buffered() { buffered = true; }
-    public void buffered(boolean buf) {
-        if (!buf) flush();
-        buffered = buf;
-    }
-
     protected synchronized void dbang(int bit, boolean val) {
         dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
         try {
