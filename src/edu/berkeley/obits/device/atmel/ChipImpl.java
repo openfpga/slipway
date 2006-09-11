@@ -10,23 +10,34 @@ public class ChipImpl extends FtdiChip implements Chip {
     }
 
     public void doReset() {
+        flush();
+
+        buffered(false);
+        flush();
+
         dbangmode(dmask);
+        flush();
+
         clk(false);
+        flush();
+
         data(false);
+        flush();
 
         con(false);
         flush();
 
-        buffered(false);
         reset(false);
-        //avrrst(false);
+        flush();
         try { Thread.sleep(200); } catch (Exception e) { }
+
         reset(true);
-        //avrrst(true);
+        flush();
         try { Thread.sleep(200); } catch (Exception e) { }
 
         dmask &= ~(1<<7);
         dbangmode(dmask);
+        flush();
     }
 
     int porte = 0;
@@ -37,9 +48,6 @@ public class ChipImpl extends FtdiChip implements Chip {
             flush();
         }
     }
-
-
-    //
 
     public void config(boolean bit) { config(bit?1:0, 1); }
     public void config(int dat) { config(dat, 8); }
@@ -70,13 +78,15 @@ public class ChipImpl extends FtdiChip implements Chip {
     public void clk(boolean on)    { dbang(6, on); }
     public void data(boolean on)   { dbang(5, on); }
 
-    public boolean initErr()       { return (readPins() & (1<<4))!=0; }
+    public boolean initErr()       { flush(); return (readPins() & (1<<4))!=0; }
     public boolean con() {
+        flush();
         dmask &= ~(1<<0);
         dbangmode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
     public void con(boolean on) {
+        flush();
         dmask |= (1<<0);
         dbangmode(dmask);
         dbang(0, on);
