@@ -3,33 +3,20 @@ import com.ftdi.usb.*;
 import java.io.*;
 
 public class FtdiChip {
-    protected SWIGTYPE_p_ftdi_context context;
+
     protected int bits = 0;
+    protected SWIGTYPE_p_ftdi_context context = example.new_ftdi_context();
+
     public FtdiChip() {
-        context = example.new_ftdi_context();
-
-        int result = example.ftdi_init(context);
-        if (result != 0)
-            throw new RuntimeException("ftdi_initErr() returned " + result);
-
-        result = example.ftdi_usb_open(context, 0x6666, 0x3133);
-        if (result != 0)
-            throw new RuntimeException("ftdi_usb_open() returned " + result);
-
-        int result = example.ftdi_set_baudrate(context, 750 * 1000);
-        if (result != 0)
-            throw new RuntimeException("ftdi_set_baudrate() returned " + result);
-
-        result = example.ftdi_set_line_property(context, 8, 0, 0);
-        if (result != 0)
-            throw new RuntimeException("ftdi_set_baudrate() returned " + result);
+        example.ftdi_init(context);
+        example.ftdi_usb_open(context, 0x6666, 0x3133);
+        example.ftdi_set_baudrate(context, 750 * 1000);
+        example.ftdi_set_line_property(context, 8, 0, 0);
     }
 
     public synchronized int readPins() {
         byte[] b = new byte[1];
-        int result = example.ftdi_read_pins(context, b);
-        if (result != 0)
-            throw new RuntimeException("ftdi_read_pins() returned " + result);
+        example.ftdi_read_pins(context, b);
         return b[0];
     }
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -38,8 +25,8 @@ public class FtdiChip {
         baos = new ByteArrayOutputStream();
         dbang(bytes, bytes.length);
     }
-    public boolean buffered = false;
 
+    public boolean buffered = false;
     protected static int mask =
         (1<<0) |
         (1<<1)// |
@@ -49,10 +36,8 @@ public class FtdiChip {
 
     protected static int dmask =
         //(1<<0) |
-
         (1<<1) |
         (1<<2) |
-
         //(1<<3) |
         //(1<<4) |
         (1<<5) |
@@ -64,20 +49,15 @@ public class FtdiChip {
 
         int result = example.ftdi_setflowctrl(context, (1 << 8));
         if (result != 0)
-            throw new RuntimeException("ftdi_setflowcontrol() returned " +
-                                       result);
+            throw new RuntimeException("ftdi_setflowcontrol() returned " + result);
     }
     public synchronized void uart() {
-
-        result = example.ftdi_set_bitmode(context, (short)0, (short)0x00);
+        int result = example.ftdi_set_bitmode(context, (short)0, (short)0x00);
         if (result != 0)
             throw new RuntimeException("ftdi_set_bitmode() returned " + result);
-
         result = example.ftdi_setflowctrl(context, (1 << 8));
         if (result != 0)
-            throw new RuntimeException("ftdi_setflowcontrol() returned " +
-                                       result);
-
+            throw new RuntimeException("ftdi_setflowcontrol() returned " + result);
     }
     public synchronized void dbangmode() {
         int result = example.ftdi_set_bitmode(context, (short)dmask, (short)0x01);
@@ -100,7 +80,7 @@ public class FtdiChip {
             dbang((byte)dbits);
         }
     }
-    int write = 0;
+
     protected synchronized void dbang(byte by) {
         byte[] b = new byte[1];
         b[0] = by;
@@ -108,7 +88,6 @@ public class FtdiChip {
         if (result != 1)
             throw new RuntimeException("ftdi_write_data() returned " + result);
     }
-    int queued = 0;
     protected synchronized void dbang(byte[] b, int len) {
         example.ftdi_write_data(context, b, len);
     }

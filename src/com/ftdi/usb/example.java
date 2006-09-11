@@ -23,6 +23,38 @@ public class example {
     return exampleJNI.ftdi_init(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
   }
 
+  public static int ftdi_read_data(SWIGTYPE_p_ftdi_context ftdi, byte[] buf, int size) {
+    return exampleJNI.ftdi_read_data(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), buf, size);
+  }
+
+  public static int ftdi_write_data(SWIGTYPE_p_ftdi_context ftdi, byte[] buf, int size) {
+    return exampleJNI.ftdi_write_data(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), buf, size);
+  }
+
+  public static int ftdi_usb_open(SWIGTYPE_p_ftdi_context ftdi, int vendor, int product) {
+    return exampleJNI.ftdi_usb_open(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), vendor, product);
+  }
+
+  public static int ftdi_set_baudrate(SWIGTYPE_p_ftdi_context ftdi, int baudrate) {
+    return exampleJNI.ftdi_set_baudrate(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), baudrate);
+  }
+
+  public static int ftdi_set_line_property(SWIGTYPE_p_ftdi_context ftdi, int bits, int sbit, int parity) {
+    return exampleJNI.ftdi_set_line_property(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), bits, sbit, parity);
+  }
+
+  public static int ftdi_set_bitmode(SWIGTYPE_p_ftdi_context ftdi, short bitmask, short mode) {
+    return exampleJNI.ftdi_set_bitmode(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), bitmask, mode);
+  }
+
+  public static int ftdi_read_pins(SWIGTYPE_p_ftdi_context ftdi, byte[] pins) {
+    return exampleJNI.ftdi_read_pins(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), pins);
+  }
+
+  public static int ftdi_setflowctrl(SWIGTYPE_p_ftdi_context ftdi, int flowctrl) {
+    return exampleJNI.ftdi_setflowctrl(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), flowctrl);
+  }
+
   public static void ftdi_deinit(SWIGTYPE_p_ftdi_context ftdi) {
     exampleJNI.ftdi_deinit(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
   }
@@ -37,10 +69,6 @@ public class example {
 
   public static void ftdi_list_free(SWIGTYPE_p_p_ftdi_device_list devlist) {
     exampleJNI.ftdi_list_free(SWIGTYPE_p_p_ftdi_device_list.getCPtr(devlist));
-  }
-
-  public static int ftdi_usb_open(SWIGTYPE_p_ftdi_context ftdi, int vendor, int product) {
-    return exampleJNI.ftdi_usb_open(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), vendor, product);
   }
 
   public static int ftdi_usb_open_desc(SWIGTYPE_p_ftdi_context ftdi, int vendor, int product, String description, String serial) {
@@ -63,28 +91,12 @@ public class example {
     return exampleJNI.ftdi_usb_purge_buffers(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
   }
 
-  public static int ftdi_set_baudrate(SWIGTYPE_p_ftdi_context ftdi, int baudrate) {
-    return exampleJNI.ftdi_set_baudrate(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), baudrate);
-  }
-
-  public static int ftdi_set_line_property(SWIGTYPE_p_ftdi_context ftdi, int bits, int sbit, int parity) {
-    return exampleJNI.ftdi_set_line_property(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), bits, sbit, parity);
-  }
-
-  public static int ftdi_read_data(SWIGTYPE_p_ftdi_context ftdi, byte[] buf, int size) {
-    return exampleJNI.ftdi_read_data(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), buf, size);
-  }
-
   public static int ftdi_read_data_set_chunksize(SWIGTYPE_p_ftdi_context ftdi, long chunksize) {
     return exampleJNI.ftdi_read_data_set_chunksize(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), chunksize);
   }
 
   public static int ftdi_read_data_get_chunksize(SWIGTYPE_p_ftdi_context ftdi, SWIGTYPE_p_unsigned_int chunksize) {
     return exampleJNI.ftdi_read_data_get_chunksize(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), SWIGTYPE_p_unsigned_int.getCPtr(chunksize));
-  }
-
-  public static int ftdi_write_data(SWIGTYPE_p_ftdi_context ftdi, byte[] buf, int size) {
-    return exampleJNI.ftdi_write_data(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), buf, size);
   }
 
   public static int ftdi_write_data_set_chunksize(SWIGTYPE_p_ftdi_context ftdi, long chunksize) {
@@ -101,18 +113,6 @@ public class example {
 
   public static int ftdi_disable_bitbang(SWIGTYPE_p_ftdi_context ftdi) {
     return exampleJNI.ftdi_disable_bitbang(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
-  }
-
-  public static int ftdi_set_bitmode(SWIGTYPE_p_ftdi_context ftdi, short bitmask, short mode) {
-    return exampleJNI.ftdi_set_bitmode(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), bitmask, mode);
-  }
-
-  public static int ftdi_read_pins(SWIGTYPE_p_ftdi_context ftdi, byte[] pins) {
-    return exampleJNI.ftdi_read_pins(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), pins);
-  }
-
-  public static int ftdi_setflowctrl(SWIGTYPE_p_ftdi_context ftdi, int flowctrl) {
-    return exampleJNI.ftdi_setflowctrl(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), flowctrl);
   }
 
   public static int ftdi_set_latency_timer(SWIGTYPE_p_ftdi_context ftdi, short latency) {

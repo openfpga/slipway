@@ -18,7 +18,97 @@ struct ftdi_eeprom *new_ftdi_eeprom() {
 %}
 
 
+%exception ftdi_init {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_init() returned nonzero result");
+    return $null;
+  }
+}
 int ftdi_init(struct ftdi_context *ftdi);
+
+%exception ftdi_read_data {
+  $action
+  if (result<0) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_read_data() returned negative result");
+    return $null;
+  }
+}
+int ftdi_read_data(struct ftdi_context *ftdi, signed char buf[], int size);
+
+%exception ftdi_write_data {
+  $action
+  if (result<0) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_write_data() returned negative result");
+    return $null;
+  }
+}
+int ftdi_write_data(struct ftdi_context *ftdi, signed char buf[], int size);
+
+%exception ftdi_usb_open {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_usb_open() returned nonzero result");
+    return $null;
+  }
+}
+int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
+
+%exception ftdi_set_baudrate {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdftdi_set_baudrate() returned nonzero result");
+    return $null;
+  }
+}
+int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate);
+
+%exception ftdi_set_line_property {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_set_line_property() returned nonzero result");
+    return $null;
+  }
+}
+int ftdi_set_line_property(struct ftdi_context *ftdi, int bits, int sbit, int parity);
+
+%exception ftdi_set_bitmode {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftftdi_set_bitmodeeturned nonzero result");
+    return $null;
+  }
+}
+int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode);
+
+%exception ftdi_read_pins {
+  $action
+  if (result<0) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_read_pins() returned negative result");
+    return $null;
+  }
+}
+int ftdi_read_pins(struct ftdi_context *ftdi, signed char pins[]);
+
+%exception ftdi_setflowctrl {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_setflowctrleturned nonzero result");
+    return $null;
+  }
+}
+int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
+
+
 /*
 int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface);
 */
@@ -30,7 +120,6 @@ int ftdi_usb_find_all(struct ftdi_context *ftdi, struct ftdi_device_list **devli
                       int vendor, int product);
 void ftdi_list_free(struct ftdi_device_list **devlist);
     
-int ftdi_usb_open(struct ftdi_context *ftdi, int vendor, int product);
 int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
                        const char* description, const char* serial);
 int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev);
@@ -39,25 +128,14 @@ int ftdi_usb_close(struct ftdi_context *ftdi);
 int ftdi_usb_reset(struct ftdi_context *ftdi);
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi);
 
-int ftdi_set_baudrate(struct ftdi_context *ftdi, int baudrate);
-
-int ftdi_set_line_property(struct ftdi_context *ftdi, int bits,
-                           int sbit, int parity);
-
-int ftdi_read_data(struct ftdi_context *ftdi, signed char buf[], int size);
 int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
 int ftdi_read_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
 
-int ftdi_write_data(struct ftdi_context *ftdi, signed char buf[], int size);
 int ftdi_write_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
 int ftdi_write_data_get_chunksize(struct ftdi_context *ftdi, unsigned int *chunksize);
 
 int ftdi_enable_bitbang(struct ftdi_context *ftdi, unsigned char bitmask);
 int ftdi_disable_bitbang(struct ftdi_context *ftdi);
-int ftdi_set_bitmode(struct ftdi_context *ftdi, unsigned char bitmask, unsigned char mode);
-int ftdi_read_pins(struct ftdi_context *ftdi, signed char pins[]);
-
-int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
 
 int ftdi_set_latency_timer(struct ftdi_context *ftdi, unsigned char latency);
 int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency);
@@ -65,9 +143,6 @@ int ftdi_get_latency_timer(struct ftdi_context *ftdi, unsigned char *latency);
 // init and build eeprom from ftdi_eeprom structure
 void ftdi_eeprom_initdefaults(struct ftdi_eeprom *eeprom);
 int  ftdi_eeprom_build(struct ftdi_eeprom *eeprom, signed char output[]);
-
-// "eeprom" needs to be valid 128 byte eeprom (generated by the eeprom generator)
-// the checksum of the eeprom is valided
 
 int ftdi_read_eeprom(struct ftdi_context *ftdi, signed char eeprom[]);
 int ftdi_write_eeprom(struct ftdi_context *ftdi, signed char eeprom[]);
