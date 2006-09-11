@@ -16,6 +16,7 @@ public class ChipImpl extends FtdiChip implements Chip {
 
         con(false);
         flush();
+
         buffered(false);
         reset(false);
         //avrrst(false);

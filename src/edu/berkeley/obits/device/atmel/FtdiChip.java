@@ -27,11 +27,8 @@ public class FtdiChip {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     public void flush() {
         try {
-            byte[] bytes = baos.toByteArray();
-            baos = new ByteArrayOutputStream();
-            out.write(bytes, 0, bytes.length);
-            out.flush();
-        } catch (IOException e) { throw new RuntimeException(e); }
+            getOutputStream().flush();
+        } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     protected static int mask =
