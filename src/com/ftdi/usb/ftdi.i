@@ -102,12 +102,21 @@ int ftdi_read_pins(struct ftdi_context *ftdi, signed char pins[]);
   $action
   if (result) {
     jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
-    (*jenv)->ThrowNew(jenv, clazz, "ftdi_setflowctrleturned nonzero result");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_setflowctrl() returned nonzero result");
     return $null;
   }
 }
 int ftdi_setflowctrl(struct ftdi_context *ftdi, int flowctrl);
 
+%exception ftdi_usb_reset {
+  $action
+  if (result) {
+    jclass clazz = (*jenv)->FindClass(jenv, "java/lang/RuntimeException");
+    (*jenv)->ThrowNew(jenv, clazz, "ftdi_usb_reset() nonzero result");
+    return $null;
+  }
+}
+int ftdi_usb_reset(struct ftdi_context *ftdi);
 
 /*
 int ftdi_set_interface(struct ftdi_context *ftdi, enum ftdi_interface interface);
@@ -125,7 +134,6 @@ int ftdi_usb_open_desc(struct ftdi_context *ftdi, int vendor, int product,
 int ftdi_usb_open_dev(struct ftdi_context *ftdi, struct usb_device *dev);
     
 int ftdi_usb_close(struct ftdi_context *ftdi);
-int ftdi_usb_reset(struct ftdi_context *ftdi);
 int ftdi_usb_purge_buffers(struct ftdi_context *ftdi);
 
 int ftdi_read_data_set_chunksize(struct ftdi_context *ftdi, unsigned int chunksize);
