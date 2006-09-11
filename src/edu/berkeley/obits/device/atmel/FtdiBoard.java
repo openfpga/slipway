@@ -21,10 +21,7 @@ public class FtdiBoard extends Board {
 
     public FtdiBoard() throws Exception {
         chip = new ChipImpl();
-        chip.porte(4, true);
-
         boot(new InputStreamReader(new FileInputStream("bitstreams/usbdrone.bst")));
-
         in = chip.getInputStream();
         out = chip.getOutputStream();
         for(int i=0; i<255; i++) out.write(0);
@@ -38,32 +35,40 @@ public class FtdiBoard extends Board {
     public void boot(Reader r) throws Exception {
         boolean pin;
         Chip d = chip;
+        d.buffered(true);
         d.doReset();
         d.config(0,10);
         d.con();
+        d.flush();
         d.config(Integer.parseInt("10110111", 2), 8);
         d.config(0,1);
+        d.flush();
         pin = d.initErr();
         System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
 
         d.doReset();
         d.config(0,9);
         d.con();
+        d.flush();
         d.config(Integer.parseInt("10110111", 2), 8);
         d.config(0, 2);
+        d.flush();
         pin = d.initErr();
         System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
         d.doReset();
         d.config(0,10);
         d.con();
+        d.flush();
         d.config(Integer.parseInt("11110111", 2), 8);
         d.config(0, 1);
+        d.flush();
         pin = d.initErr();
         System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
 
         d.doReset();
+
 
         d.config(0,10);
         d.con();

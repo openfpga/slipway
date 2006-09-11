@@ -24,7 +24,6 @@ public class FtdiChip {
         return b[0];
     }
 
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
     public void flush() {
         try {
             getOutputStream().flush();
@@ -51,9 +50,12 @@ public class FtdiChip {
 
     protected int dbits = 0;
 
-    public boolean buffered = false;
+    public boolean buffered = true;
     public void buffered() { buffered = true; }
-    public void buffered(boolean buf) { buffered = buf; }
+    public void buffered(boolean buf) {
+        if (!buf) flush();
+        buffered = buf;
+    }
 
     protected synchronized void dbang(int bit, boolean val) {
         dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
