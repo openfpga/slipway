@@ -49,8 +49,7 @@ public class FtdiChip {
         example.ftdi_setflowctrl(context, (1 << 8));
     }
     public synchronized void uart() {
-        example.ftdi_set_bitmode(context, (short)0, (short)0x00);
-        example.ftdi_setflowctrl(context, (1 << 8));
+        cbangmode();
     }
     public synchronized void dbangmode() {
         example.ftdi_set_bitmode(context, (short)dmask, (short)0x01);
