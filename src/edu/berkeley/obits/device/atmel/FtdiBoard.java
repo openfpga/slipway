@@ -36,6 +36,7 @@ public class FtdiBoard extends Board {
         boolean pin;
         Chip d = chip;
 
+        d.buffered(false);
         d.doReset();
         d.config(0,10);
         d.con();
@@ -95,6 +96,7 @@ public class FtdiBoard extends Board {
                     throw new RuntimeException("initialization failed at byte " + bytes + ", bit " + i);
             }
         }
+
 
         d.flush();
         if (!d.initErr())
