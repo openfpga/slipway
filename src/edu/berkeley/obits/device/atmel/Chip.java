@@ -2,38 +2,26 @@ package edu.berkeley.obits.device.atmel;
 import com.ftdi.usb.*;
 import java.io.*;
 
-public abstract class Chip {
+public interface Chip {
     
-    public void doReset() {
-        flush();
-        buffered(false);
+    public void doReset();
 
 
-        reset(false);
-        //avrrst(false);
-        try { Thread.sleep(200); } catch (Exception e) { }
-        reset(true);
-        //avrrst(true);
-        try { Thread.sleep(200); } catch (Exception e) { }
-    }
+    public void reset(boolean on);
+    public void avrrst(boolean on);
 
-    public abstract void reset(boolean on);
-    public abstract void avrrst(boolean on);
-    public abstract void int3(boolean on);
+    public void config(boolean bit);
+    public void config(int data, int numbits);
 
-    public abstract void config(boolean bit);
-    public abstract void config(int data, int numbits);
+    public boolean initErr();
+    public void    porte(int pin, boolean b);
 
-    public abstract boolean initErr();
-    public abstract boolean porte(int pin);
-    public abstract void porte(int pin, boolean b);
-
-    public abstract void    con(boolean b);
-    public abstract boolean con();
+    public void    con(boolean b);
+    public boolean con();
 
     //remove
-    public abstract void buffered();
-    public abstract void buffered(boolean buf);
-    protected abstract void flush();
-    public abstract int readPins();
+    public void buffered();
+    public void buffered(boolean buf);
+    public void flush();
+    public int readPins();
 }

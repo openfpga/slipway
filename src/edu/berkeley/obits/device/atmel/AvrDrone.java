@@ -23,7 +23,6 @@ public class AvrDrone extends AtmelDevice {
     public void reset() { board.reset(); }
 
     private void init() throws IOException {
-        //board.reset();
         Log.debug(this, "waiting for device to identify itself");
         if (in.readByte() != (byte)'O')  throw new RuntimeException("didn't get the proper signature");
         if (in.readByte() != (byte)'B')  throw new RuntimeException("didn't get the proper signature");
