@@ -65,12 +65,11 @@ public class FtdiBoard extends Board {
         pin = d.initErr();
         System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
-        d.buffered(true);
-
+        d.buffered(false);
         d.doReset();
 
-
         d.config(0,10);
+        d.flush();
         d.con();
         //d.config(Integer.parseInt("10110111", 2));
         //d.config(0);
