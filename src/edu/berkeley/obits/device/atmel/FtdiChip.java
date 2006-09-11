@@ -51,7 +51,7 @@ public class FtdiChip {
     protected int dbits = 0;
 
     public boolean buffered = false;
-    public void buffered() { buffered = true; }
+    public void buffered() { /*buffered = true;*/ }
     public void buffered(boolean buf) {
         if (!buf) flush();
         buffered = buf;
