@@ -35,7 +35,7 @@ public class FtdiBoard extends Board {
     public void boot(Reader r) throws Exception {
         boolean pin;
         Chip d = chip;
-
+        /*
         d.buffered(false);
         d.doReset();
         d.config(0,10);
@@ -66,7 +66,7 @@ public class FtdiBoard extends Board {
         d.flush();
         pin = d.initErr();
         System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
-
+        */
         d.doReset();
 
         d.config(0,10);

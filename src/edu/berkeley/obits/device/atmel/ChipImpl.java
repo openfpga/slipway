@@ -4,6 +4,16 @@ import java.io.*;
 
 public class ChipImpl extends FtdiChip implements Chip {
 
+    protected int dmask =
+        //(1<<0) |
+        (1<<1) |
+        (1<<2) |
+        //(1<<3) |
+        //(1<<4) |
+        (1<<5) |
+        (1<<6) |
+        (1<<7);
+
     public ChipImpl() {
         super();
         doReset();
@@ -17,6 +27,7 @@ public class ChipImpl extends FtdiChip implements Chip {
     }
 
     public void doReset() {
+
         flush();
 
         dbangmode(dmask);
@@ -29,13 +40,22 @@ public class ChipImpl extends FtdiChip implements Chip {
 
         reset(false);
         flush();
-        try { Thread.sleep(200); } catch (Exception e) { }
+        try { Thread.sleep(500); } catch (Exception e) { }
 
         reset(true);
         flush();
-        try { Thread.sleep(200); } catch (Exception e) { }
+        try { Thread.sleep(500); } catch (Exception e) { }
 
-        dmask &= ~(1<<7);
+System.out.println("\ndisagree:"+(dmask ^ (        //(1<<0) |
+        (1<<1) |
+        (1<<2) |
+        //(1<<3) |
+        //(1<<4) |
+        (1<<5) |
+        (1<<6) |
+        (1<<7)))+"\n");
+
+//dmask &= ~(1<<7);
         dbangmode(dmask);
         flush();
     }
@@ -59,16 +79,6 @@ public class ChipImpl extends FtdiChip implements Chip {
             clk(false);
         }
     }
-
-    protected int dmask =
-        //(1<<0) |
-        (1<<1) |
-        (1<<2) |
-        //(1<<3) |
-        //(1<<4) |
-        (1<<5) |
-        (1<<6) |
-        (1<<7);
 
     public void reset(boolean on) {
         bits = on ? (1<<1) : 0;
