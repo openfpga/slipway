@@ -40,8 +40,6 @@ public class ChipImpl extends FtdiChip implements Chip {
 
     //
 
-    public void buffered() { buffered = true; }
-    public void buffered(boolean buf) { buffered = buf; }
     public void config(boolean bit) { config(bit?1:0, 1); }
     public void config(int dat) { config(dat, 8); }
     public void config(int dat, int numbits) {

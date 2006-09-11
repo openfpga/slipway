@@ -34,7 +34,6 @@ public class FtdiChip {
         } catch (IOException e) { throw new RuntimeException(e); }
     }
 
-    public boolean buffered = false;
     protected static int mask =
         (1<<0) |
         (1<<1)// |
@@ -54,16 +53,17 @@ public class FtdiChip {
     }
 
     protected int dbits = 0;
+
+    public boolean buffered = false;
+    public void buffered() { buffered = true; }
+    public void buffered(boolean buf) { buffered = buf; }
+
     protected synchronized void dbang(int bit, boolean val) {
         dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
-        if (buffered) {
-            baos.write((byte)dbits);
-        } else {
-            try {
-                out.write((byte)dbits);
-                out.flush();
-            } catch (IOException e) { throw new RuntimeException(e); }
-        }
+        try {
+            out.write((byte)dbits);
+            if (!buffered) out.flush();
+        } catch (IOException e) { throw new RuntimeException(e); }
     }
 
  
