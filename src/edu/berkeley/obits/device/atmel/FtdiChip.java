@@ -46,29 +46,19 @@ public class FtdiChip {
 
     public synchronized void purge() {
         example.ftdi_usb_purge_buffers(context);
-
-        int result = example.ftdi_setflowctrl(context, (1 << 8));
-        if (result != 0)
-            throw new RuntimeException("ftdi_setflowcontrol() returned " + result);
+        example.ftdi_setflowctrl(context, (1 << 8));
     }
     public synchronized void uart() {
-        int result = example.ftdi_set_bitmode(context, (short)0, (short)0x00);
-        if (result != 0)
-            throw new RuntimeException("ftdi_set_bitmode() returned " + result);
-        result = example.ftdi_setflowctrl(context, (1 << 8));
-        if (result != 0)
-            throw new RuntimeException("ftdi_setflowcontrol() returned " + result);
+        example.ftdi_set_bitmode(context, (short)0, (short)0x00);
+        example.ftdi_setflowctrl(context, (1 << 8));
     }
     public synchronized void dbangmode() {
-        int result = example.ftdi_set_bitmode(context, (short)dmask, (short)0x01);
-        if (result != 0)
-            throw new RuntimeException("ftdi_set_bitmode() returned " + result);
+        example.ftdi_set_bitmode(context, (short)dmask, (short)0x01);
     }
 
     protected synchronized void cbangmode() {
-        int result = example.ftdi_set_bitmode(context, (short)((mask << 4) | bits), (short)0x20);
-        if (result != 0)
-            throw new RuntimeException("ftdi_set_bitmode() returned " + result);
+        example.ftdi_set_bitmode(context, (short)((mask << 4) | bits), (short)0x20);
+        example.ftdi_setflowctrl(context, (1 << 8));
     }
 
     protected int dbits = 0;
@@ -84,11 +74,67 @@ public class FtdiChip {
     protected synchronized void dbang(byte by) {
         byte[] b = new byte[1];
         b[0] = by;
-        int result = example.ftdi_write_data(context, b, 1);
-        if (result != 1)
-            throw new RuntimeException("ftdi_write_data() returned " + result);
+        example.ftdi_write_data(context, b, 1);
     }
     protected synchronized void dbang(byte[] b, int len) {
         example.ftdi_write_data(context, b, len);
+    }
+
+    private OutputStream os = new ChipOutputStream();
+    private InputStream  is = new ChipInputStream();
+    public OutputStream getOutputStream() { return os; }
+    public InputStream  getInputStream() { return is; }
+    
+    public class ChipInputStream extends InputStream {
+        public int available() throws IOException {
+            // FIXME
+            return 0;
+        }
+        public long skip(long l) throws IOException {
+            throw new RuntimeException("not supported");
+        }
+        public int read() throws IOException {
+            System.out.println("read()");
+            byte[] b = new byte[1];
+            int result = 0;
+            while(result==0)
+                result = read(b, 0, 1);
+            return b[0] & 0xff;
+        }
+        public int read(byte[] b, int off, int len) throws IOException {
+            // FIXME: blocking reads?
+            int result = 0;
+            while(true) {
+                if (len==0) return 0;
+                    byte[] b0 = new byte[len];
+                    synchronized(FtdiChip.this) {
+                        result = example.ftdi_read_data(context, b0, len);
+                    }
+                    if (result>0) {
+                        System.arraycopy(b0, 0, b, off, result);
+                        return result;
+                    }
+                try { Thread.sleep(50); } catch (Exception e) { e.printStackTrace(); } 
+            }
+        }
+    }
+
+    public class ChipOutputStream extends OutputStream {
+        public void write(int b) throws IOException {
+            byte[] d = new byte[1];
+            d[0] = (byte)b;
+            write(d, 0, 1);
+        }
+        public void write(byte[] b, int off, int len) throws IOException {
+            byte[] b2 = new byte[64];
+            while(len > 0) {
+                System.arraycopy(b, off, b2, 0, Math.min(b2.length, len));
+                synchronized(FtdiChip.this) {
+                    int result = example.ftdi_write_data(context, b2, Math.min(b2.length, len));
+                    off += result;
+                    len -= result;
+                }
+            }
+        }
     }
 }
