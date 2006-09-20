@@ -10,7 +10,7 @@ import gnu.io.*;
 public class FtdiBoard extends Board {
 
     static {
-        System.load(new File("build/"+System.mapLibraryName("Ftdi")).getAbsolutePath());
+        System.load(new File("build/"+System.mapLibraryName("FtdiUartNative")).getAbsolutePath());
     }
 
     private final ChipImpl chip;
@@ -22,7 +22,10 @@ public class FtdiBoard extends Board {
 
     public FtdiBoard() throws Exception {
         chip = new ChipImpl();
-        boot(new InputStreamReader(new FileInputStream("bitstreams/usbdrone.bst")));
+        String bstFile = this.getClass().getName();
+        bstFile = bstFile.substring(0, bstFile.lastIndexOf('.'));
+        bstFile = bstFile.replace('.', '/')+"/slipway_drone.bst";
+        boot(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(bstFile)));
         in = chip.getInputStream();
         out = chip.getOutputStream();
         for(int i=0; i<255; i++) out.write(0);
