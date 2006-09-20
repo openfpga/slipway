@@ -135,7 +135,7 @@ public class FtdiBoard extends Board {
 
         //System.out.println("avr reset => true");
         chip.purge();
-        chip.uart(1<<1, 1<<1);
+        chip.uart_and_cbus_mode(1<<1, 1<<1);
         
         //d.avrrst(true);
         //try { Thread.sleep(500); } catch (Exception e) { }

@@ -25,6 +25,14 @@ public class ChipImpl extends FtdiUart implements Chip {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    protected int dbits = 0;
+    protected synchronized void dbang(int bit, boolean val) {
+        dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
+        try {
+            getOutputStream().write((byte)dbits);
+        } catch (IOException e) { throw new RuntimeException(e); }
+    }
+
     public void doReset() {
 
         dmask =
@@ -41,7 +49,7 @@ public class ChipImpl extends FtdiUart implements Chip {
         flush();
         //purge();
 
-        dbangmode(dmask);
+        dbus_mode(dmask);
         flush();
 
         clk(false);
@@ -79,10 +87,10 @@ public class ChipImpl extends FtdiUart implements Chip {
     //         we can pull it down (assert reset) from uart-mode, or we can
     //         let it float upward from either mode.
     public void reset(boolean on) {
-        uart(1<<1, on ? (1<<1) : 0);
+        uart_and_cbus_mode(1<<1, on ? (1<<1) : 0);
         flush();
         if (on) {
-            dbangmode(dmask);
+            dbus_mode(dmask);
             flush();
         }
     }
@@ -96,19 +104,19 @@ public class ChipImpl extends FtdiUart implements Chip {
     public boolean con() {
         flush();
         //dmask &= ~(1<<0);
-        dbangmode(dmask);
+        dbus_mode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
     public boolean rcon() {
         flush();
         dmask &= ~(1<<0);
-        dbangmode(dmask);
+        dbus_mode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
     public void con(boolean on) {
         flush();
         dmask |= (1<<0);
         dbang(0, on);
-        dbangmode(dmask);
+        dbus_mode(dmask);
     }
 }
