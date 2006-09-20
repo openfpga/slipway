@@ -39,46 +39,30 @@ public class FtdiBoard extends Board {
     public void boot(Reader r) throws Exception {
         Chip d = chip;
 
-        //d.buffered(false);
-
         d.selfTest();
 
-        d.doReset();
-
-        d.config(0,10);
-        d.con();
-        //d.config(Integer.parseInt("10110111", 2));
-        //d.config(0);
+        OutputStream os = d.getConfigStream();
 
         BufferedReader br = new BufferedReader(r);
         br.readLine();
+
         int bytes = 0;
-        //System.out.println("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8));
         while(true) {
             String s = br.readLine();
             if (s==null) break;
             int in = Integer.parseInt(s, 2);
             bytes++;
-            for(int i=7; i>=0; i--) {
-                d.config((((in & 0xff) & (1<<i))!=0)?1:0, 1);
-                boolean init = true; // d.initErr()
-                if (bytes < 100 || (bytes % 1000)==0) {
-                    d.flush();
-                    init = d.initErr();
-                    System.out.print("wrote " + bytes + " bytes, init="+init+"      \r");
-                    d.rcon();
-                }
-                if (!init)
-                    throw new RuntimeException("initialization failed at byte " + bytes + ", bit " + i);
+            os.write((byte)in);
+            if ((bytes % 1000)==0) {
+                os.flush();
+                System.out.print("wrote " + bytes + " bytes\r");
+                d.rcon();
             }
         }
-
 
         d.flush();
         if (!d.initErr())
             throw new RuntimeException("initialization failed at " + bytes);
-        //System.out.println("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8));
-
 
         for(int i=0; i<100; i++) {
             d.flush();

@@ -21,5 +21,6 @@ public interface Chip {
     public InputStream getInputStream();
     public OutputStream getOutputStream();
     public void selfTest() throws Exception;
+    public OutputStream getConfigStream() throws IOException;
 
 }

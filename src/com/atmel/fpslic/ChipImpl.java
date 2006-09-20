@@ -115,6 +115,26 @@ public class ChipImpl extends FtdiUart implements Chip {
         dbus_mode(dmask);
     }
 
+    public OutputStream getConfigStream() throws IOException {
+        doReset();
+        config(0,10);
+        con();
+        return new OutputStream() {
+                public void write(int in) throws IOException {
+                    for(int i=7; i>=0; i--) {
+                        config((((in & 0xff) & (1<<i))!=0)?1:0, 1);
+                    }
+                }
+                public void write(byte[] b, int off, int len) throws IOException {
+                    for(int i=off; i<off+len; i++)
+                        write(b[i]);
+                }
+                public void flush() throws IOException {
+                    ChipImpl.this.flush();
+                }
+            };
+    }
+
     public static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
     public static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
     public void selfTest() throws Exception {
