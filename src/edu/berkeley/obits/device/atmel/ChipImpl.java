@@ -20,17 +20,16 @@ public class ChipImpl extends FtdiChip implements Chip {
     }
 
     public void doReset() {
-        /*
-dmask =
-        (1<<0) |
-        (1<<1) |
-        (1<<2) |
-        //(1<<3) |
-        //(1<<4) |
-        (1<<5) |
-        (1<<6) |
-        (1<<7);
-        */
+
+        dmask =
+            (1<<0) |
+            (1<<1) |
+            (1<<2) |
+            //(1<<3) |
+            //(1<<4) |
+            (1<<5) |
+            (1<<6) |
+            (1<<7);
 
         flush();
         //purge();
@@ -51,10 +50,6 @@ dmask =
         reset(true);
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
-        
-        purge();
-        dbangmode(dmask);
-        flush();
     }
 
     int porte = 0;
@@ -77,10 +72,17 @@ dmask =
         }
     }
 
+    // tricky: RESET has a weak pull-up, and is wired to a CBUS line.  So,
+    //         we can pull it down (assert reset) from uart-mode, or we can
+    //         let it float upward from either mode.
     public void reset(boolean on) {
         bits = on ? (1<<1) : 0;
+        mask = on ? (1<<0) : ((1<<0) | (1<<1));
         uart();
+        flush();
+        if (on) dbangmode(dmask);
     }
+
     public void avrrst(boolean on) { dbang(7, on); }
     public void clk(boolean on)    { dbang(6, on); }
     public void data(boolean on)   { dbang(5, on); }
