@@ -55,6 +55,10 @@ public class example {
     return exampleJNI.ftdi_setflowctrl(SWIGTYPE_p_ftdi_context.getCPtr(ftdi), flowctrl);
   }
 
+  public static int ftdi_usb_reset(SWIGTYPE_p_ftdi_context ftdi) {
+    return exampleJNI.ftdi_usb_reset(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
+  }
+
   public static void ftdi_deinit(SWIGTYPE_p_ftdi_context ftdi) {
     exampleJNI.ftdi_deinit(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
   }
@@ -81,10 +85,6 @@ public class example {
 
   public static int ftdi_usb_close(SWIGTYPE_p_ftdi_context ftdi) {
     return exampleJNI.ftdi_usb_close(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
-  }
-
-  public static int ftdi_usb_reset(SWIGTYPE_p_ftdi_context ftdi) {
-    return exampleJNI.ftdi_usb_reset(SWIGTYPE_p_ftdi_context.getCPtr(ftdi));
   }
 
   public static int ftdi_usb_purge_buffers(SWIGTYPE_p_ftdi_context ftdi) {

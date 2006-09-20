@@ -20,6 +20,7 @@ class exampleJNI {
   public final static native int ftdi_set_bitmode(long jarg1, short jarg2, short jarg3);
   public final static native int ftdi_read_pins(long jarg1, byte[] jarg2);
   public final static native int ftdi_setflowctrl(long jarg1, int jarg2);
+  public final static native int ftdi_usb_reset(long jarg1);
   public final static native void ftdi_deinit(long jarg1);
   public final static native void ftdi_set_usbdev(long jarg1, long jarg2);
   public final static native int ftdi_usb_find_all(long jarg1, long jarg2, int jarg3, int jarg4);
@@ -27,7 +28,6 @@ class exampleJNI {
   public final static native int ftdi_usb_open_desc(long jarg1, int jarg2, int jarg3, String jarg4, String jarg5);
   public final static native int ftdi_usb_open_dev(long jarg1, long jarg2);
   public final static native int ftdi_usb_close(long jarg1);
-  public final static native int ftdi_usb_reset(long jarg1);
   public final static native int ftdi_usb_purge_buffers(long jarg1);
   public final static native int ftdi_read_data_set_chunksize(long jarg1, long jarg2);
   public final static native int ftdi_read_data_get_chunksize(long jarg1, long jarg2);

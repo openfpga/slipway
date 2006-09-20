@@ -35,38 +35,47 @@ public class FtdiBoard extends Board {
     public void boot(Reader r) throws Exception {
         boolean pin;
         Chip d = chip;
-        /*
-        d.buffered(false);
+
+        //d.buffered(false);
+        for(int i=0; i<1000; i++) {
         d.doReset();
         d.config(0,10);
-        d.con();
         d.flush();
+        d.con();
+        //d.flush();
         d.config(Integer.parseInt("10110111", 2), 8);
         d.config(0,1);
         d.flush();
+        try { Thread.sleep(100); } catch (Exception e) { }
         pin = d.initErr();
         System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
 
         d.doReset();
+        try { Thread.sleep(100); } catch (Exception e) { }
         d.config(0,9);
-        d.con();
         d.flush();
+        d.con();
+        //d.flush();
         d.config(Integer.parseInt("10110111", 2), 8);
         d.config(0, 2);
         d.flush();
+        try { Thread.sleep(100); } catch (Exception e) { }
         pin = d.initErr();
         System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
         d.doReset();
+        try { Thread.sleep(100); } catch (Exception e) { }
         d.config(0,10);
-        d.con();
         d.flush();
+        d.con();
+        //d.flush();
         d.config(Integer.parseInt("11110111", 2), 8);
         d.config(0, 1);
         d.flush();
+        try { Thread.sleep(100); } catch (Exception e) { }
         pin = d.initErr();
         System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
-        */
+        }
         d.doReset();
 
         d.config(0,10);
@@ -120,8 +129,8 @@ public class FtdiBoard extends Board {
         //((ChipImpl)d).avr();
 
         //System.out.println("avr reset => true");
-        chip.uart();
         chip.purge();
+        chip.uart();
         
         //d.avrrst(true);
         //try { Thread.sleep(500); } catch (Exception e) { }

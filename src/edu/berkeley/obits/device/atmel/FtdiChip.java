@@ -14,7 +14,9 @@ public class FtdiChip {
         example.ftdi_init(context);
         example.ftdi_usb_open(context, 0x6666, 0x3133);
         example.ftdi_usb_reset(context);
-        example.ftdi_set_baudrate(context, 750 * 1000);
+        //example.ftdi_set_baudrate(context, 750 * 1000);
+        example.ftdi_set_baudrate(context, 1500 * 1000);
+        //example.ftdi_set_baudrate(context, 750 * 1000 * 4);
         example.ftdi_set_line_property(context, 8, 0, 0);
         purge();
     }
@@ -44,7 +46,7 @@ public class FtdiChip {
     }
     public synchronized void uart() {
         example.ftdi_set_bitmode(context, (short)((mask << 4) | bits), (short)0x20);
-        example.ftdi_setflowctrl(context, (1 << 8));
+        //example.ftdi_setflowctrl(context, (1 << 8));
     }
     public synchronized void dbangmode(int dmask) {
         example.ftdi_set_bitmode(context, (short)dmask, (short)0x01);

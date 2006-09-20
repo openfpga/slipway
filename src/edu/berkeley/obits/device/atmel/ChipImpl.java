@@ -4,7 +4,7 @@ import java.io.*;
 
 public class ChipImpl extends FtdiChip implements Chip {
 
-    protected int dmask =
+    private int dmask =
         //(1<<0) |
         (1<<1) |
         (1<<2) |
@@ -20,8 +20,20 @@ public class ChipImpl extends FtdiChip implements Chip {
     }
 
     public void doReset() {
+        /*
+dmask =
+        (1<<0) |
+        (1<<1) |
+        (1<<2) |
+        //(1<<3) |
+        //(1<<4) |
+        (1<<5) |
+        (1<<6) |
+        (1<<7);
+        */
 
         flush();
+        //purge();
 
         dbangmode(dmask);
         flush();
@@ -30,6 +42,7 @@ public class ChipImpl extends FtdiChip implements Chip {
         data(false);
         con(false);
         flush();
+        //try { Thread.sleep(500); } catch (Exception e) { }
 
         reset(false);
         flush();
@@ -38,7 +51,7 @@ public class ChipImpl extends FtdiChip implements Chip {
         reset(true);
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
-
+        
         dbangmode(dmask);
         flush();
     }
