@@ -77,10 +77,16 @@ public class ChipImpl extends FtdiChip implements Chip {
     //         let it float upward from either mode.
     public void reset(boolean on) {
         bits = on ? (1<<1) : 0;
-        mask = on ? (1<<0) : ((1<<0) | (1<<1));
+        mask = ((1<<0) | (1<<1));
         uart();
         flush();
-        if (on) dbangmode(dmask);
+        if (on) {
+            mask = (1<<0);
+            uart();
+            flush();
+            dbangmode(dmask);
+            flush();
+        }
     }
 
     public void avrrst(boolean on) { dbang(7, on); }
