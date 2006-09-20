@@ -14,26 +14,26 @@ public class ChipImpl extends FtdiUart implements Chip {
         (1<<6) |
         (1<<7);
 
-    public ChipImpl() {
+    public ChipImpl() throws IOException {
         super(0x6666, 0x3133, 1500 * 1000);
         doReset();
     }
 
-    public void flush() {
+    public void flush() throws IOException {
         try {
             getOutputStream().flush();
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     protected int dbits = 0;
-    protected synchronized void dbang(int bit, boolean val) {
+    protected synchronized void dbang(int bit, boolean val) throws IOException {
         dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
         try {
             getOutputStream().write((byte)dbits);
         } catch (IOException e) { throw new RuntimeException(e); }
     }
 
-    public void doReset() {
+    public void doReset() throws IOException {
 
         dmask =
             (1<<0) |
@@ -72,9 +72,9 @@ public class ChipImpl extends FtdiUart implements Chip {
         con(false);
     }
 
-    public void config(boolean bit) { config(bit?1:0, 1); }
-    public void config(int dat) { config(dat, 8); }
-    public void config(int dat, int numbits) {
+    public void config(boolean bit) throws IOException { config(bit?1:0, 1); }
+    public void config(int dat) throws IOException { config(dat, 8); }
+    public void config(int dat, int numbits) throws IOException {
         for(int i=(numbits-1); i>=0; i--) {
             boolean bit = (dat & (1<<i)) != 0;
             data(bit);
@@ -86,7 +86,7 @@ public class ChipImpl extends FtdiUart implements Chip {
     // tricky: RESET has a weak pull-up, and is wired to a CBUS line.  So,
     //         we can pull it down (assert reset) from uart-mode, or we can
     //         let it float upward from either mode.
-    public void reset(boolean on) {
+    public void reset(boolean on) throws IOException {
         uart_and_cbus_mode(1<<1, on ? (1<<1) : 0);
         flush();
         if (on) {
@@ -95,25 +95,25 @@ public class ChipImpl extends FtdiUart implements Chip {
         }
     }
 
-    public void avrrst(boolean on) { dbang(7, on); }
-    public void clk(boolean on)    { dbang(6, on); }
-    public void data(boolean on)   { dbang(5, on); }
+    public void avrrst(boolean on) throws IOException { dbang(7, on); }
+    public void clk(boolean on)    throws IOException { dbang(6, on); }
+    public void data(boolean on)   throws IOException { dbang(5, on); }
 
-    public boolean initErr()       { flush(); return (readPins() & (1<<4))!=0; }
+    public boolean initErr()       throws IOException { flush(); return (readPins() & (1<<4))!=0; }
 
-    public boolean con() {
+    public boolean con() throws IOException {
         flush();
         //dmask &= ~(1<<0);
         dbus_mode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
-    public boolean rcon() {
+    public boolean rcon() throws IOException {
         flush();
         dmask &= ~(1<<0);
         dbus_mode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
-    public void con(boolean on) {
+    public void con(boolean on) throws IOException {
         flush();
         dmask |= (1<<0);
         dbang(0, on);

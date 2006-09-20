@@ -5,18 +5,18 @@ import java.io.*;
 
 public interface Chip {
     
-    public void    doReset();
-    public void    reset(boolean on);
-    public void    avrrst(boolean on);
-    public void    config(boolean bit);
-    public void    config(int data, int numbits);
-    public boolean initErr();
+    public void    doReset() throws IOException;
+    public void    reset(boolean on) throws IOException;
+    public void    avrrst(boolean on) throws IOException;
+    public void    config(boolean bit) throws IOException;
+    public void    config(int data, int numbits) throws IOException;
+    public boolean initErr() throws IOException;
 
-    public void    con(boolean b);
-    public boolean con();
-    public boolean rcon();
+    public void    con(boolean b) throws IOException;
+    public boolean con() throws IOException;
+    public boolean rcon() throws IOException;
 
     //remove
-    public void flush();
-    public int readPins();
+    public void flush() throws IOException;
+    public int readPins() throws IOException;
 }

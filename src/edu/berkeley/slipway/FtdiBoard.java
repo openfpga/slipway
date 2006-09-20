@@ -29,7 +29,7 @@ public class FtdiBoard extends Board {
         out.flush();
     }
 
-    public void reset() {
+    public void reset() throws IOException {
         chip.doReset();
     }
 

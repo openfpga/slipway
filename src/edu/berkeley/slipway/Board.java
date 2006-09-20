@@ -8,7 +8,7 @@ import gnu.io.*;
 
 public abstract class Board {
 
-    public abstract void reset();
+    public abstract void reset() throws IOException;
     public abstract void boot(Reader r) throws Exception;
     public abstract InputStream getInputStream();
     public abstract OutputStream getOutputStream();

@@ -21,7 +21,13 @@ public class AvrDrone extends AtmelDevice {
         init();
     } 
 
-    public void reset() { board.reset(); }
+    public void reset() throws DeviceException {
+        try {
+            board.reset();
+        } catch (IOException e) {
+            throw new DeviceException(e);
+        }
+    }
 
     private void init() throws IOException {
         Log.debug(this, "waiting for device to identify itself");

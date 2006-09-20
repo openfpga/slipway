@@ -17,7 +17,7 @@ public class FtdiUart {
     public OutputStream getOutputStream() { return out; }
     public InputStream  getInputStream() { return in; }
 
-    public FtdiUart(int vendor, int product, int baud) {
+    public FtdiUart(int vendor, int product, int baud) throws IOException {
         example.ftdi_init(context);
         example.ftdi_usb_open(context, vendor, product);
         example.ftdi_usb_reset(context);
@@ -34,7 +34,7 @@ public class FtdiUart {
      *  @param cbus_mask a four-bit mask; set bit=1 to write to a CBUS line, bit=0 to read from it
      *  @param cbus_bits a four-bit mask; the bits to assert on the write-enabled CBUS lines
      */
-    public synchronized void uart_and_cbus_mode(int cbus_mask, int cbus_bits) {
+    public synchronized void uart_and_cbus_mode(int cbus_mask, int cbus_bits) throws IOException {
         example.ftdi_set_bitmode(context, (short)((cbus_mask << 4) | cbus_bits), (short)0x20);
     }
 
@@ -44,24 +44,20 @@ public class FtdiUart {
      * 
      *  @param dbus_mask an eight-bit mask; set bit=1 to write to a DBUS line, bit=0 to read from it
      */
-    public synchronized void dbus_mode(int dbus_mask) {
+    public synchronized void dbus_mode(int dbus_mask) throws IOException {
         example.ftdi_set_bitmode(context, (short)dbus_mask, (short)0x01);
     }
 
     /** returns the instantaneous value present on the DBUS pins */
-    public synchronized int readPins() {
-        try {
-            getOutputStream().flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public synchronized int readPins() throws IOException {
+        getOutputStream().flush();
         byte[] b = new byte[1];
         example.ftdi_read_pins(context, b);
         return b[0];
     }
 
     /** purge the on-chip buffers */
-    public synchronized void purge() {
+    public synchronized void purge() throws IOException {
         example.ftdi_usb_purge_buffers(context);
     }
 
