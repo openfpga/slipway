@@ -73,14 +73,9 @@ public class ChipImpl extends FtdiUart implements Chip {
     //         we can pull it down (assert reset) from uart-mode, or we can
     //         let it float upward from either mode.
     public void reset(boolean on) {
-        bits = on ? (1<<1) : 0;
-        mask = (1<<1);
-        uart();
+        uart(1<<1, on ? (1<<1) : 0);
         flush();
         if (on) {
-            //mask = 0;
-            //uart();
-            //flush();
             dbangmode(dmask);
             flush();
         }

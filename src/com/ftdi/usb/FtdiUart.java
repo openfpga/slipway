@@ -41,7 +41,6 @@ public class FtdiUart {
     public synchronized void purge() {
         example.ftdi_usb_purge_buffers(context);
     }
-    public synchronized void uart() { uart(mask, bits); }
     public synchronized void uart(int mask, int bits) {
         example.ftdi_set_bitmode(context, (short)((mask << 4) | bits), (short)0x20);
         //example.ftdi_setflowctrl(context, (1 << 8));
