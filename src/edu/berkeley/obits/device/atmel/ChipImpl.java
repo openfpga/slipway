@@ -84,6 +84,7 @@ public class ChipImpl extends FtdiChip implements Chip {
             mask = (1<<0);
             uart();
             flush();
+            try { Thread.sleep(100); } catch (Exception e) { }
             dbangmode(dmask);
             flush();
         }
