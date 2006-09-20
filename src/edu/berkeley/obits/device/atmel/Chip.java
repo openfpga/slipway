@@ -13,6 +13,7 @@ public interface Chip {
     public void    porte(int pin, boolean b);
     public void    con(boolean b);
     public boolean con();
+    public boolean rcon();
 
     //remove
     public void flush();

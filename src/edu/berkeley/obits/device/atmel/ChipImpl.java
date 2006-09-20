@@ -2,7 +2,7 @@ package edu.berkeley.obits.device.atmel;
 import com.ftdi.usb.*;
 import java.io.*;
 
-public class ChipImpl extends FtdiChip implements Chip {
+public class ChipImpl extends FtdiUart implements Chip {
 
     private int dmask =
         (1<<0) |
@@ -104,6 +104,12 @@ public class ChipImpl extends FtdiChip implements Chip {
     public boolean con() {
         flush();
         //dmask &= ~(1<<0);
+        dbangmode(dmask);
+        return (readPins() & (1<<0)) != 0;
+    }
+    public boolean rcon() {
+        flush();
+        dmask &= ~(1<<0);
         dbangmode(dmask);
         return (readPins() & (1<<0)) != 0;
     }

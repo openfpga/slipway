@@ -1,8 +1,7 @@
-package edu.berkeley.obits.device.atmel;
-import com.ftdi.usb.*;
+package com.ftdi.usb;
 import java.io.*;
 
-public class FtdiChip {
+public class FtdiUart {
 
     protected int bits = 0;
     protected SWIGTYPE_p_ftdi_context context = example.new_ftdi_context();
@@ -10,7 +9,7 @@ public class FtdiChip {
     public OutputStream getOutputStream() { return out; }
     public InputStream  getInputStream() { return in; }
 
-    public FtdiChip() {
+    public FtdiUart() {
         example.ftdi_init(context);
         example.ftdi_usb_open(context, 0x6666, 0x3133);
         example.ftdi_usb_reset(context);
@@ -79,7 +78,7 @@ public class FtdiChip {
                 while(true) {
                     if (len==0) return 0;
                     byte[] b0 = new byte[len];
-                    synchronized(FtdiChip.this) {
+                    synchronized(FtdiUart.this) {
                         result = example.ftdi_read_data(context, b0, len);
                     }
                     if (result>0) {
@@ -102,7 +101,7 @@ public class FtdiChip {
                 while(len > 0) {
                     System.arraycopy(b, off, b2, 0, Math.min(b2.length, len));
                     int result;
-                    synchronized(FtdiChip.this) {
+                    synchronized(FtdiUart.this) {
                         result = example.ftdi_write_data(context, b2, Math.min(b2.length, len));
                     }
                     off += result;

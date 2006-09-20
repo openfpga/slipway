@@ -102,6 +102,7 @@ public class FtdiBoard extends Board {
                     d.flush();
                     init = d.initErr();
                     System.out.print("wrote " + bytes + " bytes, init="+init+"      \r");
+                    d.rcon();
                 }
                 if (!init)
                     throw new RuntimeException("initialization failed at byte " + bytes + ", bit " + i);
