@@ -13,9 +13,7 @@ public class FtdiUart {
         example.ftdi_init(context);
         example.ftdi_usb_open(context, vendor, product);
         example.ftdi_usb_reset(context);
-        //example.ftdi_set_baudrate(context, 750 * 1000);
         example.ftdi_set_baudrate(context, 1500 * 1000);
-        //example.ftdi_set_baudrate(context, 750 * 1000 * 4);
         example.ftdi_set_line_property(context, 8, 0, 0);
         purge();
     }
@@ -43,7 +41,8 @@ public class FtdiUart {
     public synchronized void purge() {
         example.ftdi_usb_purge_buffers(context);
     }
-    public synchronized void uart() {
+    public synchronized void uart() { uart(mask, bits); }
+    public synchronized void uart(int mask, int bits) {
         example.ftdi_set_bitmode(context, (short)((mask << 4) | bits), (short)0x20);
         //example.ftdi_setflowctrl(context, (1 << 8));
     }
