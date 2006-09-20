@@ -18,7 +18,11 @@ public class FtdiUart {
     }
 
     public synchronized int readPins() {
-        flush();
+        try {
+            getOutputStream().flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         byte[] b = new byte[1];
         example.ftdi_read_pins(context, b);
         return b[0];
