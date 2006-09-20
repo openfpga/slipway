@@ -5,7 +5,7 @@ import java.io.*;
 public class ChipImpl extends FtdiChip implements Chip {
 
     private int dmask =
-        //(1<<0) |
+        (1<<0) |
         (1<<1) |
         (1<<2) |
         //(1<<3) |
@@ -30,6 +30,7 @@ public class ChipImpl extends FtdiChip implements Chip {
             (1<<5) |
             (1<<6) |
             (1<<7);
+        avrrst(false);
 
         flush();
         //purge();
@@ -46,10 +47,15 @@ public class ChipImpl extends FtdiChip implements Chip {
         reset(false);
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
+        if (initErr()) throw new RuntimeException("INIT was still high after pulling RESET low");
+        //System.out.println("0 con() = " + con());
 
         reset(true);
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
+        if (!initErr()) throw new RuntimeException("INIT was still low after releasing RESET");
+        //System.out.println("1 con() = " + con());
+        con(false);
     }
 
     int porte = 0;
@@ -77,14 +83,13 @@ public class ChipImpl extends FtdiChip implements Chip {
     //         let it float upward from either mode.
     public void reset(boolean on) {
         bits = on ? (1<<1) : 0;
-        mask = ((1<<0) | (1<<1));
+        mask = (1<<1);
         uart();
         flush();
         if (on) {
-            mask = (1<<0);
-            uart();
-            flush();
-            try { Thread.sleep(100); } catch (Exception e) { }
+            //mask = 0;
+            //uart();
+            //flush();
             dbangmode(dmask);
             flush();
         }
@@ -95,16 +100,17 @@ public class ChipImpl extends FtdiChip implements Chip {
     public void data(boolean on)   { dbang(5, on); }
 
     public boolean initErr()       { flush(); return (readPins() & (1<<4))!=0; }
+
     public boolean con() {
         flush();
-        dmask &= ~(1<<0);
+        //dmask &= ~(1<<0);
         dbangmode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
     public void con(boolean on) {
         flush();
         dmask |= (1<<0);
-        dbangmode(dmask);
         dbang(0, on);
+        dbangmode(dmask);
     }
 }

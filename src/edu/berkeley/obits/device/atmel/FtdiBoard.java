@@ -39,9 +39,10 @@ public class FtdiBoard extends Board {
         //d.buffered(false);
         for(int i=0; i<1000; i++) {
         d.doReset();
-        d.config(0,10);
-        d.flush();
+        d.config(0,3);
         d.con();
+        d.config(0,7);
+        d.flush();
         //d.flush();
         d.config(Integer.parseInt("10110111", 2), 8);
         d.config(0,1);
@@ -52,9 +53,10 @@ public class FtdiBoard extends Board {
 
         d.doReset();
         try { Thread.sleep(100); } catch (Exception e) { }
-        d.config(0,9);
-        d.flush();
+        d.config(0,3);
         d.con();
+        d.config(0,6);
+        d.flush();
         //d.flush();
         d.config(Integer.parseInt("10110111", 2), 8);
         d.config(0, 2);
@@ -65,9 +67,10 @@ public class FtdiBoard extends Board {
 
         d.doReset();
         try { Thread.sleep(100); } catch (Exception e) { }
-        d.config(0,10);
-        d.flush();
+        d.config(0,3);
         d.con();
+        d.config(0,7);
+        d.flush();
         //d.flush();
         d.config(Integer.parseInt("11110111", 2), 8);
         d.config(0, 1);
