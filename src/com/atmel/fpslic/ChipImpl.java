@@ -15,8 +15,14 @@ public class ChipImpl extends FtdiUart implements Chip {
         (1<<7);
 
     public ChipImpl() {
-        super(0x6666, 0x3133);
+        super(0x6666, 0x3133, 1500 * 1000);
         doReset();
+    }
+
+    public void flush() {
+        try {
+            getOutputStream().flush();
+        } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     public void doReset() {

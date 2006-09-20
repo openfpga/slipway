@@ -3,16 +3,16 @@ import java.io.*;
 
 public class FtdiUart {
 
-    protected SWIGTYPE_p_ftdi_context context = example.new_ftdi_context();
+    private SWIGTYPE_p_ftdi_context context = example.new_ftdi_context();
 
     public OutputStream getOutputStream() { return out; }
     public InputStream  getInputStream() { return in; }
 
-    public FtdiUart(int vendor, int product) {
+    public FtdiUart(int vendor, int product, int baud) {
         example.ftdi_init(context);
         example.ftdi_usb_open(context, vendor, product);
         example.ftdi_usb_reset(context);
-        example.ftdi_set_baudrate(context, 1500 * 1000);
+        example.ftdi_set_baudrate(context, baud);
         example.ftdi_set_line_property(context, 8, 0, 0);
         purge();
     }
@@ -22,12 +22,6 @@ public class FtdiUart {
         byte[] b = new byte[1];
         example.ftdi_read_pins(context, b);
         return b[0];
-    }
-
-    public void flush() {
-        try {
-            getOutputStream().flush();
-        } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     public synchronized void purge() {
