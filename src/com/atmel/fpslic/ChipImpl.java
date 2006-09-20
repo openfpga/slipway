@@ -120,7 +120,9 @@ public class ChipImpl extends FtdiUart implements Chip {
         config(0,10);
         con();
         return new OutputStream() {
+                int bytes = 0;
                 public void write(int in) throws IOException {
+                    bytes++;
                     for(int i=7; i>=0; i--) {
                         config((((in & 0xff) & (1<<i))!=0)?1:0, 1);
                     }
@@ -131,6 +133,23 @@ public class ChipImpl extends FtdiUart implements Chip {
                 }
                 public void flush() throws IOException {
                     ChipImpl.this.flush();
+                    rcon();
+                }
+                public void close() throws IOException {
+                    flush();
+                    if (!initErr())
+                        throw new RuntimeException("initialization failed at " + bytes);
+                    for(int i=0; i<100; i++) {
+                        flush();
+                        if (!initErr())
+                            throw new RuntimeException("initialization failed at " + bytes);
+                        try { Thread.sleep(20); } catch (Exception e) { }
+                        config(0,1);
+                    }
+                    avrrst(false);
+                    try { Thread.sleep(100); } catch (Exception e) { }
+                    purge();
+                    uart_and_cbus_mode(1<<1, 1<<1);
                 }
             };
     }

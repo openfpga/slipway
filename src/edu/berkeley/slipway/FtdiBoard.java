@@ -56,37 +56,9 @@ public class FtdiBoard extends Board {
             if ((bytes % 1000)==0) {
                 os.flush();
                 System.out.print("wrote " + bytes + " bytes\r");
-                d.rcon();
             }
         }
-
-        d.flush();
-        if (!d.initErr())
-            throw new RuntimeException("initialization failed at " + bytes);
-
-        for(int i=0; i<100; i++) {
-            d.flush();
-            if (!d.initErr())
-                throw new RuntimeException("initialization failed at " + bytes);
-            try { Thread.sleep(20); } catch (Exception e) { }
-            d.config(0,1);
-        }
-
-        System.out.println();
-        System.out.println("avr reset => false");
-        d.avrrst(false);
-        try { Thread.sleep(500); } catch (Exception e) { }
-        //System.out.println("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8));
-
-        //((Chip)d).avr();
-
-        //System.out.println("avr reset => true");
-        ((ChipImpl)chip).purge();
-        ((ChipImpl)chip).uart_and_cbus_mode(1<<1, 1<<1);
-        
-        //d.avrrst(true);
-        //try { Thread.sleep(500); } catch (Exception e) { }
-        //System.out.println("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8));
+        os.close();
     }
 
     public static String pad(String s, int i) {
