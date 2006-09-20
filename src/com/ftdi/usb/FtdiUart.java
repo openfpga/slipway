@@ -9,9 +9,9 @@ public class FtdiUart {
     public OutputStream getOutputStream() { return out; }
     public InputStream  getInputStream() { return in; }
 
-    public FtdiUart() {
+    public FtdiUart(int vendor, int product) {
         example.ftdi_init(context);
-        example.ftdi_usb_open(context, 0x6666, 0x3133);
+        example.ftdi_usb_open(context, vendor, product);
         example.ftdi_usb_reset(context);
         //example.ftdi_set_baudrate(context, 750 * 1000);
         example.ftdi_set_baudrate(context, 1500 * 1000);

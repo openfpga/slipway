@@ -15,7 +15,7 @@ public class ChipImpl extends FtdiUart implements Chip {
         (1<<7);
 
     public ChipImpl() {
-        super();
+        super(0x6666, 0x3133);
         doReset();
     }
 
