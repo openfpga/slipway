@@ -22,16 +22,16 @@ avrdrone.hex: src/edu/berkeley/obits/device/atmel/AvrDrone.c
 demo: ftdi.jar
 	java -cp ftdi.jar edu.berkeley.obits.device.atmel.Demo
 
-src/com/ftdi/usb/ftdi_wrap.c: src/com/ftdi/usb/ftdi.i
-	mkdir -p build
+build/src/com/ftdi/usb/FtdiUart.c: src/com/ftdi/usb/FtdiUart.i
+	mkdir -p `dirname $@`
 	mkdir -p src/com/ftdi/usb
-	swig -noproxy -package com.ftdi.usb -outdir src/com/ftdi/usb -java $<
+	swig -noproxy -package com.ftdi.usb -outdir `dirname $@` -java $<
 
-build/libFtdi.jnilib: src/com/ftdi/usb/ftdi_wrap.c
+build/libFtdi.jnilib: build/src/com/ftdi/usb/FtdiUart.c
 	gcc -I. -I/System/Library/Frameworks/JavaVM.framework/Versions/1.5.0/Headers/ \
 		$< -o $@ -lftdi -dynamiclib -framework JavaVM
 
-javafiles := $(shell find src -name \*.java)
+javafiles := $(shell find src build/src -name \*.java)
 
 ftdi.jar: $(javafiles) build/libFtdi.jnilib
 	mkdir -p build
