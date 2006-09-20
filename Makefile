@@ -16,7 +16,7 @@ build/src/com/ftdi/usb/FtdiUart.c: src/com/ftdi/usb/FtdiUart.i
 	mkdir -p src/com/ftdi/usb
 	swig -module FtdiUartNative -noproxy -package com.ftdi.usb -o $@ -outdir `dirname $@` -java $<
 
-build/$(jnilib): build/src/com/ftdi/usb/FtdiUart.c
+build/$(jnilib): build/src/com/ftdi/usb/FtdiUart.c upstream/libusb/.built
 	gcc -I. -Iupstream/libftdi -Iupstream/usb \
 		-I$(JAVA_HOME)/include \
 		$< \
