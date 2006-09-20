@@ -37,7 +37,7 @@ public class FtdiBoard extends Board {
         Chip d = chip;
 
         //d.buffered(false);
-        for(int i=0; i<1000; i++) {
+
         d.doReset();
         d.config(0,3);
         d.con();
@@ -78,7 +78,7 @@ public class FtdiBoard extends Board {
         try { Thread.sleep(100); } catch (Exception e) { }
         pin = d.initErr();
         System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
-        }
+
         d.doReset();
 
         d.config(0,10);
