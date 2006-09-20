@@ -3,7 +3,6 @@ import java.io.*;
 
 public class FtdiUart {
 
-    protected int bits = 0;
     protected SWIGTYPE_p_ftdi_context context = example.new_ftdi_context();
 
     public OutputStream getOutputStream() { return out; }
@@ -31,19 +30,11 @@ public class FtdiUart {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
-    protected static int mask =
-        (1<<0) |
-        (1<<1)// |
-        //(1<<2) |
-        //(1<<3)
-        ;
-
     public synchronized void purge() {
         example.ftdi_usb_purge_buffers(context);
     }
-    public synchronized void uart(int mask, int bits) {
-        example.ftdi_set_bitmode(context, (short)((mask << 4) | bits), (short)0x20);
-        //example.ftdi_setflowctrl(context, (1 << 8));
+    public synchronized void uart(int cbus_mask, int cbus_bits) {
+        example.ftdi_set_bitmode(context, (short)((cbus_mask << 4) | cbus_bits), (short)0x20);
     }
     public synchronized void dbangmode(int dmask) {
         example.ftdi_set_bitmode(context, (short)dmask, (short)0x01);
