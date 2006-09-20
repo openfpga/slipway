@@ -42,7 +42,7 @@ upstream/libusb:
 
 upstream/libusb/.built: upstream/libusb
 	cd upstream/libusb; \
-		./configure &&
+		./configure && \
 		make
 	touch $@
 
