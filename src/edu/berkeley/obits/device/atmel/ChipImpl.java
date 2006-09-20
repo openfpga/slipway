@@ -52,6 +52,7 @@ dmask =
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
         
+        purge();
         dbangmode(dmask);
         flush();
     }
