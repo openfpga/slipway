@@ -1,5 +1,6 @@
 package edu.berkeley.obits.device.atmel;
 
+import edu.berkeley.slipway.*;
 import edu.berkeley.obits.*;
 import org.ibex.util.Log;
 import java.io.*;

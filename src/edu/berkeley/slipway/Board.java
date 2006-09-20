@@ -1,4 +1,4 @@
-package edu.berkeley.obits.device.atmel;
+package edu.berkeley.slipway;
 
 import edu.berkeley.obits.*;
 import org.ibex.util.Log;

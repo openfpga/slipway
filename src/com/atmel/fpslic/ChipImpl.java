@@ -1,4 +1,4 @@
-package edu.berkeley.obits.device.atmel;
+package com.atmel.fpslic;
 import com.ftdi.usb.*;
 import java.io.*;
 
@@ -56,15 +56,6 @@ public class ChipImpl extends FtdiUart implements Chip {
         if (!initErr()) throw new RuntimeException("INIT was still low after releasing RESET");
         //System.out.println("1 con() = " + con());
         con(false);
-    }
-
-    int porte = 0;
-    public void porte(int pin, boolean b) {
-        porte = (~(1<<pin)) | (b ? (1<<pin) : 0);
-        if (pin==4) {
-            dbang(2, b);
-            flush();
-        }
     }
 
     public void config(boolean bit) { config(bit?1:0, 1); }

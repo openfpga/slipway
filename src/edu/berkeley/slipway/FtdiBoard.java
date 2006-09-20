@@ -1,5 +1,6 @@
-package edu.berkeley.obits.device.atmel;
+package edu.berkeley.slipway;
 
+import com.atmel.fpslic.*;
 import edu.berkeley.obits.*;
 import org.ibex.util.Log;
 import java.io.*;

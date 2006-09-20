@@ -1,5 +1,6 @@
 package edu.berkeley.obits;
 
+import edu.berkeley.slipway.*;
 import static edu.berkeley.obits.device.atmel.AtmelDevice.Constants.*;
 import static edu.berkeley.obits.device.atmel.AtmelDevice.Util.*;
 import edu.berkeley.obits.device.atmel.*;
