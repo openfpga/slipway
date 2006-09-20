@@ -20,6 +20,7 @@ public class FtdiUart {
         FtdiUartNative.ftdi_usb_reset(context);
         FtdiUartNative.ftdi_set_baudrate(context, baud);
         FtdiUartNative.ftdi_set_line_property(context, 8, 0, 0);
+        FtdiUartNative.ftdi_setflowctrl(context, (1<<8));
         purge();
     }
 
@@ -39,6 +40,7 @@ public class FtdiUart {
      */
     public synchronized void uart_and_cbus_mode(int cbus_mask, int cbus_bits) throws IOException {
         FtdiUartNative.ftdi_set_bitmode(context, (short)((cbus_mask << 4) | cbus_bits), (short)0x20);
+        FtdiUartNative.ftdi_setflowctrl(context, (1<<8));
     }
 
     /**

@@ -584,6 +584,7 @@ int ftdi_write_data(struct ftdi_context *ftdi, unsigned char *buf, int size)
             write_size = size-offset;
 
         ret = usb_bulk_write(ftdi->usb_dev, ftdi->in_ep, buf+offset, write_size, ftdi->usb_write_timeout);
+        printf("write => %d\n", ret);
         if (ret < 0)
             ftdi_error_return(ret, "usb bulk write failed");
 

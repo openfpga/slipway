@@ -42,13 +42,11 @@ inline void portd(int bit, int on) {
 long int numread = 0;
 inline void cts(int c) {
   numread++;
-  if (c /*&& numread < 10000*/) {
-    PORTE |= (1 << 4);
-    PORTE |= (1 << 2);
+  if (c) {
+    PORTE &= ~(1 << 7);
     portd(0, 0);
   } else {
-    PORTE &= ~(1 << 4);
-    PORTE &= ~(1 << 2);
+    PORTE |= (1 << 7);
     portd(0, 1);
   }
 }
@@ -92,6 +90,8 @@ inline char recv() {
   ret = read_buf[read_buf_head];
   read_buf_head = inc(read_buf_head);
   if (!read_nearlyFull()) cts(1);
+  if (PORTE & (1<<3)) PORTE &= ~(1<<3);
+  else                PORTE |=  (1<<3);
   return ret;
 }
 
@@ -113,8 +113,6 @@ void send(char c) {
   if (PORTE & (1<<2)) PORTE &= ~(1<<2);
   else                PORTE |=  (1<<2);
   UCSR0B |= (1 << UDRIE0);
-  if (PORTE & (1<<3)) PORTE &= ~(1<<3);
-  else                PORTE |=  (1<<3);
 }
 
 
@@ -195,7 +193,7 @@ ISR(SIG_INTERRUPT0) {   // use interrupt1 since interrupt0 is sent by the watchd
   //PORTE |=  (1<<0);
   sei();
 }
-void die() { cli(); cts(0); _delay_ms(2000); while(1) { portd(2,0); portd(2,1); } }
+void die() { cli(); PORTE|=(1<<5); _delay_ms(2000); while(1) { portd(2,0); portd(2,1); } }
 
 ISR(SIG_UART0_RECV) {
 
@@ -218,7 +216,7 @@ inline int hex(char c) {
 }
 
 int main() {
-  DDRE = (1<<7) | (1<<5) | (1<<4) | (1<<3) | (1<<2);
+  DDRE = (1<<7) | (1<<5) | (1<<3) | (1<<2);
   PORTE = 0;
 
   init();
@@ -253,7 +251,6 @@ int main() {
   */
 
   PORTE |=  (1<<3);
-  PORTE |=  (1<<5);
   recv();
   send('O');
   send('B');
