@@ -13,7 +13,7 @@ public class FtdiBoard extends Board {
         System.load(new File("build/"+System.mapLibraryName("FtdiUartNative")).getAbsolutePath());
     }
 
-    private final ChipImpl chip;
+    private final Chip chip;
     private final InputStream in;
     private final OutputStream out;
 
@@ -37,51 +37,11 @@ public class FtdiBoard extends Board {
     }
 
     public void boot(Reader r) throws Exception {
-        boolean pin;
         Chip d = chip;
 
         //d.buffered(false);
 
-        d.doReset();
-        d.config(0,3);
-        d.con();
-        d.config(0,7);
-        d.flush();
-        //d.flush();
-        d.config(Integer.parseInt("10110111", 2), 8);
-        d.config(0,1);
-        d.flush();
-        try { Thread.sleep(100); } catch (Exception e) { }
-        pin = d.initErr();
-        System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
-
-        d.doReset();
-        try { Thread.sleep(100); } catch (Exception e) { }
-        d.config(0,3);
-        d.con();
-        d.config(0,6);
-        d.flush();
-        //d.flush();
-        d.config(Integer.parseInt("10110111", 2), 8);
-        d.config(0, 2);
-        d.flush();
-        try { Thread.sleep(100); } catch (Exception e) { }
-        pin = d.initErr();
-        System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
-
-        d.doReset();
-        try { Thread.sleep(100); } catch (Exception e) { }
-        d.config(0,3);
-        d.con();
-        d.config(0,7);
-        d.flush();
-        //d.flush();
-        d.config(Integer.parseInt("11110111", 2), 8);
-        d.config(0, 1);
-        d.flush();
-        try { Thread.sleep(100); } catch (Exception e) { }
-        pin = d.initErr();
-        System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
+        d.selfTest();
 
         d.doReset();
 
@@ -134,11 +94,11 @@ public class FtdiBoard extends Board {
         try { Thread.sleep(500); } catch (Exception e) { }
         //System.out.println("cts="+""+"  pins=" + pad(Integer.toString(d.readPins()&0xff,2),8));
 
-        //((ChipImpl)d).avr();
+        //((Chip)d).avr();
 
         //System.out.println("avr reset => true");
-        chip.purge();
-        chip.uart_and_cbus_mode(1<<1, 1<<1);
+        ((ChipImpl)chip).purge();
+        ((ChipImpl)chip).uart_and_cbus_mode(1<<1, 1<<1);
         
         //d.avrrst(true);
         //try { Thread.sleep(500); } catch (Exception e) { }
@@ -149,6 +109,4 @@ public class FtdiBoard extends Board {
         if (s.length() >= i) return s;
         return "0"+pad(s, i-1);
     }
-    public static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
-    public static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
 }

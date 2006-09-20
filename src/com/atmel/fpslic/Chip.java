@@ -17,6 +17,9 @@ public interface Chip {
     public boolean rcon() throws IOException;
 
     //remove
-    public void flush() throws IOException;
-    public int readPins() throws IOException;
+    public void    flush() throws IOException;
+    public InputStream getInputStream();
+    public OutputStream getOutputStream();
+    public void selfTest() throws Exception;
+
 }

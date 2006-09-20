@@ -19,11 +19,7 @@ public class ChipImpl extends FtdiUart implements Chip {
         doReset();
     }
 
-    public void flush() throws IOException {
-        try {
-            getOutputStream().flush();
-        } catch (Exception e) { throw new RuntimeException(e); }
-    }
+    public void flush() throws IOException { getOutputStream().flush(); }
 
     protected int dbits = 0;
     protected synchronized void dbang(int bit, boolean val) throws IOException {
@@ -62,13 +58,12 @@ public class ChipImpl extends FtdiUart implements Chip {
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
         if (initErr()) throw new RuntimeException("INIT was still high after pulling RESET low");
-        //System.out.println("0 con() = " + con());
 
         reset(true);
         flush();
         try { Thread.sleep(500); } catch (Exception e) { }
         if (!initErr()) throw new RuntimeException("INIT was still low after releasing RESET");
-        //System.out.println("1 con() = " + con());
+
         con(false);
     }
 
@@ -118,5 +113,52 @@ public class ChipImpl extends FtdiUart implements Chip {
         dmask |= (1<<0);
         dbang(0, on);
         dbus_mode(dmask);
+    }
+
+    public static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
+    public static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
+    public void selfTest() throws Exception {
+        ChipImpl d = this;
+        boolean pin;
+        d.doReset();
+        d.config(0,3);
+        d.con();
+        d.config(0,7);
+        d.flush();
+        //d.flush();
+        d.config(Integer.parseInt("10110111", 2), 8);
+        d.config(0,1);
+        d.flush();
+        try { Thread.sleep(100); } catch (Exception e) { }
+        pin = d.initErr();
+        System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
+
+        d.doReset();
+        try { Thread.sleep(100); } catch (Exception e) { }
+        d.config(0,3);
+        d.con();
+        d.config(0,6);
+        d.flush();
+        //d.flush();
+        d.config(Integer.parseInt("10110111", 2), 8);
+        d.config(0, 2);
+        d.flush();
+        try { Thread.sleep(100); } catch (Exception e) { }
+        pin = d.initErr();
+        System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
+
+        d.doReset();
+        try { Thread.sleep(100); } catch (Exception e) { }
+        d.config(0,3);
+        d.con();
+        d.config(0,7);
+        d.flush();
+        //d.flush();
+        d.config(Integer.parseInt("11110111", 2), 8);
+        d.config(0, 1);
+        d.flush();
+        try { Thread.sleep(100); } catch (Exception e) { }
+        pin = d.initErr();
+        System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
     }
 }
