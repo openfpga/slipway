@@ -13,7 +13,7 @@ public class FtdiBoard extends Board {
         System.load(new File("build/"+System.mapLibraryName("FtdiUartNative")).getAbsolutePath());
     }
 
-    private final Chip chip;
+    private final FpslicRaw chip;
     private final InputStream in;
     private final OutputStream out;
 
@@ -21,7 +21,7 @@ public class FtdiBoard extends Board {
     public OutputStream getOutputStream() { return out; }
 
     public FtdiBoard() throws Exception {
-        chip = new ChipImpl();
+        chip = new FpslicRawUsb();
         String bstFile = this.getClass().getName();
         bstFile = bstFile.substring(0, bstFile.lastIndexOf('.'));
         bstFile = bstFile.replace('.', '/')+"/slipway_drone.bst";
@@ -33,16 +33,14 @@ public class FtdiBoard extends Board {
     }
 
     public void reset() throws IOException {
-        chip.doReset();
+        chip.reset();
     }
 
     public void boot(Reader r) throws Exception {
-        Chip d = chip;
 
-        d.selfTest();
+        chip.selfTest();
 
-        OutputStream os = d.getConfigStream();
-
+        OutputStream os = chip.getConfigStream();
         BufferedReader br = new BufferedReader(r);
         br.readLine();
 
@@ -50,9 +48,8 @@ public class FtdiBoard extends Board {
         while(true) {
             String s = br.readLine();
             if (s==null) break;
-            int in = Integer.parseInt(s, 2);
             bytes++;
-            os.write((byte)in);
+            os.write((byte)Integer.parseInt(s, 2));
             if ((bytes % 1000)==0) {
                 os.flush();
                 System.out.print("wrote " + bytes + " bytes\r");

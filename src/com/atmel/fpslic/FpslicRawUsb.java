@@ -2,7 +2,7 @@ package com.atmel.fpslic;
 import com.ftdi.usb.*;
 import java.io.*;
 
-public class ChipImpl extends FtdiUart implements Chip {
+public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
 
     private int dmask =
         (1<<0) |
@@ -14,12 +14,12 @@ public class ChipImpl extends FtdiUart implements Chip {
         (1<<6) |
         (1<<7);
 
-    public ChipImpl() throws IOException {
+    public FpslicRawUsb() throws IOException {
         super(0x6666, 0x3133, 1500 * 1000);
-        doReset();
+        reset();
     }
 
-    public void flush() throws IOException { getOutputStream().flush(); }
+    void flush() throws IOException { getOutputStream().flush(); }
 
     protected int dbits = 0;
     protected synchronized void dbang(int bit, boolean val) throws IOException {
@@ -29,7 +29,7 @@ public class ChipImpl extends FtdiUart implements Chip {
         } catch (IOException e) { throw new RuntimeException(e); }
     }
 
-    public void doReset() throws IOException {
+    public void reset() throws IOException {
 
         dmask =
             (1<<0) |
@@ -67,9 +67,9 @@ public class ChipImpl extends FtdiUart implements Chip {
         con(false);
     }
 
-    public void config(boolean bit) throws IOException { config(bit?1:0, 1); }
-    public void config(int dat) throws IOException { config(dat, 8); }
-    public void config(int dat, int numbits) throws IOException {
+    void config(boolean bit) throws IOException { config(bit?1:0, 1); }
+    void config(int dat) throws IOException { config(dat, 8); }
+    void config(int dat, int numbits) throws IOException {
         for(int i=(numbits-1); i>=0; i--) {
             boolean bit = (dat & (1<<i)) != 0;
             data(bit);
@@ -81,7 +81,7 @@ public class ChipImpl extends FtdiUart implements Chip {
     // tricky: RESET has a weak pull-up, and is wired to a CBUS line.  So,
     //         we can pull it down (assert reset) from uart-mode, or we can
     //         let it float upward from either mode.
-    public void reset(boolean on) throws IOException {
+    void reset(boolean on) throws IOException {
         uart_and_cbus_mode(1<<1, on ? (1<<1) : 0);
         flush();
         if (on) {
@@ -90,25 +90,25 @@ public class ChipImpl extends FtdiUart implements Chip {
         }
     }
 
-    public void avrrst(boolean on) throws IOException { dbang(7, on); }
-    public void clk(boolean on)    throws IOException { dbang(6, on); }
-    public void data(boolean on)   throws IOException { dbang(5, on); }
+    void avrrst(boolean on) throws IOException { dbang(7, on); }
+    void clk(boolean on)    throws IOException { dbang(6, on); }
+    void data(boolean on)   throws IOException { dbang(5, on); }
 
-    public boolean initErr()       throws IOException { flush(); return (readPins() & (1<<4))!=0; }
+    boolean initErr()       throws IOException { flush(); return (readPins() & (1<<4))!=0; }
 
-    public boolean con() throws IOException {
+    boolean con() throws IOException {
         flush();
         //dmask &= ~(1<<0);
         dbus_mode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
-    public boolean rcon() throws IOException {
+    boolean rcon() throws IOException {
         flush();
         dmask &= ~(1<<0);
         dbus_mode(dmask);
         return (readPins() & (1<<0)) != 0;
     }
-    public void con(boolean on) throws IOException {
+    void con(boolean on) throws IOException {
         flush();
         dmask |= (1<<0);
         dbang(0, on);
@@ -116,7 +116,7 @@ public class ChipImpl extends FtdiUart implements Chip {
     }
 
     public OutputStream getConfigStream() throws IOException {
-        doReset();
+        reset();
         config(0,10);
         con();
         return new OutputStream() {
@@ -132,7 +132,7 @@ public class ChipImpl extends FtdiUart implements Chip {
                         write(b[i]);
                 }
                 public void flush() throws IOException {
-                    ChipImpl.this.flush();
+                    FpslicRawUsb.this.flush();
                     rcon();
                 }
                 public void close() throws IOException {
@@ -154,12 +154,12 @@ public class ChipImpl extends FtdiUart implements Chip {
             };
     }
 
-    public static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
-    public static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
+    static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
+    static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
     public void selfTest() throws Exception {
-        ChipImpl d = this;
+        FpslicRawUsb d = this;
         boolean pin;
-        d.doReset();
+        d.reset();
         d.config(0,3);
         d.con();
         d.config(0,7);
@@ -172,7 +172,7 @@ public class ChipImpl extends FtdiUart implements Chip {
         pin = d.initErr();
         System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
 
-        d.doReset();
+        d.reset();
         try { Thread.sleep(100); } catch (Exception e) { }
         d.config(0,3);
         d.con();
@@ -186,7 +186,7 @@ public class ChipImpl extends FtdiUart implements Chip {
         pin = d.initErr();
         System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
-        d.doReset();
+        d.reset();
         try { Thread.sleep(100); } catch (Exception e) { }
         d.config(0,3);
         d.con();
