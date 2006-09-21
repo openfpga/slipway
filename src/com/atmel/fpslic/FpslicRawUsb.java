@@ -124,13 +124,11 @@ public class FpslicRawUsb implements FpslicRaw {
         pin = initErr();
         System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
 
-        reset();
-        try { Thread.sleep(100); } catch (Exception e) { }
-        config(0,3);
+        getConfigStream();
+        config(0,1);
         con();
         config(0,6);
         flush();
-        // one too many
         config(Integer.parseInt("10110111", 2), 8);
         config(0, 2);
         flush();
@@ -138,8 +136,6 @@ public class FpslicRawUsb implements FpslicRaw {
         pin = initErr();
         System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
-        reset();
-        try { Thread.sleep(100); } catch (Exception e) { }
         getConfigStream();
         config(0,1);
         con();
