@@ -64,16 +64,16 @@ public class FpslicRawUsb implements FpslicRaw {
 
     public OutputStream getConfigStream() throws IOException {
         reset();
-        config(0,3);
-        con();
-        config(0,7);
+        config(0,2);
         flush();
         return new OutputStream() {
                 int bytes = 0;
                 int bits = 0;
                 public void write(int in) throws IOException {
                     for(int i=7; i>=0; i--) {
+                        bits++;
                         config((((in & 0xff) & (1<<i))!=0)?1:0, 1);
+                        if (bits==1) con();
                     }
                 }
                 public void write(byte[] b, int off, int len) throws IOException {
@@ -114,6 +114,9 @@ public class FpslicRawUsb implements FpslicRaw {
         boolean pin;
 
         getConfigStream();
+        config(0,1);
+        con();
+        config(0,7);
         config(Integer.parseInt("10110111", 2), 8);
         config(0,1);
         flush();
@@ -138,6 +141,9 @@ public class FpslicRawUsb implements FpslicRaw {
         reset();
         try { Thread.sleep(100); } catch (Exception e) { }
         getConfigStream();
+        config(0,1);
+        con();
+        config(0,7);
         config(Integer.parseInt("11110111", 2), 8);
         config(0, 1);
         flush();

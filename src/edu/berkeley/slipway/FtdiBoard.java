@@ -43,7 +43,6 @@ public class FtdiBoard extends Board {
 
         OutputStream os = chip.getConfigStream();
         BufferedReader br = new BufferedReader(r);
-        br.readLine();
 
         int bytes = 0;
         while(true) {
