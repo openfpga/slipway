@@ -40,25 +40,26 @@ public class FpslicRawUsb implements FpslicRaw {
         avrrst(false);
         clk(false);
         data(false);
-        con(false);
+
+        flush();
+        dmask |= (1<<0);
+        dbang(0, false);
+        ftdiuart.dbus_mode(dmask);
 
         reset(false);
-        flush();
         try { Thread.sleep(500); } catch (Exception e) { }
         if (initErr()) throw new RuntimeException("INIT was still high after pulling RESET low");
 
         reset(true);
-        flush();
         try { Thread.sleep(500); } catch (Exception e) { }
         if (!initErr()) throw new RuntimeException("INIT was still low after releasing RESET");
 
-        con(false);
+        config(0,2);
+        flush();
     }
 
     public OutputStream getConfigStream() throws IOException {
         reset();
-        config(0,2);
-        flush();
         return new OutputStream() {
                 int bytes = 0;
                 int bits = 0;
@@ -66,7 +67,6 @@ public class FpslicRawUsb implements FpslicRaw {
                     for(int i=7; i>=0; i--) {
                         bits++;
                         config((((in & 0xff) & (1<<i))!=0)?1:0, 1);
-                        if (bits==1) con();
                     }
                 }
                 public void write(byte[] b, int off, int len) throws IOException {
@@ -75,9 +75,9 @@ public class FpslicRawUsb implements FpslicRaw {
                 }
                 public void flush() throws IOException {
                     FpslicRawUsb.this.flush();
-                    //rcon();
                 }
                 public void close() throws IOException {
+                    rcon();
                     flush();
                     if (!initErr())
                         throw new RuntimeException("initialization failed at " + bytes);
@@ -99,17 +99,11 @@ public class FpslicRawUsb implements FpslicRaw {
     public OutputStream getOutputStream() { return ftdiuart.getOutputStream(); }
     public InputStream  getInputStream() { return ftdiuart.getInputStream(); }
 
-    private void preamble() throws IOException {
-        config(0,7);
-        flush();
-    }
     public void selfTest() throws Exception {
         boolean pin;
 
         getConfigStream();
-        config(0,1);
-        con();
-        config(0,7);
+        config(Integer.parseInt("00000000", 2), 8);
         config(Integer.parseInt("10110111", 2), 8);
         config(0,1);
         flush();
@@ -118,10 +112,7 @@ public class FpslicRawUsb implements FpslicRaw {
         System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
 
         getConfigStream();
-        config(0,1);
-        con();
-        config(0,6);
-        flush();
+        config(Integer.parseInt("0000000",  2), 7);
         config(Integer.parseInt("10110111", 2), 8);
         config(0, 2);
         flush();
@@ -130,9 +121,7 @@ public class FpslicRawUsb implements FpslicRaw {
         System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
         getConfigStream();
-        config(0,1);
-        con();
-        config(0,7);
+        config(Integer.parseInt("00000000", 2), 8);
         config(Integer.parseInt("11110111", 2), 8);
         config(0, 1);
         flush();
@@ -179,23 +168,8 @@ public class FpslicRawUsb implements FpslicRaw {
     private void data(boolean on)   throws IOException { dbang(5, on); }
     private boolean initErr()       throws IOException { flush(); return (ftdiuart.readPins() & (1<<4))!=0; }
 
-    private boolean con() throws IOException {
-        flush();
-        //dmask &= ~(1<<0);
-        ftdiuart.dbus_mode(dmask);
-        return (ftdiuart.readPins() & (1<<0)) != 0;
-    }
-
-    private boolean rcon() throws IOException {
-        flush();
+    private void rcon() throws IOException {
         dmask &= ~(1<<0);
-        ftdiuart.dbus_mode(dmask);
-        return (ftdiuart.readPins() & (1<<0)) != 0;
-    }
-    private void con(boolean on) throws IOException {
-        flush();
-        dmask |= (1<<0);
-        dbang(0, on);
         ftdiuart.dbus_mode(dmask);
     }
 
