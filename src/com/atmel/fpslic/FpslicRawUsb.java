@@ -77,7 +77,7 @@ public class FpslicRawUsb implements FpslicRaw {
                     FpslicRawUsb.this.flush();
                 }
                 public void close() throws IOException {
-                    rcon();
+
                     flush();
                     if (!initErr())
                         throw new RuntimeException("initialization failed at " + bytes);
@@ -88,6 +88,12 @@ public class FpslicRawUsb implements FpslicRaw {
                         try { Thread.sleep(20); } catch (Exception e) { }
                         config(0,1);
                     }
+
+                    // turn off the CON pin we've been pulling low...
+                    dmask &= ~(1<<0);
+                    ftdiuart.dbus_mode(dmask);
+
+
                     avrrst(false);
                     try { Thread.sleep(100); } catch (Exception e) { }
                     ftdiuart.purge();
@@ -167,11 +173,6 @@ public class FpslicRawUsb implements FpslicRaw {
     private void clk(boolean on)    throws IOException { dbang(6, on); }
     private void data(boolean on)   throws IOException { dbang(5, on); }
     private boolean initErr()       throws IOException { flush(); return (ftdiuart.readPins() & (1<<4))!=0; }
-
-    private void rcon() throws IOException {
-        dmask &= ~(1<<0);
-        ftdiuart.dbus_mode(dmask);
-    }
 
     private static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
     private static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
