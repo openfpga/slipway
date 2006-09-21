@@ -2,7 +2,12 @@ package com.atmel.fpslic;
 import com.ftdi.usb.*;
 import java.io.*;
 
-public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
+/**
+ * Exposes the FpslicRaw interface of an FPSLIC wired to an FTDI USB-UART.
+ */
+public class FpslicRawUsb implements FpslicRaw {
+
+    private FtdiUart ftdiuart;
 
     private int dmask =
         (1<<0) |
@@ -15,18 +20,19 @@ public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
         (1<<7);
 
     public FpslicRawUsb() throws IOException {
-        super(0x6666, 0x3133, 1500 * 1000);
+        this(new FtdiUart(0x6666, 0x3133, 1500 * 1000));
+    }
+    public FpslicRawUsb(FtdiUart ftdiuart) throws IOException {
+        this.ftdiuart = ftdiuart;
         reset();
     }
 
-    void flush() throws IOException { getOutputStream().flush(); }
+    void flush() throws IOException { ftdiuart.getOutputStream().flush(); }
 
     protected int dbits = 0;
     protected synchronized void dbang(int bit, boolean val) throws IOException {
         dbits = val ? (dbits | (1 << bit)) : (dbits & (~(1 << bit)));
-        try {
-            getOutputStream().write((byte)dbits);
-        } catch (IOException e) { throw new RuntimeException(e); }
+        ftdiuart.getOutputStream().write((byte)dbits);
     }
 
     public void reset() throws IOException {
@@ -45,7 +51,7 @@ public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
         flush();
         //purge();
 
-        dbus_mode(dmask);
+        ftdiuart.dbus_mode(dmask);
         flush();
 
         clk(false);
@@ -82,10 +88,10 @@ public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
     //         we can pull it down (assert reset) from uart-mode, or we can
     //         let it float upward from either mode.
     void reset(boolean on) throws IOException {
-        uart_and_cbus_mode(1<<1, on ? (1<<1) : 0);
+        ftdiuart.uart_and_cbus_mode(1<<1, on ? (1<<1) : 0);
         flush();
         if (on) {
-            dbus_mode(dmask);
+            ftdiuart.dbus_mode(dmask);
             flush();
         }
     }
@@ -94,25 +100,25 @@ public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
     void clk(boolean on)    throws IOException { dbang(6, on); }
     void data(boolean on)   throws IOException { dbang(5, on); }
 
-    boolean initErr()       throws IOException { flush(); return (readPins() & (1<<4))!=0; }
+    boolean initErr()       throws IOException { flush(); return (ftdiuart.readPins() & (1<<4))!=0; }
 
     boolean con() throws IOException {
         flush();
         //dmask &= ~(1<<0);
-        dbus_mode(dmask);
-        return (readPins() & (1<<0)) != 0;
+        ftdiuart.dbus_mode(dmask);
+        return (ftdiuart.readPins() & (1<<0)) != 0;
     }
     boolean rcon() throws IOException {
         flush();
         dmask &= ~(1<<0);
-        dbus_mode(dmask);
-        return (readPins() & (1<<0)) != 0;
+        ftdiuart.dbus_mode(dmask);
+        return (ftdiuart.readPins() & (1<<0)) != 0;
     }
     void con(boolean on) throws IOException {
         flush();
         dmask |= (1<<0);
         dbang(0, on);
-        dbus_mode(dmask);
+        ftdiuart.dbus_mode(dmask);
     }
 
     public OutputStream getConfigStream() throws IOException {
@@ -148,56 +154,59 @@ public class FpslicRawUsb extends FtdiUart implements FpslicRaw {
                     }
                     avrrst(false);
                     try { Thread.sleep(100); } catch (Exception e) { }
-                    purge();
-                    uart_and_cbus_mode(1<<1, 1<<1);
+                    ftdiuart.purge();
+                    ftdiuart.uart_and_cbus_mode(1<<1, 1<<1);
                 }
             };
     }
 
+    public OutputStream getOutputStream() { return ftdiuart.getOutputStream(); }
+    public InputStream  getInputStream() { return ftdiuart.getInputStream(); }
+
+
     static String red(Object o) { return "\033[31m"+o+"\033[0m"; }
     static String green(Object o) { return "\033[32m"+o+"\033[0m"; }
     public void selfTest() throws Exception {
-        FpslicRawUsb d = this;
         boolean pin;
-        d.reset();
-        d.config(0,3);
-        d.con();
-        d.config(0,7);
-        d.flush();
-        //d.flush();
-        d.config(Integer.parseInt("10110111", 2), 8);
-        d.config(0,1);
-        d.flush();
+        reset();
+        config(0,3);
+        con();
+        config(0,7);
+        flush();
+
+        config(Integer.parseInt("10110111", 2), 8);
+        config(0,1);
+        flush();
         try { Thread.sleep(100); } catch (Exception e) { }
-        pin = d.initErr();
+        pin = initErr();
         System.out.println("good preamble   => " + pin + " " + (pin ? green("good") : red("BAD")));
 
-        d.reset();
+        reset();
         try { Thread.sleep(100); } catch (Exception e) { }
-        d.config(0,3);
-        d.con();
-        d.config(0,6);
-        d.flush();
-        //d.flush();
-        d.config(Integer.parseInt("10110111", 2), 8);
-        d.config(0, 2);
-        d.flush();
+        config(0,3);
+        con();
+        config(0,6);
+        flush();
+        //flush();
+        config(Integer.parseInt("10110111", 2), 8);
+        config(0, 2);
+        flush();
         try { Thread.sleep(100); } catch (Exception e) { }
-        pin = d.initErr();
+        pin = initErr();
         System.out.println("bad preamble #2 => " + pin + " " + (pin ? red("BAD") : green("good")));
 
-        d.reset();
+        reset();
         try { Thread.sleep(100); } catch (Exception e) { }
-        d.config(0,3);
-        d.con();
-        d.config(0,7);
-        d.flush();
-        //d.flush();
-        d.config(Integer.parseInt("11110111", 2), 8);
-        d.config(0, 1);
-        d.flush();
+        config(0,3);
+        con();
+        config(0,7);
+        flush();
+        //flush();
+        config(Integer.parseInt("11110111", 2), 8);
+        config(0, 1);
+        flush();
         try { Thread.sleep(100); } catch (Exception e) { }
-        pin = d.initErr();
+        pin = initErr();
         System.out.println("bad preamble #1 => " + pin + " " + (pin ? red("BAD") : green("good")));
     }
 }
