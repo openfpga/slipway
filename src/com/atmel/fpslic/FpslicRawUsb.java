@@ -75,7 +75,7 @@ public class FpslicRawUsb implements FpslicRaw {
                 }
                 public void flush() throws IOException {
                     FpslicRawUsb.this.flush();
-                    rcon();
+                    //rcon();
                 }
                 public void close() throws IOException {
                     flush();
