@@ -1,5 +1,6 @@
 package edu.berkeley.slipway;
 
+import com.ftdi.usb.*;
 import com.atmel.fpslic.*;
 import edu.berkeley.obits.*;
 import org.ibex.util.Log;
@@ -21,7 +22,7 @@ public class FtdiBoard extends Board {
     public OutputStream getOutputStream() { return out; }
 
     public FtdiBoard() throws Exception {
-        chip = new FpslicRawUsb();
+        chip = new FpslicRawUsb(new FtdiUart(0x6666, 0x3133, 1500 * 1000));
         String bstFile = this.getClass().getName();
         bstFile = bstFile.substring(0, bstFile.lastIndexOf('.'));
         bstFile = bstFile.replace('.', '/')+"/slipway_drone.bst";
