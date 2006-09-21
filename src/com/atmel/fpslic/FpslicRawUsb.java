@@ -35,19 +35,12 @@ public class FpslicRawUsb implements FpslicRaw {
             (1<<5) |
             (1<<6) |
             (1<<7);
-        avrrst(false);
-
-        flush();
-        //purge();
-
         ftdiuart.dbus_mode(dmask);
-        flush();
 
+        avrrst(false);
         clk(false);
         data(false);
         con(false);
-        flush();
-        //try { Thread.sleep(500); } catch (Exception e) { }
 
         reset(false);
         flush();
@@ -165,7 +158,7 @@ public class FpslicRawUsb implements FpslicRaw {
             boolean bit = (dat & (1<<i)) != 0;
             data(bit);
             clk(true);
-            clk(false);
+            dbits &= ~(1<<6);  // let the clock fall with the next data bit, whenever it goes out
         }
     }
 

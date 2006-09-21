@@ -53,6 +53,10 @@ public class FtdiUart {
         FtdiUartNative.ftdi_set_bitmode(context, (short)dbus_mask, (short)0x01);
     }
 
+    public synchronized void setBitRate(int bitRate) throws IOException {
+        FtdiUartNative.ftdi_set_baudrate(context, bitRate);
+    }
+
     /** returns the instantaneous value present on the DBUS pins */
     public synchronized int readPins() throws IOException {
         getOutputStream().flush();
