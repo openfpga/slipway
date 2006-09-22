@@ -8,8 +8,8 @@ import java.io.*;
  */
 public interface FpslicRaw {
 
-    public InputStream  getInputStream();
-    public OutputStream getOutputStream();
+    public InputStream  getInputStream() throws IOException;
+    public OutputStream getOutputStream() throws IOException;
     public OutputStream getConfigStream() throws IOException;
     public void         reset() throws IOException;
     public void         selfTest() throws Exception;
