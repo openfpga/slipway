@@ -1,1 +1,4 @@
 - eeprom flash/restore
+
+- flow control from FPGA->USB
+- interrupt-driven transmit on uart

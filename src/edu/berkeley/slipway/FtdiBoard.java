@@ -32,6 +32,7 @@ public class FtdiBoard extends Fpslic implements Board {
         out = new DataOutputStream(chip.getOutputStream());
         for(int i=0; i<255; i++) out.write(0);
         out.flush();
+        init();
     }
 
     public void reset() throws IOException {
@@ -88,6 +89,20 @@ public class FtdiBoard extends Fpslic implements Board {
             }
         }
 
+        // FIXME: what if init() is called twice?
+        new Thread() {
+            public void run() {
+                while(true) {
+                    try {
+                        byte b = in.readByte();
+                        ByteCallback bc = (ByteCallback)callbacks.remove(0);
+                        bc.call(b);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }.start();
     }
 
     public synchronized void scanFPGA(boolean on) throws IOException {
@@ -102,10 +117,6 @@ public class FtdiBoard extends Fpslic implements Board {
     public static int retval = 0;
     public synchronized int readCount() {
         try {
-            if (reader != null) {
-                reader.start();
-                reader = null;
-            }
             ByteCallback bc = new ByteCallback() {
                     public synchronized void call(byte b) throws Exception {
                         retval =
@@ -132,39 +143,16 @@ public class FtdiBoard extends Fpslic implements Board {
 
     private Vector callbacks = new Vector();
 
-    private Thread reader = new Thread() {
-            public void run() {
-                System.out.println("*** reader thread begun");
-                while(true) {
-                    try {
-                        byte b = in.readByte();
-                        ByteCallback bc = (ByteCallback)callbacks.remove(0);
-                        bc.call(b);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        };
-
     public synchronized void readBus(ByteCallback bc) throws IOException {
         callbacks.add(bc);
         out.writeByte(2);
         out.flush();
-        if (reader != null) {
-            reader.start();
-            reader = null;
-        }
     }
 
     public synchronized void readInterrupts(ByteCallback bc) throws IOException {
         callbacks.add(bc);
         out.writeByte(6);
         out.flush();
-        if (reader != null) {
-            reader.start();
-            reader = null;
-        }
     }
 
     private byte[][][] cache = new byte[24][][];
