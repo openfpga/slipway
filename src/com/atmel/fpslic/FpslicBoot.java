@@ -4,13 +4,13 @@ import com.ftdi.usb.*;
 import java.io.*;
 
 /**
- * "Raw" access to an <i>unconfigured</i> FPSLIC -- used to load the initial bitstream.
+ * Bitstream level access to the bootstrap interface (protocol wrapper around FpslicPins)
  */
-public class FpslicRaw {
+public class FpslicBoot {
 
-    private FpslicPins pins;
+    private FpslicBootPins pins;
 
-    public FpslicRaw(FpslicPins pins) throws IOException {
+    public FpslicBoot(FpslicBootPins pins) throws IOException {
         this.pins = pins;
         reset();
     }

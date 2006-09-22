@@ -14,7 +14,7 @@ public class FtdiBoard extends Board {
         System.load(new File("build/"+System.mapLibraryName("FtdiUartNative")).getAbsolutePath());
     }
 
-    private final FpslicRaw chip;
+    private final FpslicBoot chip;
     private final InputStream in;
     private final OutputStream out;
 
@@ -22,7 +22,7 @@ public class FtdiBoard extends Board {
     public OutputStream getOutputStream() { return out; }
 
     public FtdiBoard() throws Exception {
-        chip = new FpslicRaw(new FpslicPinsUsb(new FtdiUart(0x6666, 0x3133, 1500 * 1000)));
+        chip = new FpslicBoot(new FpslicBootPinsUsb(new FtdiUart(0x6666, 0x3133, 1500 * 1000)));
         String bstFile = this.getClass().getName();
         bstFile = bstFile.substring(0, bstFile.lastIndexOf('.'));
         bstFile = bstFile.replace('.', '/')+"/slipway_drone.bst";

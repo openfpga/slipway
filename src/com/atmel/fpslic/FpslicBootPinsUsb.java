@@ -2,14 +2,16 @@ package com.atmel.fpslic;
 import com.ftdi.usb.*;
 import java.io.*;
 
+// TODO: more state checking (ie must have reset high before uart-mode, etc)
+
 /**
- * Exposes the raw pin-level configuration interface to the FPSLIC
+ * Pin-level access to the bootstrap port of an FPSLIC via an FTDI USB-UART
  */
-public class FpslicPinsUsb implements FpslicPins {
+public class FpslicBootPinsUsb implements FpslicBootPins {
 
     private FtdiUart ftdiuart;
 
-    public FpslicPinsUsb(FtdiUart ftdiuart) {
+    public FpslicBootPinsUsb(FtdiUart ftdiuart) {
         this.ftdiuart = ftdiuart;
     }
 
