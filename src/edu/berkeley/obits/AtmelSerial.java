@@ -39,7 +39,7 @@ public class AtmelSerial {
         At40k at40k = new At40k.At40k10(device);
         try {
             long begin = System.currentTimeMillis();
-            device.readMode4(System.in);
+            device.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740));
             long end = System.currentTimeMillis();
             Log.info(AtmelSerial.class, "finished in " + ((end-begin)/1000) + "s");
             Thread.sleep(1000);

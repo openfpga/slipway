@@ -86,9 +86,9 @@ public abstract class AtmelDevice extends Bits implements Device {
             long foo = Long.parseLong(str, 16);
             mode4((int)(foo >> 24), (int)(foo >> 16), (int)(foo >>  8), (int)(foo >>  0));
             count++;
-            if (count % 100 == 0) Log.info(AtmelSerial.class, "wrote " + count + " configuration octets");
         }
         flush();
+        in.close();
     }
 
     public void writeMode4(Writer w) throws IOException {

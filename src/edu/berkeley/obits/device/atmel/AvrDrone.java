@@ -30,7 +30,7 @@ public class AvrDrone extends AtmelDevice {
     }
 
     private void init() throws IOException {
-        Log.debug(this, "waiting for device to identify itself");
+        //Log.debug(this, "waiting for device to identify itself");
         /*
         if (in.readByte() != (byte)'O')  throw new RuntimeException("didn't get the proper signature");
         if (in.readByte() != (byte)'B')  throw new RuntimeException("didn't get the proper signature");
@@ -43,10 +43,10 @@ public class AvrDrone extends AtmelDevice {
         byte[] bytes = new byte[6];
         for(int i=0; i<6; i++) {
             bytes[i] = in.readByte();
-            System.out.println("got " + (i+1) + " header bytes: " + (bytes[i] & 0xff) + " '" + ((char)bytes[i]) + "'");
+            //System.out.println("got " + (i+1) + " header bytes: " + (bytes[i] & 0xff) + " '" + ((char)bytes[i]) + "'");
             // FIXME
         }
-        Log.info(this, "device correctly identified itself; ready for operation");
+        //Log.info(this, "device correctly identified itself; ready for operation");
     }
 
     public synchronized void scanFPGA(boolean on) throws DeviceException {

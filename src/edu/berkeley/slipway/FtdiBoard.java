@@ -3,7 +3,7 @@ package edu.berkeley.slipway;
 import com.ftdi.usb.*;
 import com.atmel.fpslic.*;
 import edu.berkeley.obits.*;
-import org.ibex.util.Log;
+import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
 import gnu.io.*;
@@ -41,7 +41,8 @@ public class FtdiBoard extends Board {
 
         chip.selfTest();
 
-        OutputStream os = chip.getConfigStream();
+        int total = 75090/9;
+        OutputStream os = new ProgressOutputStream("bootstrap bitstream:", chip.getConfigStream(), total);
         BufferedReader br = new BufferedReader(r);
 
         int bytes = 0;
@@ -50,10 +51,7 @@ public class FtdiBoard extends Board {
             if (s==null) break;
             bytes++;
             os.write((byte)Integer.parseInt(s, 2));
-            if ((bytes % 1000)==0) {
-                os.flush();
-                System.out.print("wrote " + bytes + " bytes\r");
-            }
+            if ((bytes % 1000)==0) os.flush();
         }
         os.close();
     }
