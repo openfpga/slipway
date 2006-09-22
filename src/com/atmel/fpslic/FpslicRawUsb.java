@@ -8,6 +8,7 @@ import java.io.*;
 public class FpslicRawUsb implements FpslicRaw {
 
     private FtdiUart ftdiuart;
+    private FpslicPinsUsb pins;
 
     private int dmask =
         (1<<0) |
@@ -21,25 +22,19 @@ public class FpslicRawUsb implements FpslicRaw {
 
     public FpslicRawUsb(FtdiUart ftdiuart) throws IOException {
         this.ftdiuart = ftdiuart;
+        //this.pins = new FpslicPinsUsb(ftdiuart);
         reset();
     }
 
     public void reset() throws IOException {
 
-        dmask =
-            (1<<0) |
-            (1<<1) |
-            (1<<2) |
-            //(1<<3) |
-            //(1<<4) |
-            (1<<5) |
-            (1<<6) |
-            (1<<7);
-        ftdiuart.dbus_mode(dmask);
-
-        clearDBusLines();
+        avrrstPin(false);
+        configDataPin(false);
+        resetPin(false);
+        cclkPin(false);
+        
+        conPin(false);
         flush();
-        ftdiuart.dbus_mode(dmask);
 
         resetPin(false);
         try { Thread.sleep(500); } catch (Exception e) { }
@@ -76,9 +71,7 @@ public class FpslicRawUsb implements FpslicRaw {
                     flush();
 
                     // turn off the CON pin we've been pulling low...
-                    dmask &= ~(1<<0);
-                    ftdiuart.dbus_mode(dmask);
-                    flush();
+                    releaseConPin();
 
                     if (!initPin())
                         throw new RuntimeException("initialization failed at " + bytes);
@@ -184,6 +177,19 @@ public class FpslicRawUsb implements FpslicRaw {
             ftdiuart.dbus_mode(dmask);
             flush();
         }
+    }
+
+    private void releaseConPin() throws IOException {
+        dmask &= ~(1<<0);
+        ftdiuart.dbus_mode(dmask);
+        flush();
+    }
+
+    private void conPin(boolean on) throws IOException {
+        dmask |= (1<<0);
+        ftdiuart.dbus_mode(dmask);
+        setDBusLine(0, on);
+        flush();
     }
 
     private void avrrstPin(boolean on) throws IOException { setDBusLine(7, on); }
