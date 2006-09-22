@@ -65,6 +65,7 @@ public class FpslicBootPinsUsb implements FpslicBootPins {
         avrrstPin(false);
         ftdiuart.purge();
         ftdiuart.uart_and_cbus_mode(1<<1, 1<<1);
+        ftdiuart.purge();
     }
     
     private int dmask =

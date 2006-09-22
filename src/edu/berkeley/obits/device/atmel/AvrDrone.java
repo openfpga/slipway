@@ -41,7 +41,11 @@ public class AvrDrone extends AtmelDevice {
         */
         byte[] bytes = new byte[6];
         int i=0;
+
         out.write(0);
+        out.flush();
+
+        // read any crap that might be left in the buffer
         while(true) {
             System.arraycopy(bytes, 1, bytes, 0, 5);
             bytes[5] = in.readByte();
