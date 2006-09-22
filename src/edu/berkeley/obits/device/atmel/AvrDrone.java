@@ -141,24 +141,6 @@ public class AvrDrone extends AtmelDevice {
     public static int saveof = 0;
     public /*synchronized*/ void mode4(int z, int y, int x, int d) {
         try {
-            /*
-            Log.info(this, "writing configuration frame [zyxd]: " +
-                      pad(1, Integer.toString(z&0xff, 16)) + " " +
-                      pad(1, Integer.toString(y&0xff, 16)) + " " +
-                      pad(1, Integer.toString(x&0xff, 16)) + " " +
-                      pad(1, Integer.toString(d&0xff, 16))
-                      );
-            */
-            boolean zchange = z!=lastz;
-            boolean ychange = y!=lasty;
-            boolean xchange = x!=lastx;
-            boolean zinc    = z==lastz+1;
-            boolean yinc    = y==lasty+1;
-            boolean xinc    = x==lastx+1;
-            boolean zdec    = z==lastz-1;
-            boolean ydec    = y==lasty-1;
-            boolean xdec    = x==lastx-1;
-            
             out.writeByte(1);
             out.writeByte(z);
             out.writeByte(y);
