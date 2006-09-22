@@ -2,7 +2,6 @@
 // YOU MUST COMPILE THIS WITH -O3 OR THE AVR WILL NOT BE ABLE TO KEEP UP!!!!
 //
 
-//#define F_CPU 3960000
 #define F_CPU 12000000
 
 #if !defined(__AVR_AT94K__)

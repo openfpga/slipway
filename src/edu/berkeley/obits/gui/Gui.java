@@ -1,5 +1,7 @@
 package edu.berkeley.obits.gui;
 
+import com.atmel.fpslic.*;
+import edu.berkeley.slipway.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 import static com.atmel.fpslic.Fpslic.Util.*;
 import edu.berkeley.obits.*;
@@ -19,8 +21,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     Graphics2D g;
     G gg;
 
-    At40k at40k;
-    AvrDrone drone;
+    Fpslic at40k;
+    FtdiBoard drone;
 
     private Cell[][] ca = new Cell[128][];
 
@@ -54,7 +56,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         }
     }
 
-    public Gui(At40k at40k, AvrDrone drone) {
+    public Gui(Fpslic at40k, FtdiBoard drone) {
         this.at40k = at40k;
         this.drone = drone;
         for(int i=0; i<ca.length; i++)
@@ -65,7 +67,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
         scan();
         /*
-        At40k.Cell c = at40k.cell(0,0);
+        Fpslic.Cell c = at40k.cell(0,0);
         for(int i=0; i<256; i++) {
             c.ylut(i);
             System.out.println(c.printYLut());
@@ -74,14 +76,14 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
 
     public class Cell {
-        At40k.Cell cell;
+        Fpslic.Cell cell;
         boolean in = false;
         public boolean xon = false;
         public boolean yon = false;
         public boolean xknown = false;
         public boolean yknown = false;
         int _x, _y;
-        public Cell(int x, int y, At40k.Cell cell) {
+        public Cell(int x, int y, Fpslic.Cell cell) {
             _x = x;
             _y = y;
             ca[_x][_y] = this;
@@ -701,7 +703,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         return null;
     }
 
-    public static boolean xlut_relevant(At40k.Cell c) {
+    public static boolean xlut_relevant(Fpslic.Cell c) {
         return c.xlut_relevant();
     }
 
@@ -720,7 +722,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
     public void scan(final Gui.Cell c) {
         try {
-            final At40k.Cell cell = c.cell;
+            final Fpslic.Cell cell = c.cell;
             AtmelSerial.scan(at40k, cell, NONE, true);
             boolean safe = !cell.fb_relevant();
             if (cell.xo()) safe = false;
@@ -754,7 +756,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
     int made = 0;
-    private class BCB implements AvrDrone.ByteCallback {
+    private class BCB implements FtdiBoard.ByteCallback {
         Gui.Cell c;
         int who;
         public BCB(Gui.Cell c, int who) {

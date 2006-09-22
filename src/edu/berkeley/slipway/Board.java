@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 import gnu.io.*;
 
-public abstract class Board {
+public interface Board {
 
     /** boot the board using an md4 configuration stream */
     public abstract void boot(Reader r) throws Exception;

@@ -1,5 +1,6 @@
 package edu.berkeley.obits.gui;
 
+import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 import static com.atmel.fpslic.Fpslic.Util.*;
 import edu.berkeley.obits.*;
@@ -108,7 +109,7 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
             }
         }
         Gui.Cell cell = whichCell(mousex, mousey);
-        At40k.Cell c = cell == null ? null : cell.cell;
+        Fpslic.Cell c = cell == null ? null : cell.cell;
         if ((k.getModifiers() & k.ALT_MASK) != 0)
             switch(k.getKeyCode()) {
                 case VK_S:

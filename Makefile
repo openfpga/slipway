@@ -52,7 +52,7 @@ upstream/libusb/.built: upstream/libusb
 
 ## for rebuilding usbdrone.hex ###########################################################
 
-build/slipway_drone.hex: src/edu/berkeley/slipway/slipway_drone.c  upstream/avr-libc/.built
+build/slipway_drone.hex: src/edu/berkeley/slipway/FtdiBoardSlave.c  upstream/avr-libc/.built
 	upstream/prefix/bin/avr-gcc -O3 -mmcu=at94k $< -o $@.o
 	upstream/prefix/bin/avr-objcopy -O ihex $@.o $@
 

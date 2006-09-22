@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 import gnu.io.*;
 
-public class FakeBoard extends Board {
+public class FakeBoard implements Board {
 
     public FakeBoard() {
         

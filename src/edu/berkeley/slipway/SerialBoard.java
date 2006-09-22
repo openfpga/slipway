@@ -6,7 +6,7 @@ import java.io.*;
 import java.util.*;
 import gnu.io.*;
 
-public class SerialBoard extends Board {
+public class SerialBoard implements Board {
 
     private final SerialPort sp;
     private final DataInputStream in;

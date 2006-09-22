@@ -1,6 +1,7 @@
 package edu.berkeley.obits;
 
 import edu.berkeley.slipway.*;
+import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 import static com.atmel.fpslic.Fpslic.Util.*;
 import edu.berkeley.obits.device.atmel.*;
@@ -33,10 +34,8 @@ public class AtmelSerial {
     }
     public static int PIPELEN=20;
     public static void main(String[] s) throws Exception {
-      //AvrDrone device = new AvrDrone(detectObitsPort());
-        //AvrDrone device = new AvrDrone();
-        AvrDrone device = new AvrDrone(new FtdiBoard());
-        At40k at40k = new At40k.At40k10(device);
+        FtdiBoard device = new FtdiBoard();
+        Fpslic at40k = device;
         try {
             long begin = System.currentTimeMillis();
             device.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740));
@@ -73,12 +72,12 @@ public class AtmelSerial {
             /*
             System.out.println("a: " + at40k.new SectorWire(true, 0, 4, 0x17).driverRight());
             System.out.println("b: " + at40k.new SectorWire(true, 1, 4, 0x17).driverRight());
-            At40k.SectorWire h0p0 = at40k.new SectorWire(true, 0, 0, 0x17);
-            At40k.SectorWire h0p1 = at40k.new SectorWire(true, 1, 0, 0x17);
-            At40k.SectorWire h0p2 = at40k.new SectorWire(true, 2, 0, 0x17);
-            At40k.SectorWire h4p0 = at40k.new SectorWire(true, 0, 4, 0x17);
-            At40k.SectorWire h4p1 = at40k.new SectorWire(true, 1, 4, 0x17);
-            At40k.SectorWire h4p2 = at40k.new SectorWire(true, 2, 4, 0x17);
+            Fpslic.SectorWire h0p0 = at40k.new SectorWire(true, 0, 0, 0x17);
+            Fpslic.SectorWire h0p1 = at40k.new SectorWire(true, 1, 0, 0x17);
+            Fpslic.SectorWire h0p2 = at40k.new SectorWire(true, 2, 0, 0x17);
+            Fpslic.SectorWire h4p0 = at40k.new SectorWire(true, 0, 4, 0x17);
+            Fpslic.SectorWire h4p1 = at40k.new SectorWire(true, 1, 4, 0x17);
+            Fpslic.SectorWire h4p2 = at40k.new SectorWire(true, 2, 4, 0x17);
 
             //h4p1.drives(h0p1, false);
             //at40k.cell(0x04, 0x17).out(L1, false);
@@ -104,7 +103,7 @@ public class AtmelSerial {
             /*
             System.out.println("xlut is " + hex(at40k.cell(0x04, 0x17).xlut()));
             System.out.println("ylut is " + hex(at40k.cell(0x04, 0x17).ylut()));
-            At40k.Cell cell = at40k.cell(0x04, 0x17);
+            Fpslic.Cell cell = at40k.cell(0x04, 0x17);
             //cell.xlut(0xff);
             //cell.f(false);
             System.out.println(cell.c());
@@ -238,7 +237,7 @@ public class AtmelSerial {
             at40k.iob_right(15, true).enableOutput(WEST);
 
 
-            At40k.Cell c = at40k.cell(10,10);
+            Fpslic.Cell c = at40k.cell(10,10);
             c.ylut(~LUT_SELF);
             c.xlut(LUT_Z);
             c.yi(WEST);
@@ -456,7 +455,7 @@ public class AtmelSerial {
             //at40k.cell(6,22).ylut(0xff);
             //at40k.cell(22,11).ylut(0xff);
             /*
-            At40k.Cell cell = at40k.cell(4, 16);
+            Fpslic.Cell cell = at40k.cell(4, 16);
             cell.xlut(0xff);
             cell.ylut(0xff);
             cell.b(false);
@@ -521,7 +520,7 @@ public class AtmelSerial {
             Visualizer v = new Visualizer(at40k, device);
             v.show();
             v.setSize(1380, 1080);
-            At40k.Cell cell = at40k.cell(4, 23);
+            Fpslic.Cell cell = at40k.cell(4, 23);
 
             Image img = v.createImage(v.getWidth(), v.getHeight());
             /*
@@ -539,7 +538,7 @@ public class AtmelSerial {
             //int y = 11;
 
             //selfTest(device, at40k, v);
-            System.out.println("save: " + AvrDrone.save + " of " + (AvrDrone.saveof*5));
+            System.out.println("save: " + FtdiBoard.save + " of " + (FtdiBoard.saveof*5));
 
             at40k.iob_top(0, true).enableInput();
             copy(at40k.cell(0, 23), NORTH, NORTH);
@@ -634,7 +633,7 @@ public class AtmelSerial {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    public static void scan(At40k dev, At40k.Cell cell, int source, boolean setup) {
+    public static void scan(Fpslic dev, Fpslic.Cell cell, int source, boolean setup) {
         if (setup) {
             if (source != NONE) cell.c(source);
             if (cell.b()) cell.b(false);
@@ -643,7 +642,7 @@ public class AtmelSerial {
         if (cell.out(L3)!=setup) cell.out(L3, setup);
         if (cell.vx(L3)!=setup) cell.v(L3, setup);
 
-        At40k.SectorWire sw = cell.vwire(L3);
+        Fpslic.SectorWire sw = cell.vwire(L3);
         //System.out.println("wire is: " + sw);
 
         if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
@@ -686,7 +685,7 @@ public class AtmelSerial {
 
     }
 
-    public static void copy(At40k.Cell c, int xdir, int ydir) {
+    public static void copy(Fpslic.Cell c, int xdir, int ydir) {
         switch(xdir) {
             case NW: case NE: case SW: case SE: {
                 c.xi(xdir);
@@ -722,7 +721,7 @@ public class AtmelSerial {
         return Long.toString(x & 0xffffffffL, 16);
     }
 
-    public static void handshaker(At40k.Cell cell) {
+    public static void handshaker(Fpslic.Cell cell) {
         cell.xlut(0x22);
         cell.ylut(0x71);
         cell.c(XLUT);
@@ -737,11 +736,11 @@ public class AtmelSerial {
         public static final int LH = 15;
         public static final Color RED  = new Color(0xaa, 0x55, 0x55);
         public static final Color BLUE = new Color(0x55, 0x55, 0xaa);
-        private final At40k dev;
-        private final AvrDrone drone;
+        private final Fpslic dev;
+        private final FtdiBoard drone;
         int selx = -1;
         int sely = -1;
-        public Visualizer(final At40k dev, final AvrDrone drone) {
+        public Visualizer(final Fpslic dev, final FtdiBoard drone) {
             this.dev = dev;
             this.drone = drone;
             show();
@@ -755,7 +754,7 @@ public class AtmelSerial {
                             Thread.sleep(500);
                             if (!enabled) continue;
                             /*
-                            At40k.Cell cell = dev.cell(21, 22);
+                            Fpslic.Cell cell = dev.cell(21, 22);
                             cell.xlut(0xff);
                             cell.ylut(0xff);
                             */
@@ -786,7 +785,7 @@ public class AtmelSerial {
             switch(keyevent==null ? '_' : keyevent.getKeyChar()) {
                 case '1': {
                     if (selx==-1 || sely==-1) break;
-                    At40k.Cell cell = dev.cell(selx, sely);
+                    Fpslic.Cell cell = dev.cell(selx, sely);
                     cell.xlut(0xff);
                     cell.ylut(0xff);
                     drawCell(getGraphics(), selx, sely);
@@ -836,7 +835,7 @@ public class AtmelSerial {
                             */
                             copy(dev.cell(mx, yofs-1), NORTH, SW);
                             boolean left = true;
-                            At40k.Cell lc = null;
+                            Fpslic.Cell lc = null;
                             for(int k=0; k<10; k++) {
                                 int y = yofs-2-(k*2);
                                 copy(dev.cell(left?(mx-1):mx, y),        SOUTH, left?NE:NW);
@@ -891,14 +890,14 @@ public class AtmelSerial {
                 }
                 case 'C': {
                     if (selx==-1 || sely==-1) break;
-                    At40k.Cell cell = dev.cell(selx, sely);
+                    Fpslic.Cell cell = dev.cell(selx, sely);
                     cell.ylut(0xB2);
                     drawCell(getGraphics(), selx, sely);
                     break;
                 }
                 case '0': {
                     if (selx==-1 || sely==-1) break;
-                    At40k.Cell cell = dev.cell(selx, sely);
+                    Fpslic.Cell cell = dev.cell(selx, sely);
                     cell.xlut(0x00);
                     cell.ylut(0x00);
                     drawCell(getGraphics(), selx, sely);
@@ -910,10 +909,10 @@ public class AtmelSerial {
             showit(dev, drone, this);
         }
         public void mousePressed(MouseEvent e) {
-            final At40k.Cell cell = dev.cell(selx, sely);
+            final Fpslic.Cell cell = dev.cell(selx, sely);
             if (cell==null) return;
             final int old = cell.c();
-            AvrDrone.ByteCallback bc = new AvrDrone.ByteCallback() {
+            FtdiBoard.ByteCallback bc = new FtdiBoard.ByteCallback() {
                     public void call(byte b) throws Exception {
                         boolean y = (b & 0x80) != 0;
                         //cell.c(old);
@@ -949,7 +948,7 @@ public class AtmelSerial {
             if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
                 int cx = selx;
                 int cy = sely;
-                At40k.Cell cell = dev.cell(cx, cy);
+                Fpslic.Cell cell = dev.cell(cx, cy);
                 selx = -1;
                 sely = -1;
                 /*
@@ -960,7 +959,7 @@ public class AtmelSerial {
             selx = (x-20)/(WIDTH+2);
             sely = (23 - (y-20)/(HEIGHT+2))+1;
             /*
-            At40k.Cell cell = dev.cell(selx, sely);
+            Fpslic.Cell cell = dev.cell(selx, sely);
             if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
                 drawCell(getGraphics(), selx, sely);
                 drawSector(getGraphics(), dev.cell(selx, sely).sector());
@@ -998,9 +997,9 @@ public class AtmelSerial {
             }
             */
         }
-        public static int left(At40k.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
-        public static int top(At40k.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
-        public void drawSector(Graphics g, At40k.Sector sector) {
+        public static int left(Fpslic.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
+        public static int top(Fpslic.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
+        public void drawSector(Graphics g, Fpslic.Sector sector) {
             g.setColor(Color.gray);
             ((Graphics2D)g).setStroke(new BasicStroke(1));
             int px = ((sector.col)*(WIDTH+2))+20-1;
@@ -1011,9 +1010,9 @@ public class AtmelSerial {
                 boolean h = dir==0;
                 for(int y=h?sector.row:sector.col; y<(h?sector.row+4:sector.col+4); y++)
                     for(int plane=0; plane<=4; plane++) {
-                        At40k.Cell cell      = h ? dev.cell(sector.col,   y) : dev.cell(y, sector.row);
-                        At40k.Cell cell_east = h ? dev.cell(sector.col-1, y) : dev.cell(y, sector.row-1);
-                        At40k.Cell cell_west = h ? dev.cell(sector.col+4, y) : dev.cell(y, sector.row+4);
+                        Fpslic.Cell cell      = h ? dev.cell(sector.col,   y) : dev.cell(y, sector.row);
+                        Fpslic.Cell cell_east = h ? dev.cell(sector.col-1, y) : dev.cell(y, sector.row-1);
+                        Fpslic.Cell cell_west = h ? dev.cell(sector.col+4, y) : dev.cell(y, sector.row+4);
                         boolean draw = false;
                         if (h) {
                             if (cell_east!=null &&
@@ -1070,7 +1069,7 @@ public class AtmelSerial {
             int y = ((23-cy)*(HEIGHT+2))+60;
 
             //System.out.println("drawcell " + cx + "," + cy);
-            At40k.Cell cell = dev.cell(cx, cy);
+            Fpslic.Cell cell = dev.cell(cx, cy);
             g.setColor(bg);
             g.fillRect(x, y, WIDTH, HEIGHT);
 
@@ -1153,13 +1152,13 @@ public class AtmelSerial {
         return ret;
     }
 
-    public static void selfTest(AvrDrone device, At40k at40k, Visualizer v) {
+    public static void selfTest(FtdiBoard device, Fpslic at40k, Visualizer v) {
         /*
             int fail = 0;
             long now = System.currentTimeMillis();
             for(int x=0; x<24; x++)
                 for(int y=0; y<24; y++) {
-                    At40k.Cell cell = at40k.cell(x,y);
+                    Fpslic.Cell cell = at40k.cell(x,y);
                     scan(at40k, cell, YLUT, true);
                     //v.paint(img.getGraphics());
                     //v.getGraphics().drawImage(img, 0, 0, null);
@@ -1187,7 +1186,7 @@ public class AtmelSerial {
         */
     }
     
-    public static void bounce(At40k.Cell cell, int xi, int yi) {
+    public static void bounce(Fpslic.Cell cell, int xi, int yi) {
         cell.xlut((byte)0xCC);
         cell.ylut((byte)0xCC);
         cell.xi(xi);
@@ -1195,7 +1194,7 @@ public class AtmelSerial {
         cell.xo(false);
         cell.yo(false);
     }
-    public static void muller(At40k.Cell cell, int xi, int yi) {
+    public static void muller(Fpslic.Cell cell, int xi, int yi) {
         cell.ylut(0xB2);
         cell.c(YLUT);
         cell.f(false);
@@ -1207,7 +1206,7 @@ public class AtmelSerial {
     }
 
     /** watches for a rising/falling edge on Yin, emits a pulse on Xout */
-    public static void pulse_detect(At40k.Cell c, int in, boolean falling) {
+    public static void pulse_detect(Fpslic.Cell c, int in, boolean falling) {
         c.ylut(0x00);
         c.xlut(0x00);
         switch(in) {
@@ -1232,7 +1231,7 @@ public class AtmelSerial {
     }
 
     /** watches for a pulse on Xin, copies value of Yin */
-    public static void pulse_copy(At40k.Cell cell, int xi, int yi, boolean invert) {
+    public static void pulse_copy(Fpslic.Cell cell, int xi, int yi, boolean invert) {
         loopback(cell, YLUT);
         if (!invert) cell.ylut(0xB8);   /* yo = x ?  yi : z => 1011 1000 */
         else         cell.ylut(0x74);   /* yo = x ? !yi : z => 0111 0100 */
@@ -1242,7 +1241,7 @@ public class AtmelSerial {
         cell.yi(yi);
     }
 
-    public static void loopback(At40k.Cell cell, int cin) {
+    public static void loopback(Fpslic.Cell cell, int cin) {
         cell.f(false);
         cell.b(false);
         cell.t(false, false, true);
@@ -1250,9 +1249,9 @@ public class AtmelSerial {
         cell.xo(false);
         cell.c(cin);
     }
-    public static void doit(At40k at40k, AvrDrone device) throws Exception {
+    public static void doit(Fpslic at40k, FtdiBoard device) throws Exception {
 
-        At40k.Cell led = at40k.cell(1, 23);
+        Fpslic.Cell led = at40k.cell(1, 23);
         led.v(L2, true);
         led.h(L2, false);
         led.yi(L2);
@@ -1260,7 +1259,7 @@ public class AtmelSerial {
         led.xlut(LUT_SELF);
         led.yo(false);
 
-        At40k.Cell c = at40k.cell(1, 22);
+        Fpslic.Cell c = at40k.cell(1, 22);
         c.out(L1, true);
         c.out(L0, true);
         c.oe(V4);
@@ -1276,7 +1275,7 @@ public class AtmelSerial {
         c.c(YLUT);
 
         for(int i=0; i<4; i++) at40k.cell(i, 20).h(L0, false);
-        At40k.Cell z = at40k.cell(1, 20);
+        Fpslic.Cell z = at40k.cell(1, 20);
         z.out(L0, true);
         z.xlut(0xff);
         z.c(XLUT);
@@ -1408,7 +1407,7 @@ public class AtmelSerial {
     }
 
     public static int yofs = mullers ? 19 : 22;
-    public static void counter(At40k at40k, AvrDrone device) throws Exception {
+    public static void counter(Fpslic at40k, FtdiBoard device) throws Exception {
         // watch for rising edge from south, emit pulse on Xout (to NE)
         //copy(at40k.cell(16,23), SW, WEST);
         
@@ -1448,10 +1447,10 @@ public class AtmelSerial {
         //at40k.iob_top(1, false).slew(SLOW);
 
     }
-    public static void fill(At40k at40k, AvrDrone device, int num) throws Exception {
+    public static void fill(Fpslic at40k, FtdiBoard device, int num) throws Exception {
         //muller(at40k.cell(PIPELEN,22), NE, WEST);
-        At40k.Cell a = at40k.cell(10,22);
-        At40k.Cell b = at40k.cell(11,22);
+        Fpslic.Cell a = at40k.cell(10,22);
+        Fpslic.Cell b = at40k.cell(11,22);
         a.ylut(0x00);
         for(int i=0; i<num; i++) {
             //System.out.println(i);
@@ -1465,7 +1464,7 @@ public class AtmelSerial {
         b.ylut(0xB2);
         a.ylut(0xB2);
     }
-    public static void showit(At40k dev, AvrDrone drone, final Visualizer vis) {
+    public static void showit(Fpslic dev, FtdiBoard drone, final Visualizer vis) {
         final long then = System.currentTimeMillis();
         final Graphics g = vis.getGraphics();
         g.setFont(new Font("sansserif", Font.BOLD, 24));
@@ -1477,9 +1476,9 @@ public class AtmelSerial {
                 //for(int yy=21; yy<=22; yy++) {
                 final int x = xx;
                 final int y = yy;
-                final At40k.Cell cell = dev.cell(x, y);
+                final Fpslic.Cell cell = dev.cell(x, y);
                 if ((cell.ylut()&0xff)!=0xB2) continue;
-                AvrDrone.ByteCallback bc = new AvrDrone.ByteCallback() {
+                FtdiBoard.ByteCallback bc = new FtdiBoard.ByteCallback() {
                         public void call(byte b) throws Exception {
                             boolean v = (b & 0x80) != 0;
                             vis.drawCell(g, x, y, v?red:green);
@@ -1499,9 +1498,9 @@ public class AtmelSerial {
             }
         }
     }
-    public static void drain(At40k at40k, AvrDrone device) throws Exception {
-        At40k.Cell a = at40k.cell(10,22);
-        At40k.Cell b = at40k.cell(11,22);
+    public static void drain(Fpslic at40k, FtdiBoard device) throws Exception {
+        Fpslic.Cell a = at40k.cell(10,22);
+        Fpslic.Cell b = at40k.cell(11,22);
         a.lut(0x00, 0x00);
         b.lut(0x00, 0x00);
         for(int i=0; i<30; i++) {
@@ -1516,7 +1515,7 @@ public class AtmelSerial {
         b.ylut(0xB2);
         a.ylut(0xB2);
     }
-    public static void doitx(At40k at40k, AvrDrone device) throws Exception {
+    public static void doitx(Fpslic at40k, FtdiBoard device) throws Exception {
         for(int i=5; i<PIPELEN+1; i++) bounce(at40k.cell(i, 23), SE,                     SOUTH);
         for(int x=5; x<PIPELEN;   x++) muller(at40k.cell(x, 22), x==PIPELEN-1 ? SE : NE, WEST);
         
