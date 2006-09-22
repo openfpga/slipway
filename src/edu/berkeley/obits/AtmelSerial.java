@@ -1,8 +1,8 @@
 package edu.berkeley.obits;
 
 import edu.berkeley.slipway.*;
-import static edu.berkeley.obits.device.atmel.AtmelDevice.Constants.*;
-import static edu.berkeley.obits.device.atmel.AtmelDevice.Util.*;
+import static com.atmel.fpslic.Fpslic.Constants.*;
+import static com.atmel.fpslic.Fpslic.Util.*;
 import edu.berkeley.obits.device.atmel.*;
 import edu.berkeley.obits.gui.*;
 import java.awt.*;

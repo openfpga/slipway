@@ -1,5 +1,8 @@
 package edu.berkeley.obits.device.atmel;
-import static edu.berkeley.obits.device.atmel.AtmelDevice.Constants.*;
+
+import com.atmel.fpslic.*;
+import static com.atmel.fpslic.Fpslic.Constants.*;
+import static com.atmel.fpslic.Fpslic.Util.*;
 import edu.berkeley.obits.*;
 import org.ibex.util.*;
 import java.util.*;
@@ -7,18 +10,18 @@ import java.io.*;
 
 public class At40k {
 
-    /*private*/public final AtmelDevice dev;
+    /*private*/public final Fpslic dev;
     private final int width;
     private final int height;
 
-    public At40k(AtmelDevice dev, int width, int height) {
+    public At40k(Fpslic dev, int width, int height) {
         this.width = width;
         this.height = height;
         this.dev = dev;
     }
 
     public static class At40k10 extends At40k {
-        public At40k10(AtmelDevice dev) { super(dev, 24, 24); }
+        public At40k10(Fpslic dev) { super(dev, 24, 24); }
     }
 
     public final class Sector {

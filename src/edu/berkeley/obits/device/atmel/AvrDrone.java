@@ -1,5 +1,6 @@
 package edu.berkeley.obits.device.atmel;
 
+import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import edu.berkeley.obits.*;
 import org.ibex.util.Log;
@@ -8,7 +9,7 @@ import java.util.*;
 import gnu.io.*;
 
 /** the "host" side of the AVR Drone; see AvrDrone.c for the other side */
-public class AvrDrone extends AtmelDevice {
+public class AvrDrone extends Fpslic {
 
     private final DataInputStream in;
     private final DataOutputStream out;

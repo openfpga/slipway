@@ -1,12 +1,10 @@
-package edu.berkeley.obits.device.atmel;
+package com.atmel.fpslic;
 
-import edu.berkeley.obits.*;
-//import static edu.berkeley.cs.obits.device.atmel.Wires.*;
 import java.util.*;
 import java.io.*;
 import org.ibex.util.Log;
 
-public abstract class AtmelDevice {
+public abstract class Fpslic {
 
     public static class Util {
         public static int lutSwap(int x) {

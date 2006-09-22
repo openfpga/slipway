@@ -1,11 +1,12 @@
 package edu.berkeley.obits.device.atmel;
 
+import com.atmel.fpslic.*;
 import edu.berkeley.obits.*;
 import java.util.*;
 import java.io.*;
 import org.ibex.util.Log;
 
-public class FakeAtmelDevice extends AtmelDevice {
+public class FakeAtmelDevice extends Fpslic {
 
     public void mode4(int z, int y, int x, int d) { }
     public byte mode4(int z, int y, int x) {
