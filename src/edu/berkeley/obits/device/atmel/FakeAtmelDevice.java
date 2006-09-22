@@ -7,7 +7,7 @@ import org.ibex.util.Log;
 
 public class FakeAtmelDevice extends AtmelDevice {
 
-    public void mode4(int z, int y, int x, int d) throws DeviceException { }
+    public void mode4(int z, int y, int x, int d) { }
     public byte mode4(int z, int y, int x) {
         // FIXME
         return 0;

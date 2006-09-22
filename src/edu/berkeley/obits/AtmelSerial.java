@@ -932,11 +932,15 @@ public class AtmelSerial {
                         g.setColor(BLUE);
                         g.drawString(v+"="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
                     } };
-            scan(dev, cell, NONE, true);
-            drone.readBus(bc);
-            //scan(dev, cell, XLUT, true);
-            //boolean x = (drone.readBus() & 0x80) != 0;
-            scan(dev, cell, NONE, false);
+            try {
+                scan(dev, cell, NONE, true);
+                drone.readBus(bc);
+                //scan(dev, cell, XLUT, true);
+                //boolean x = (drone.readBus() & 0x80) != 0;
+                scan(dev, cell, NONE, false);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
 
         public void mouseMoved(MouseEvent e) {
@@ -1483,11 +1487,15 @@ public class AtmelSerial {
                         }
                     };
                 scan(dev, cell, NONE, true);
-                drone.readBus(bc);
-                //scan(dev, cell, YLUT, false);
-                cell.v(L3, false);
-                dev.cell(x, 15).h(L3, false);
-                dev.cell(x, 15).v(L3, false);
+                try {
+                    drone.readBus(bc);
+                    //scan(dev, cell, YLUT, false);
+                    cell.v(L3, false);
+                    dev.cell(x, 15).h(L3, false);
+                    dev.cell(x, 15).v(L3, false);
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
     }

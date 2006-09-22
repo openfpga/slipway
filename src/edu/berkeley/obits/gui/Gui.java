@@ -719,33 +719,37 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                     scan(ca[x][y]);
     }
     public void scan(final Gui.Cell c) {
-        final At40k.Cell cell = c.cell;
-        AtmelSerial.scan(at40k, cell, NONE, true);
-        boolean safe = !cell.fb_relevant();
-        if (cell.xo()) safe = false;
-        if (cell.yo()) safe = false;
-        for(int i=0; i<5; i++)
-            if (cell.out(i))
-                safe = false;
-        if (safe) {
-            int oldc = cell.c();
-            if (cell.xlut_relevant()) {
-                cell.c(XLUT);
-                drone.readBus(new BCB(c, XLUT));
+        try {
+            final At40k.Cell cell = c.cell;
+            AtmelSerial.scan(at40k, cell, NONE, true);
+            boolean safe = !cell.fb_relevant();
+            if (cell.xo()) safe = false;
+            if (cell.yo()) safe = false;
+            for(int i=0; i<5; i++)
+                if (cell.out(i))
+                    safe = false;
+            if (safe) {
+                int oldc = cell.c();
+                if (cell.xlut_relevant()) {
+                    cell.c(XLUT);
+                    drone.readBus(new BCB(c, XLUT));
+                }
+                if (cell.ylut_relevant()) {
+                    cell.c(YLUT);
+                    drone.readBus(new BCB(c, YLUT));
+                }
+                cell.c(oldc);
+            } else {
+                switch(cell.c()) {
+                    case XLUT: if (cell.xlut_relevant()) drone.readBus(new BCB(c, XLUT)); break;
+                    case YLUT: if (cell.ylut_relevant()) drone.readBus(new BCB(c, YLUT)); break;
+                }
+                
             }
-            if (cell.ylut_relevant()) {
-                cell.c(YLUT);
-                drone.readBus(new BCB(c, YLUT));
-            }
-            cell.c(oldc);
-        } else {
-            switch(cell.c()) {
-                case XLUT: if (cell.xlut_relevant()) drone.readBus(new BCB(c, XLUT)); break;
-                case YLUT: if (cell.ylut_relevant()) drone.readBus(new BCB(c, YLUT)); break;
-            }
-            
+            AtmelSerial.scan(at40k, cell, NONE, false);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        AtmelSerial.scan(at40k, cell, NONE, false);
     }
 
 

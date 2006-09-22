@@ -21,12 +21,8 @@ public class AvrDrone extends AtmelDevice {
         init();
     } 
 
-    public void reset() throws DeviceException {
-        try {
-            board.reset();
-        } catch (IOException e) {
-            throw new DeviceException(e);
-        }
+    public void reset() throws IOException {
+        board.reset();
     }
 
     private void init() throws IOException {
@@ -54,19 +50,17 @@ public class AvrDrone extends AtmelDevice {
 
     }
 
-    public synchronized void scanFPGA(boolean on) throws DeviceException {
-        try {
-            if (on) {
-                out.writeByte(3);
-                out.flush();
-            } else {
-                // FIXME
-            }
-        } catch (IOException e) { throw new DeviceException(e); }
+    public synchronized void scanFPGA(boolean on) throws IOException {
+        if (on) {
+            out.writeByte(3);
+            out.flush();
+        } else {
+            // FIXME
+        }
     }
     // fixme!
     public static int retval = 0;
-    public synchronized int readCount() throws DeviceException {
+    public synchronized int readCount() {
         try {
             if (reader != null) {
                 reader.start();
@@ -89,7 +83,7 @@ public class AvrDrone extends AtmelDevice {
                 bc.wait();
             }
             return retval;
-        } catch (Exception e) { throw new DeviceException(e); }
+        } catch (Exception e) { throw new RuntimeException(e); }
     }
 
     public static interface ByteCallback {
@@ -113,32 +107,28 @@ public class AvrDrone extends AtmelDevice {
             }
         };
 
-    public synchronized void readBus(ByteCallback bc) throws DeviceException {
-        try {
-            callbacks.add(bc);
-            out.writeByte(2);
-            out.flush();
-            if (reader != null) {
-                reader.start();
-                reader = null;
-            }
-        } catch (IOException e) { throw new DeviceException(e); }
+    public synchronized void readBus(ByteCallback bc) throws IOException {
+        callbacks.add(bc);
+        out.writeByte(2);
+        out.flush();
+        if (reader != null) {
+            reader.start();
+            reader = null;
+        }
     }
 
-    public synchronized void readInterrupts(ByteCallback bc) throws DeviceException {
-        try {
-            callbacks.add(bc);
-            out.writeByte(6);
-            out.flush();
-            if (reader != null) {
-                reader.start();
-                reader = null;
-            }
-        } catch (IOException e) { throw new DeviceException(e); }
+    public synchronized void readInterrupts(ByteCallback bc) throws IOException {
+        callbacks.add(bc);
+        out.writeByte(6);
+        out.flush();
+        if (reader != null) {
+            reader.start();
+            reader = null;
+        }
     }
 
     private byte[][][] cache = new byte[24][][];
-    public /*synchronized*/ byte mode4(int z, int y, int x) throws DeviceException {
+    public /*synchronized*/ byte mode4(int z, int y, int x) {
         if (cache[x]==null) return 0;
         if (cache[x][y]==null) return 0;
         return cache[x][y][z];
@@ -149,7 +139,7 @@ public class AvrDrone extends AtmelDevice {
     int lasty = 0;
     public static int save = 0;
     public static int saveof = 0;
-    public /*synchronized*/ void mode4(int z, int y, int x, int d) throws DeviceException {
+    public /*synchronized*/ void mode4(int z, int y, int x, int d) {
         try {
             /*
             Log.info(this, "writing configuration frame [zyxd]: " +
@@ -182,13 +172,17 @@ public class AvrDrone extends AtmelDevice {
             if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
             if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
             cache[x & 0xff][y & 0xff][z & 0xff] = (byte)(d & 0xff);
-        } catch (IOException e) { throw new DeviceException(e); }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public /*synchronized*/ void flush() throws DeviceException {
+    public /*synchronized*/ void flush() {
         try {
             out.flush();
-        } catch (IOException e) { throw new DeviceException(e); }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String pad(int i, String s) { if (s.length()>i) return s; return "0"+pad((i-1),s); }
