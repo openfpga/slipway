@@ -60,11 +60,17 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         this.drone = drone;
         for(int i=0; i<ca.length; i++)
             ca[i] = new Cell[128];
-        for(int x=7; x<17; x++)
-            for(int y=7; y<17; y++)
-                new Cell(x-7,y-7, at40k.cell(x, y));
+        for(int x=9; x<14; x++)
+            for(int y=19; y<at40k.getHeight(); y++)
+                new Cell(x,y, at40k.cell(x, y));
 
-        scan();
+
+        new Thread() {
+            public void run() {
+                while(true) scan();
+            }
+        }.start();
+
         /*
         Fpslic.Cell c = at40k.cell(0,0);
         for(int i=0; i<256; i++) {
@@ -77,6 +83,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public class Cell {
         Fpslic.Cell cell;
         boolean in = false;
+        public boolean scanme = false;
         public boolean xon = false;
         public boolean yon = false;
         public boolean xknown = false;
@@ -90,7 +97,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
             cells.add(this);
         }
         public void clear() {
-            gg.color(in ? selectedcell : nonselectedcell);
+            gg.color(in ? selectedcell : (scanme ? new Color(0xbb, 0xbb, 0xbb) : nonselectedcell));
             g.fillRect(0, 0, SIZE, SIZE);
         }
         public void draw() {
@@ -713,11 +720,11 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
 
     public void scan() {
-        System.out.println("scan");
-        for(int x=2; x<6; x++)
-            for(int y=2; y<6; y++)
+        for(int x=0; x<at40k.getWidth(); x++)
+            for(int y=0; y<at40k.getHeight(); y++)
                 if (ca[x][y] != null)
-                    scan(ca[x][y]);
+                    if (ca[x][y].scanme)
+                        scan(ca[x][y]);
     }
     public void scan(final Gui.Cell c) {
         try {
@@ -761,10 +768,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         public BCB(Gui.Cell c, int who) {
             this.who = who; this.c = c;
             made++;
-            System.out.println("made="+made);
         }
         public void call(byte b) throws Exception {
-            System.out.println("callback: " + b);
             boolean on = (b & 0x80) != 0;
             c.xknown = false;
             c.yknown = false;
@@ -781,8 +786,6 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                     break;
             }
             made--;
-            System.out.println("made="+made);
-            if (made==0) scan();
         }
     }
 

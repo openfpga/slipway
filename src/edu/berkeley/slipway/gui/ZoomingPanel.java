@@ -117,6 +117,18 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 case VK_O:
                     readMode4();
                     break;
+                case VK_0: {
+                    c.xlut(0x00);
+                    c.ylut(0x00);
+                    repaint();
+                    return;
+                }
+                case VK_1: {
+                    c.xlut(0xff);
+                    c.ylut(0xff);
+                    repaint();
+                    return;
+                }
             }
 
         else switch(k.getKeyCode()) {
@@ -156,7 +168,10 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 return;
 
             case VK_F: c.f(!c.f()); repaint(); return;
-            case VK_S: c.ff_reset_value(!c.ff_reset_value()); repaint(); return;
+            case VK_S:
+                Gui.Cell gc = whichCell(mousex,mousey);
+                gc.scanme = !gc.scanme;
+                //case VK_S: c.ff_reset_value(!c.ff_reset_value()); repaint(); return;
             case VK_R: c.b(!c.b()); repaint(); return;
 
             case VK_T:

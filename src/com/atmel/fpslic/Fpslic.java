@@ -50,7 +50,7 @@ public abstract class Fpslic {
         public Sector south() { return row==0 ?             null : new Sector(col, row-4); }
         public Sector east()  { return col+4>=getWidth() ?  null : new Sector(col+4, row); }
         public Sector west()  { return col==0 ?             null : new Sector(col-4, row); }
-        public Cell cell() { return Fpslic.this.cell(col, row); }
+        public Cell cell()    { return Fpslic.this.cell(col, row); }
     }
 
     public final class SectorWire {
@@ -125,7 +125,8 @@ public abstract class Fpslic {
             return (connect & 0x2)!=0;
         }
         public SectorWire driverRight() {
-            System.out.println("checking " + Integer.toString(code(true), 16) + " " + Integer.toString(_row(), 16) + " " + Integer.toString(_col(), 16));
+            //System.out.println("checking " + Integer.toString(code(true), 16) + " " +
+            //Integer.toString(_row(), 16) + " " + Integer.toString(_col(), 16));
             int ret = mode4(z(code(true)), _row(), _col());
             ret = (ret >> (global?3:0)) & 0x7;
             switch(ret) {
@@ -135,6 +136,13 @@ public abstract class Fpslic {
                 case 4: return null;  /* global wire on other side */
                 default: throw new Error("multiple drivers on " + this + "!");
             }
+        }
+
+        public boolean touches(Cell c) {
+            return
+                horizontal
+                ? (c.row==_row() && (_col()/4 == c.col/4))
+                : (c.col==_col() && (_row()/4 == c.row/4));
         }
     }
     /*    
@@ -393,6 +401,29 @@ public abstract class Fpslic {
         public boolean yo()               { return (mode4(1, row, col) & 0x02) != 0; }
         public void xo(boolean center)    { mode4(1, row, col, 0, center); }
         public void yo(boolean center)    { mode4(1, row, col, 1, center); }
+
+        public void xo(Cell c) {
+            if (c.row==row || c.col==col) {   // use the y-input
+                xlut(LUT_OTHER);
+                yi(c);
+            } else {
+                xlut(LUT_SELF);
+                xi(c);
+            }
+            xo(false);
+        }
+
+        public void yo(Cell c) {
+            if (!(c.row==row || c.col==col)) {   // use the x-input
+                ylut(LUT_OTHER);
+                xi(c);
+            } else {
+                ylut(LUT_SELF);
+                yi(c);
+            }
+            yo(false);
+        }
+
         public boolean b() { return (mode4(1, row, col) & (1 << 3)) == 0; }
         public boolean f() { return (mode4(1, row, col) & (1 << 2)) == 0; }
         public boolean x() { return (mode4(1, row, col) & (1 << 1)) != 0; }
@@ -448,6 +479,19 @@ public abstract class Fpslic {
             }
         }
 
+        public void xi(SectorWire sw) {
+            if (!sw.touches(this)) throw new RuntimeException("invalid argument");
+            xi(sw.plane);
+        }
+
+        public void xi(Cell c) {
+            if      (c.row==row-1 && c.col==col-1) xi(SW);
+            else if (c.row==row+1 && c.col==col-1) xi(NW);
+            else if (c.row==row-1 && c.col==col+1) xi(SE);
+            else if (c.row==row+1 && c.col==col+1) xi(NE);
+            else throw new RuntimeException("invalid argument");
+        }
+
         public int yi() {
             if ((mode4(0x02, row, col) & (1<<6))!=0) return L4;
             switch(mode4(0x04, row, col) & 0xff) {
@@ -480,6 +524,24 @@ public abstract class Fpslic {
             }
         }
 
+        public void yi(SectorWire sw) {
+            if (!sw.touches(this)) throw new RuntimeException("invalid argument");
+            yi(sw.plane);
+        }
+
+        public void yi(Cell c) {
+            if      (c.row==row-1 && c.col==col)   yi(SOUTH);
+            else if (c.row==row+1 && c.col==col)   yi(NORTH);
+            else if (c.row==row   && c.col==col-1) yi(WEST);
+            else if (c.row==row   && c.col==col+1) yi(EAST);
+            else throw new RuntimeException("invalid argument");
+        }
+
+        public void wi(SectorWire sw) {
+            if (!sw.touches(this)) throw new RuntimeException("invalid argument");
+            wi(sw.plane);
+        }
+
         public void wi(int source) {
             switch(source) {
                 case L4:    mode4(0x03, row, col, 1<<5, 0xEC); break;
@@ -507,6 +569,11 @@ public abstract class Fpslic {
         }
 
        
+        public void zi(SectorWire sw) {
+            if (!sw.touches(this)) throw new RuntimeException("invalid argument");
+            zi(sw.plane);
+        }
+
         public void zi(int source) {
             switch(source) {
                 case L4:    mode4(0x02, row, col, 1<<7, 0xDB); break;

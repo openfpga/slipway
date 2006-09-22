@@ -217,6 +217,30 @@ public class Demo {
             at40k.cell(22,15).yi(WEST);
             at40k.cell(22,15).ylut(0xAA);
             */
+
+            Fpslic.Cell root = at40k.cell(10,20);
+            
+            root.yo(root.north());
+            root.ylut(~LUT_SELF);
+            root.c(YLUT);
+            root = root.north();
+
+            root.yo(root.east());
+            root.ylut(~LUT_SELF);
+            root.c(YLUT);
+            root = root.east();
+
+            root.yo(root.south());
+            root.ylut(~LUT_SELF);
+            root.c(YLUT);
+            root = root.south();
+
+            root.yo(root.west());
+            root.c(YLUT);
+            root = root.west();
+
+            //////////////////////////////////////////////////////////////////////////////
+
             at40k.cell(23,15).h(3, true);
             at40k.cell(23,15).yi(L3);
             at40k.cell(23,15).ylut(0xAA);

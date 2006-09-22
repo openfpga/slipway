@@ -90,6 +90,9 @@ public class FtdiBoard extends Fpslic implements Board {
                         byte b = in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
                         bc.call(b);
+                        synchronized(lock) {
+                            lock.notifyAll();
+                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -131,6 +134,24 @@ public class FtdiBoard extends Fpslic implements Board {
 
     private Vector callbacks = new Vector();
 
+    private Object lock = new Object();
+    private static final int limit = 40;
+
+    private void enqueue(ByteCallback bcb) {
+        synchronized(lock) {
+            try {
+                while (callbacks.size() >= limit) {
+                    System.out.println("block");
+                    lock.wait(100);
+                    System.out.println("unblock => " + callbacks.size());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        callbacks.add(bcb);
+    }
+
     public static abstract class ByteCallback {
         public int result;
         public abstract void call(byte b) throws Exception;
@@ -149,7 +170,7 @@ public class FtdiBoard extends Fpslic implements Board {
                     }
                 };
             synchronized(bc) {
-                callbacks.add(bc);
+                enqueue(bc);
                 out.writeByte(3);
                 out.flush();
                 bc.wait();
@@ -159,13 +180,13 @@ public class FtdiBoard extends Fpslic implements Board {
     }
 
     public synchronized void readBus(ByteCallback bc) throws IOException {
-        callbacks.add(bc);
+        enqueue(bc);
         out.writeByte(2);
         out.flush();
     }
 
     public synchronized void readInterrupts(ByteCallback bc) throws IOException {
-        callbacks.add(bc);
+        enqueue(bc);
         out.writeByte(3);
         out.flush();
     }
