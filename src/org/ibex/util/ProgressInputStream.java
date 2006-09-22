@@ -29,7 +29,7 @@ public class ProgressInputStream extends FilterInputStream {
     }
 
     private void update() {
-        System.out.print("\r                                                              \r");
+        System.out.print("\r");
         System.out.print(title);
         if (size != -1) {
             int frac = (100 * bytes) / size;
@@ -43,6 +43,7 @@ public class ProgressInputStream extends FilterInputStream {
         System.out.print(" ");
         System.out.print(bytes);
         System.out.print(" bytes ");
+        System.out.print("                         ");
     }
 
     public void close() throws IOException {
