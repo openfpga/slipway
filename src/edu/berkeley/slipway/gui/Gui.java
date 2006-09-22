@@ -1,11 +1,10 @@
-package edu.berkeley.obits.gui;
+package edu.berkeley.slipway.gui;
 
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.Fpslic.Util.*;
-import edu.berkeley.obits.*;
-import edu.berkeley.obits.device.atmel.*;
+import static com.atmel.fpslic.FpslicUtil.*;
+import edu.berkeley.slipway.*;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*;
@@ -14,7 +13,7 @@ import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
 import javax.swing.*;
-import static edu.berkeley.obits.gui.GuiConstants.*;
+import static edu.berkeley.slipway.gui.GuiConstants.*;
 
 public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListener {
 
@@ -35,7 +34,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
             final JFileChooser fc = new JFileChooser();
             int returnVal = fc.showSaveDialog(this);
             Writer pw = new OutputStreamWriter(new FileOutputStream(fc.getSelectedFile()));
-            drone.writeMode4(pw);
+            FpslicUtil.writeMode4(pw, drone);
             pw.flush();
             pw.close();
             System.err.println("done writing");
@@ -48,7 +47,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         try {
             final JFileChooser fc = new JFileChooser();
             int returnVal = fc.showOpenDialog(this);
-            drone.readMode4(new FileInputStream(fc.getSelectedFile()));
+            FpslicUtil.readMode4(new FileInputStream(fc.getSelectedFile()), drone);
             System.err.println("done reading");
             repaint();
         } catch (Exception e) {
@@ -723,7 +722,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public void scan(final Gui.Cell c) {
         try {
             final Fpslic.Cell cell = c.cell;
-            AtmelSerial.scan(at40k, cell, NONE, true);
+            Demo.scan(at40k, cell, NONE, true);
             boolean safe = !cell.fb_relevant();
             if (cell.xo()) safe = false;
             if (cell.yo()) safe = false;
@@ -748,7 +747,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 }
                 
             }
-            AtmelSerial.scan(at40k, cell, NONE, false);
+            Demo.scan(at40k, cell, NONE, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

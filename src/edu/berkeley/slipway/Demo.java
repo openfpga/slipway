@@ -1,11 +1,10 @@
-package edu.berkeley.obits;
+package edu.berkeley.slipway;
 
 import edu.berkeley.slipway.*;
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.Fpslic.Util.*;
-import edu.berkeley.obits.device.atmel.*;
-import edu.berkeley.obits.gui.*;
+import static com.atmel.fpslic.FpslicUtil.*;
+import edu.berkeley.slipway.gui.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.color.*;
@@ -14,7 +13,7 @@ import java.io.*;
 import java.util.*;
 import gnu.io.*;
 
-public class AtmelSerial {
+public class Demo {
 
     //public static boolean mullers = false;
     public static boolean mullers = true;
@@ -23,13 +22,13 @@ public class AtmelSerial {
         Enumeration e = CommPortIdentifier.getPortIdentifiers();
         while(e.hasMoreElements()) {
             CommPortIdentifier cpi = (CommPortIdentifier)e.nextElement();
-            Log.info(AtmelSerial.class, "trying " + cpi.getName());
+            Log.info(Demo.class, "trying " + cpi.getName());
             if (cpi.getName().startsWith("/dev/cu.usbserial-"))
                 return new RXTXPort(cpi.getName());
             if (cpi.getName().startsWith("/dev/ttyS0"))
                 return new RXTXPort(cpi.getName());
         }
-        Log.info(AtmelSerial.class, "returning null...");
+        Log.info(Demo.class, "returning null...");
         return null;
     }
     public static int PIPELEN=20;
@@ -38,11 +37,11 @@ public class AtmelSerial {
         Fpslic at40k = device;
         try {
             long begin = System.currentTimeMillis();
-            device.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740));
+            FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), device);
             long end = System.currentTimeMillis();
-            Log.info(AtmelSerial.class, "finished in " + ((end-begin)/1000) + "s");
+            Log.info(Demo.class, "finished in " + ((end-begin)/1000) + "s");
             Thread.sleep(1000);
-            Log.info(AtmelSerial.class, "issuing command");
+            Log.info(Demo.class, "issuing command");
 
             //at40k.iob_top(2, true).oe(false);
             //at40k.iob_top(2, false).oe(false);
@@ -513,7 +512,7 @@ public class AtmelSerial {
             vis.repaint();
             fr.repaint();
             fr.show();
-            synchronized(AtmelSerial.class) { AtmelSerial.class.wait(); }
+            synchronized(Demo.class) { Demo.class.wait(); }
 
 
 
@@ -624,11 +623,11 @@ public class AtmelSerial {
             device.flush();
             Thread.sleep(3000);
 
-            Log.info(AtmelSerial.class, "issuing command");
+            Log.info(Demo.class, "issuing command");
             at40k.iob_top(1, true).pulldown();
             device.flush();
             */
-            Log.info(AtmelSerial.class, "done");
+            Log.info(Demo.class, "done");
             System.exit(0);
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -1213,8 +1212,8 @@ public class AtmelSerial {
             case NW: case NE: case SW: case SE: {
                 c.xi(in);
                 loopback(c, XLUT);
-                if (!falling) c.ylut(lutSwap(0x0C)); /* x & !z */
-                else          c.ylut(lutSwap(0x30)); /* !x & z */
+                if (!falling) c.ylut(FpslicUtil.lutSwap(0x0C)); /* x & !z */
+                else          c.ylut(FpslicUtil.lutSwap(0x30)); /* !x & z */
                 c.xlut(LUT_SELF);
                 break;
             }
@@ -1235,8 +1234,8 @@ public class AtmelSerial {
         loopback(cell, YLUT);
         if (!invert) cell.ylut(0xB8);   /* yo = x ?  yi : z => 1011 1000 */
         else         cell.ylut(0x74);   /* yo = x ? !yi : z => 0111 0100 */
-        if (!invert) cell.xlut(lutSwap(0xB8));   /* yo = x ?  yi : z => 1011 1000 */
-        else         cell.xlut(lutSwap(0x74));   /* yo = x ? !yi : z => 0111 0100 */
+        if (!invert) cell.xlut(FpslicUtil.lutSwap(0xB8));   /* yo = x ?  yi : z => 1011 1000 */
+        else         cell.xlut(FpslicUtil.lutSwap(0x74));   /* yo = x ? !yi : z => 0111 0100 */
         cell.xi(xi);
         cell.yi(yi);
     }

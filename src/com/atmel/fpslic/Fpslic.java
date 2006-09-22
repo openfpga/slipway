@@ -7,69 +7,17 @@ import static com.atmel.fpslic.FpslicConstants.*;
 
 public abstract class Fpslic {
 
-    public static class Util {
-        public static int lutSwap(int x) {
-            return
-                (x & 0x80)        |
-                ((x & 0x20) << 1) |
-                ((x & 0x40) >> 1) |
-                (x & 0x10) |
-                (x & 0x08)        |
-                ((x & 0x02) << 1) |
-                ((x & 0x04) >> 1) |
-                (x & 0x01);
-        }
-    }
-    
-    /** issue a command to the device in Mode4 format; see Gosset's documentation for further details */
-    public int getWidth() { return 24; }
-    public int getHeight() { return 24; }
+    public Fpslic(int width, int height) { this.width = width; this.height = height; }
 
-    private static String hex2(int i) {
-        String ret = Integer.toString(i, 16);
-        while(ret.length() < 2) ret = "0"+ret;
-        return ret.toUpperCase();
-    }
-
-    public void readMode4(InputStream in) throws IOException {
-        int count = 0;
-        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-        for(String str = br.readLine(); str != null; str = br.readLine()) {
-            long foo = Long.parseLong(str, 16);
-            mode4((int)(foo >> 24), (int)(foo >> 16), (int)(foo >>  8), (int)(foo >>  0));
-            count++;
-        }
-        flush();
-        in.close();
-    }
+    private int width;
+    private int height;
+    public int getWidth() { return width; }
+    public int getHeight() { return height; }
 
     public abstract void flush();
-
-    public void writeMode4(Writer w) throws IOException {
-        for(int x=0; x<getWidth(); x++)
-            for(int y=0; y<getWidth(); y++)
-                for(int z=0; z<255; z++) {
-                    if ((z > 0x09 && z < 0x10) ||
-                        (z > 0x11 && z < 0x20) ||
-                        (z > 0x29 && z < 0x30) ||
-                        (z > 0x39 && z < 0x40) ||
-                        (z > 0x41 && z < 0x60) ||
-                        (z > 0x67 && z < 0x70) ||
-                        (z > 0x77 && z < 0xD0) ||
-                        (z > 0xD3))
-                        continue;
-                    w.write(hex2(z));
-                    w.write(hex2(y));
-                    w.write(hex2(x));
-                    w.write(hex2(mode4(z, y, x) & 0xff));
-                    w.write('\n');
-                }
-        w.flush();
-    }
-
-
     public abstract void mode4(int z, int y, int x, int d);
     public abstract byte mode4(int z, int y, int x);
+
     public          byte mode4zyx(int zyx) { return mode4(zyx>>24, (zyx>>16)&0xff, (zyx>>8)&0xff); }
     public          void mode4zyx(int zyx, int d, int invmask) { mode4(zyx>>24, (zyx>>16)&0xff, (zyx>>8)&0xff, d, invmask); }
     public          void mode4(int z, int y, int x, int d, int invmask) {
@@ -86,9 +34,7 @@ public abstract class Fpslic {
         mode4(z, y, x, old);
     }
 
-    // Fpslic ///////////////////////////////////////////////////////////////////////////////
-
-
+    // Inner Classes ///////////////////////////////////////////////////////////////////////////////
 
     public final class Sector {
         public final int col;
@@ -240,8 +186,8 @@ public abstract class Fpslic {
         public void lut(int xlut, int ylut) { xlut(xlut); ylut(ylut); }
         public void xlut(int table)    { mode4(7, row, col, (byte)(table & 0xff)); }
         public byte xlut()             { return (byte)(mode4(7, row, col) & 0xff); }
-        public String printXLut()      { return printLut(xlut(), "x", "y", "t"); }
-        public String printXLutX()     { return printLut(xlut(), str(xi(), "x"), str(yi(), "y"), str(ti_source(), "t")); }
+        public String printXLut()      { return FpslicUtil.printLut(xlut(), "x", "y", "t"); }
+        public String printXLutX()     { return FpslicUtil.printLut(xlut(), str(xi(), "x"), str(yi(), "y"), str(ti_source(), "t")); }
 
         public String str(int x, String def) {
             switch(x) {
@@ -266,8 +212,8 @@ public abstract class Fpslic {
         /* bit positions mean:  [MSB] zxy zx_ z_y z__ _xy _x_ __y ___ [LSB] */
         public void ylut(int table)    { mode4(6, row, col, (byte)(table & 0xff)); }
         public byte ylut()             { return (byte)(mode4(6, row, col) & 0xff); }
-        public String printYLut()      { return printLut(ylut(), "y", "x", "t"); }
-        public String printYLutX()     { return printLut(ylut(), str(yi(), "y"), str(xi(), "x"), str(ti_source(), "t")) + Integer.toString(ylut() & 0xff, 16); }
+        public String printYLut()      { return FpslicUtil.printLut(ylut(), "y", "x", "t"); }
+        public String printYLutX()     { return FpslicUtil.printLut(ylut(), str(yi(), "y"), str(xi(), "x"), str(ti_source(), "t")) + Integer.toString(ylut() & 0xff, 16); }
 
         public void ff_reset_value(boolean value) {
             //mode4( /* FIXME WRONG!!! */, row, col, 3, !value); return;
@@ -809,63 +755,5 @@ public abstract class Fpslic {
 
     }
 
-    public static void main(String[] s) throws Exception {
-        System.out.println(printLut(0x39, "se", "n", "L0"));
-    }
-    public static synchronized String printLut(int lut, String xn, String yn, String zn) {
-        try {
-            File f = File.createTempFile("mvsis", ".mvs");
-            f.deleteOnExit();
-
-            FileOutputStream fos = new FileOutputStream(f);
-            PrintWriter pw = new PrintWriter(new OutputStreamWriter(fos));
-            pw.println(".model clb");
-            pw.println(".inputs "+xn+" "+yn+" "+zn);
-            pw.println(".outputs O");
-            pw.println(".table "+xn+" "+yn+" "+zn+/*("X_xor_Y X_xor_Z Y_xor_Z")+*/ " -> O");
-            for(int i=8; i>=0; i--) {
-                int x = ((i & 0x01)!=0 ? 1 : 0);
-                int y = ((i & 0x02)!=0 ? 1 : 0);
-                int z = ((i & 0x04)!=0 ? 1 : 0);
-                pw.print(" "+x+" ");
-                pw.print(" "+y+" ");
-                pw.print(" "+z+" ");
-                //pw.print(" "+(x ^ y)+" ");
-                //pw.print(" "+(y ^ z)+" ");
-                //pw.print(" "+(z ^ y)+" ");
-                pw.print((lut & (1<<i))==0 ? 0 : 1);
-                pw.println();
-            }
-            pw.println(".end");
-            pw.flush();
-            pw.close();
-            Process p = Runtime.getRuntime().exec(new String[] { "mvsis", "-c", "simplify;print_factor", f.getAbsolutePath() });
-            new Gobble("mvsis: ", p.getErrorStream()).start();
-            //new Gobble("mvsis: ", p.getInputStream()).start();
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String ret = br.readLine();
-            //f.delete();
-            return ret.trim();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "*mvsis_error*";
-        }
-    }
-
-    public static class Gobble extends Thread {
-        private final String header;
-        private final BufferedReader br;
-        public Gobble(String header, BufferedReader br) { this.br = br; this.header = header; }
-        public Gobble(String header, Reader r)          { this(header, new BufferedReader(r)); }
-        public Gobble(String header, InputStream is)    { this(header, new InputStreamReader(is)); }
-        public void run() {
-            try {
-                for(String s = br.readLine(); s!=null; s=br.readLine())
-                    System.err.println(header + s);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
 }

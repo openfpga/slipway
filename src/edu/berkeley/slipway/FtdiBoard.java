@@ -22,6 +22,7 @@ public class FtdiBoard extends Fpslic implements Board {
     public OutputStream getOutputStream() { return out; }
 
     public FtdiBoard() throws Exception {
+        super(24, 24);
         chip = new FpslicBoot(new FpslicBootPinsUsb(new FtdiUart(0x6666, 0x3133, 1500 * 1000)));
         String bstFile = this.getClass().getName();
         bstFile = bstFile.substring(0, bstFile.lastIndexOf('.'));
