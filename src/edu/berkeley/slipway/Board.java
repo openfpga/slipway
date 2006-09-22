@@ -8,9 +8,16 @@ import gnu.io.*;
 
 public abstract class Board {
 
-    public abstract void reset() throws IOException;
+    /** boot the board using an md4 configuration stream */
     public abstract void boot(Reader r) throws Exception;
+
+    /** reset the board */
+    public abstract void reset() throws IOException;
+
+    /** the UART inputstream (after loading initial config) */
     public abstract InputStream getInputStream();
+
+    /** the UART inputstream (after loading initial config) */
     public abstract OutputStream getOutputStream();
 
 }

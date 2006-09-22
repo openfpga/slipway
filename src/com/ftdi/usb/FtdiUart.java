@@ -7,8 +7,6 @@ import java.io.*;
  *  Note: blocking reads are currently implemented by busy-waiting.
  *  This is really ugly.  Check the linux kernel source to see how to
  *  get libftdi to do it properly.
- *
- *  Flow control is also not properly supported.
  */
 public class FtdiUart {
 

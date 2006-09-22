@@ -250,15 +250,6 @@ int main() {
   }
   */
 
-  PORTE |=  (1<<3);
-  recv();
-  send('O');
-  send('B');
-  send('I');
-  send('T');
-  send('S');
-  send('\n');
-
   int x=0, y=0, z=0;
   //while(1) send(/*FISUA*/2);
   for(;;) {
@@ -269,6 +260,15 @@ int main() {
     int i, d=0;
     int r = recv();
     switch(r) {
+      case 0:
+        send('O');
+        send('B');
+        send('I');
+        send('T');
+        send('S');
+        send('\n');
+        PORTE |=  (1<<3);
+        break;
       case 1:
         z = recv();
         y = recv();
