@@ -755,7 +755,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
     int made = 0;
-    private class BCB implements FtdiBoard.ByteCallback {
+    private class BCB extends FtdiBoard.ByteCallback {
         Gui.Cell c;
         int who;
         public BCB(Gui.Cell c, int who) {
@@ -922,7 +922,6 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public class Z_Mux extends Mux {
         public boolean result(boolean x, boolean y, boolean z) { return z ? x : y; }
     }
-
 
     public abstract class Buf extends Gate {
         public void makePath(GeneralPath gp) {

@@ -43,4 +43,20 @@ public class SerialBoard implements Board {
 
     public InputStream getInputStream() { return in; }
     public OutputStream getOutputStream() { return out; }
+
+    /*
+    public static SerialPort detectObitsPort() throws Exception {
+        Enumeration e = CommPortIdentifier.getPortIdentifiers();
+        while(e.hasMoreElements()) {
+            CommPortIdentifier cpi = (CommPortIdentifier)e.nextElement();
+            Log.info(Demo.class, "trying " + cpi.getName());
+            if (cpi.getName().startsWith("/dev/cu.usbserial-"))
+                return new RXTXPort(cpi.getName());
+            if (cpi.getName().startsWith("/dev/ttyS0"))
+                return new RXTXPort(cpi.getName());
+        }
+        Log.info(Demo.class, "returning null...");
+        return null;
+    }
+    */
 }

@@ -202,7 +202,7 @@ int main() {
         send(readFPGA());
         break;
 
-      case 6: {
+      case 3: {
         int32_t local_interrupt_count = interrupt_count;
         interrupt_count = 0;
         send((local_interrupt_count >> 24) & 0xff);

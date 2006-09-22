@@ -35,12 +35,9 @@ public class FtdiBoard extends Fpslic implements Board {
         init();
     }
 
-    public void reset() throws IOException {
-        chip.reset();
-    }
+    public void reset() throws IOException { chip.reset(); }
 
     public void boot(Reader r) throws Exception {
-
         chip.selfTest();
 
         int total = 75090/9;
@@ -56,11 +53,6 @@ public class FtdiBoard extends Fpslic implements Board {
             if ((bytes % 1000)==0) os.flush();
         }
         os.close();
-    }
-
-    public static String pad(String s, int i) {
-        if (s.length() >= i) return s;
-        return "0"+pad(s, i-1);
     }
 
 
@@ -94,6 +86,7 @@ public class FtdiBoard extends Fpslic implements Board {
             public void run() {
                 while(true) {
                     try {
+                        while(callbacks.size() == 0) Thread.sleep(500);
                         byte b = in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
                         bc.call(b);
@@ -105,21 +98,49 @@ public class FtdiBoard extends Fpslic implements Board {
         }.start();
     }
 
-    public synchronized void scanFPGA(boolean on) throws IOException {
-        if (on) {
-            out.writeByte(3);
-            out.flush();
-        } else {
-            // FIXME
+
+    // Programming ///////////////////////////////////////////////////////////////////////////////
+
+    private byte[][][] cache = new byte[24][][];
+    public byte mode4(int z, int y, int x) {
+        if (cache[x]==null) return 0;
+        if (cache[x][y]==null) return 0;
+        return cache[x][y][z];
+    }
+
+    public void mode4(int z, int y, int x, int d) {
+        try {
+            if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
+            if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
+            cache[x & 0xff][y & 0xff][z & 0xff] = (byte)(d & 0xff);
+
+            out.writeByte(1);
+            out.writeByte(z);
+            out.writeByte(y);
+            out.writeByte(x);
+            out.writeByte(d);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
-    // fixme!
-    public static int retval = 0;
+
+    public void flush() { try { out.flush(); } catch (IOException e) { throw new RuntimeException(e); } }
+
+
+    // Callbacks //////////////////////////////////////////////////////////////////////////////
+
+    private Vector callbacks = new Vector();
+
+    public static abstract class ByteCallback {
+        public int result;
+        public abstract void call(byte b) throws Exception;
+    }
+
     public synchronized int readCount() {
         try {
             ByteCallback bc = new ByteCallback() {
                     public synchronized void call(byte b) throws Exception {
-                        retval =
+                        result =
                             ((b & 0xff) << 24) |
                             ((in.read() & 0xff) << 16) |
                             ((in.read() & 0xff) << 8) |
@@ -129,19 +150,13 @@ public class FtdiBoard extends Fpslic implements Board {
                 };
             synchronized(bc) {
                 callbacks.add(bc);
-                out.writeByte(6);
+                out.writeByte(3);
                 out.flush();
                 bc.wait();
             }
-            return retval;
+            return bc.result;
         } catch (Exception e) { throw new RuntimeException(e); }
     }
-
-    public static interface ByteCallback {
-        public void call(byte b) throws Exception;
-    }
-
-    private Vector callbacks = new Vector();
 
     public synchronized void readBus(ByteCallback bc) throws IOException {
         callbacks.add(bc);
@@ -151,50 +166,17 @@ public class FtdiBoard extends Fpslic implements Board {
 
     public synchronized void readInterrupts(ByteCallback bc) throws IOException {
         callbacks.add(bc);
-        out.writeByte(6);
+        out.writeByte(3);
         out.flush();
     }
 
-    private byte[][][] cache = new byte[24][][];
-    public /*synchronized*/ byte mode4(int z, int y, int x) {
-        if (cache[x]==null) return 0;
-        if (cache[x][y]==null) return 0;
-        return cache[x][y][z];
-    }
 
-    int lastz = 0;
-    int lastx = 0;
-    int lasty = 0;
-    public static int save = 0;
-    public static int saveof = 0;
-    public /*synchronized*/ void mode4(int z, int y, int x, int d) {
-        try {
-            out.writeByte(1);
-            out.writeByte(z);
-            out.writeByte(y);
-            out.writeByte(x);
-            saveof++;
-            lastz = z;
-            lastx = x;
-            lasty = y;
-            out.writeByte(d);
-
-            if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
-            if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
-            cache[x & 0xff][y & 0xff][z & 0xff] = (byte)(d & 0xff);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public /*synchronized*/ void flush() {
-        try {
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    // Util //////////////////////////////////////////////////////////////////////////////
 
     private String pad(int i, String s) { if (s.length()>i) return s; return "0"+pad((i-1),s); }
+    public static String pad(String s, int i) {
+        if (s.length() >= i) return s;
+        return "0"+pad(s, i-1);
+    }
 
 }
