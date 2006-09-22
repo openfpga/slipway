@@ -266,7 +266,6 @@ int main() {
         send('I');
         send('T');
         send('S');
-        send('\n');
         PORTE |=  (1<<3);
         break;
       case 1:

@@ -30,15 +30,6 @@ public class AvrDrone extends AtmelDevice {
     }
 
     private void init() throws IOException {
-        //Log.debug(this, "waiting for device to identify itself");
-        /*
-        if (in.readByte() != (byte)'O')  throw new RuntimeException("didn't get the proper signature");
-        if (in.readByte() != (byte)'B')  throw new RuntimeException("didn't get the proper signature");
-        if (in.readByte() != (byte)'I')  throw new RuntimeException("didn't get the proper signature");
-        if (in.readByte() != (byte)'T')  throw new RuntimeException("didn't get the proper signature");
-        if (in.readByte() != (byte)'S')  throw new RuntimeException("didn't get the proper signature");
-        if (in.readByte() != (byte)'\n') throw new RuntimeException("didn't get the proper signature");
-        */
         byte[] bytes = new byte[6];
         int i=0;
 
@@ -50,18 +41,17 @@ public class AvrDrone extends AtmelDevice {
             System.arraycopy(bytes, 1, bytes, 0, 5);
             bytes[5] = in.readByte();
             i++;
-            System.out.println("got " + new String(bytes));
+            System.out.print("\rsignature: read \"" + new String(bytes) + "\"                   ");
             if (bytes[0] == (byte)'O' &&
                 bytes[1] == (byte)'B' &&
                 bytes[2] == (byte)'I' &&
                 bytes[3] == (byte)'T' &&
-                bytes[4] == (byte)'S' &&
-                bytes[5] == (byte)'\n') {
-                System.out.println("got proper signature");
+                bytes[4] == (byte)'S') {
+                System.out.println("\rsignature: got proper signature                  ");
                 break;
             }
         }
-        //Log.info(this, "device correctly identified itself; ready for operation");
+
     }
 
     public synchronized void scanFPGA(boolean on) throws DeviceException {
