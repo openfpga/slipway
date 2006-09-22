@@ -1,6 +1,6 @@
 package edu.berkeley.obits.gui;
 
-import static com.atmel.fpslic.Fpslic.Constants.*;
+import static com.atmel.fpslic.FpslicConstants.*;
 import static com.atmel.fpslic.Fpslic.Util.*;
 import edu.berkeley.obits.*;
 import edu.berkeley.obits.device.atmel.*;
