@@ -19,12 +19,72 @@ public class Demo {
     public static int masterx = 1;
 
     public static int PIPELEN=20;
+
     public static void main(String[] s) throws Exception {
+        FtdiBoard device = new FtdiBoard();
+        Fpslic at40k = device;
+
+        long begin = System.currentTimeMillis();
+        //FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), device);
+        long end = System.currentTimeMillis();
+        Log.info(Demo.class, "finished in " + ((end-begin)/1000) + "s");
+        Thread.sleep(1000);
+        Log.info(Demo.class, "issuing command");
+
+        for(int i=0; i<24; i++) {
+            at40k.iob_bot(i, true).enableOutput(NORTH);
+            at40k.iob_bot(i, false).enableOutput(NW);
+            at40k.cell(i, 0).xlut(0xff);
+            at40k.cell(i, 0).ylut(0xff);
+        }
+
+        at40k.cell(23,15).h(3, true);
+        at40k.cell(23,15).yi(L3);
+        at40k.cell(23,15).ylut(0xAA);
+        at40k.iob_right(15, true).enableOutput(WEST);
+
+        device.flush();
+
+        Fpslic.Cell root = at40k.cell(10,20);
+            
+        root.yo(root.north());
+        root.ylut(~LUT_SELF);
+        root.c(YLUT);
+        root = root.north();
+
+        root.yo(root.east());
+        root.ylut(~LUT_SELF);
+        root.c(YLUT);
+        root = root.east();
+
+        root.yo(root.south());
+        root.ylut(~LUT_SELF);
+        root.c(YLUT);
+        root = root.south();
+
+        root.yo(root.west());
+        root.c(YLUT);
+        root = root.west();
+
+        Gui vis = new Gui(at40k, device);
+        Frame fr = new Frame();
+        fr.addKeyListener(vis);
+        fr.setLayout(new BorderLayout());
+        fr.add(vis, BorderLayout.CENTER);
+        fr.pack();
+        fr.setSize(900, 900);
+        vis.repaint();
+        fr.repaint();
+        fr.show();
+        synchronized(Demo.class) { Demo.class.wait(); }
+    }
+
+    public static void mainw(String[] s) throws Exception {
         FtdiBoard device = new FtdiBoard();
         Fpslic at40k = device;
         try {
             long begin = System.currentTimeMillis();
-            FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), device);
+            //FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), device);
             long end = System.currentTimeMillis();
             Log.info(Demo.class, "finished in " + ((end-begin)/1000) + "s");
             Thread.sleep(1000);
@@ -37,85 +97,85 @@ public class Demo {
             // this command confirmed to turn *on* led0
             //at40k.iob_top(1, false).output(0);
             /*
-            for(int i=0; i<20; i++) {
-                at40k.iob_bot(i, false).output(0);
-                at40k.iob_bot(i, true).output(0);
-            }
+              for(int i=0; i<20; i++) {
+              at40k.iob_bot(i, false).output(0);
+              at40k.iob_bot(i, true).output(0);
+              }
             */
 
             //System.out.println("tick");
-                //Thread.sleep(3000);
-                //System.out.println("tick");
-                //at40k.cell(0x01, 0x17).xlut((byte)0x);
+            //Thread.sleep(3000);
+            //System.out.println("tick");
+            //at40k.cell(0x01, 0x17).xlut((byte)0x);
 
             /*
-            System.out.println(Integer.toString(0xff & at40k.cell(0x01, 0x17).xlut(), 16));
-            System.out.println(Integer.toString(0xff & at40k.cell(0x01, 0x17).ylut(), 16));
-            at40k.cell(0x01, 0x17).ylut((byte)0xff);
+              System.out.println(Integer.toString(0xff & at40k.cell(0x01, 0x17).xlut(), 16));
+              System.out.println(Integer.toString(0xff & at40k.cell(0x01, 0x17).ylut(), 16));
+              at40k.cell(0x01, 0x17).ylut((byte)0xff);
             */
 
             //at40k.cell(0x01, 0x17).wi(L1);
             /*
-            System.out.println("a: " + at40k.new SectorWire(true, 0, 4, 0x17).driverRight());
-            System.out.println("b: " + at40k.new SectorWire(true, 1, 4, 0x17).driverRight());
-            Fpslic.SectorWire h0p0 = at40k.new SectorWire(true, 0, 0, 0x17);
-            Fpslic.SectorWire h0p1 = at40k.new SectorWire(true, 1, 0, 0x17);
-            Fpslic.SectorWire h0p2 = at40k.new SectorWire(true, 2, 0, 0x17);
-            Fpslic.SectorWire h4p0 = at40k.new SectorWire(true, 0, 4, 0x17);
-            Fpslic.SectorWire h4p1 = at40k.new SectorWire(true, 1, 4, 0x17);
-            Fpslic.SectorWire h4p2 = at40k.new SectorWire(true, 2, 4, 0x17);
+              System.out.println("a: " + at40k.new SectorWire(true, 0, 4, 0x17).driverRight());
+              System.out.println("b: " + at40k.new SectorWire(true, 1, 4, 0x17).driverRight());
+              Fpslic.SectorWire h0p0 = at40k.new SectorWire(true, 0, 0, 0x17);
+              Fpslic.SectorWire h0p1 = at40k.new SectorWire(true, 1, 0, 0x17);
+              Fpslic.SectorWire h0p2 = at40k.new SectorWire(true, 2, 0, 0x17);
+              Fpslic.SectorWire h4p0 = at40k.new SectorWire(true, 0, 4, 0x17);
+              Fpslic.SectorWire h4p1 = at40k.new SectorWire(true, 1, 4, 0x17);
+              Fpslic.SectorWire h4p2 = at40k.new SectorWire(true, 2, 4, 0x17);
 
-            //h4p1.drives(h0p1, false);
-            //at40k.cell(0x04, 0x17).out(L1, false);
-            //at40k.cell(0x04, 0x17).h(L0, false);
+              //h4p1.drives(h0p1, false);
+              //at40k.cell(0x04, 0x17).out(L1, false);
+              //at40k.cell(0x04, 0x17).h(L0, false);
 
-            for(int plane=0; plane<5; plane++) {
-                at40k.new SectorWire(true, plane,     4, 0x17).drives(at40k.new SectorWire(true, plane,     0, 0x17), false);
-                at40k.cell(0x04, 0x17).out(plane, false);
-                at40k.cell(0x04, 0x17).h(plane, false);
-                at40k.cell(0x01, 0x17).h(plane, false);
-            }
-            try { Thread.sleep(2000); } catch (Exception e) { }
+              for(int plane=0; plane<5; plane++) {
+              at40k.new SectorWire(true, plane,     4, 0x17).drives(at40k.new SectorWire(true, plane,     0, 0x17), false);
+              at40k.cell(0x04, 0x17).out(plane, false);
+              at40k.cell(0x04, 0x17).h(plane, false);
+              at40k.cell(0x01, 0x17).h(plane, false);
+              }
+              try { Thread.sleep(2000); } catch (Exception e) { }
 
-            int plane=0;
-            at40k.new SectorWire(true, plane, 4, 0x17).drives(at40k.new SectorWire(true, plane, 0, 0x17), true);
-            at40k.cell(0x04, 0x17).out(plane, true);
-            at40k.cell(0x04, 0x17).h(plane, true);
-            at40k.cell(0x01, 0x17).h(plane, true);
-            at40k.cell(0x01, 0x17).wi(plane);
+              int plane=0;
+              at40k.new SectorWire(true, plane, 4, 0x17).drives(at40k.new SectorWire(true, plane, 0, 0x17), true);
+              at40k.cell(0x04, 0x17).out(plane, true);
+              at40k.cell(0x04, 0x17).h(plane, true);
+              at40k.cell(0x01, 0x17).h(plane, true);
+              at40k.cell(0x01, 0x17).wi(plane);
 
             */
 
             /*
-            System.out.println("xlut is " + hex(at40k.cell(0x04, 0x17).xlut()));
-            System.out.println("ylut is " + hex(at40k.cell(0x04, 0x17).ylut()));
-            Fpslic.Cell cell = at40k.cell(0x04, 0x17);
-            //cell.xlut(0xff);
-            //cell.f(false);
-            System.out.println(cell.c());
-            cell.c(YLUT);
-            cell.ylut(0x4D);
-            cell.xlut(0x00);
+              System.out.println("xlut is " + hex(at40k.cell(0x04, 0x17).xlut()));
+              System.out.println("ylut is " + hex(at40k.cell(0x04, 0x17).ylut()));
+              Fpslic.Cell cell = at40k.cell(0x04, 0x17);
+              //cell.xlut(0xff);
+              //cell.f(false);
+              System.out.println(cell.c());
+              cell.c(YLUT);
+              cell.ylut(0x4D);
+              cell.xlut(0x00);
 
-            cell.b(false);
-            cell.f(false);
-            //cell.t(false, false, true);
-            cell.t(false, true, false);
-            cell.out(L3, true);
-            cell.wi(L3);
+              cell.b(false);
+              cell.f(false);
+              //cell.t(false, false, true);
+              cell.t(false, true, false);
+              cell.out(L3, true);
+              cell.wi(L3);
 
-            cell.yo(false);
-            cell.h(L0, false);
-            cell.h(L1, false);
-            cell.h(L2, false);
-            cell.h(L3, false);
-            cell.h(L4, false);
+              cell.yo(false);
+              cell.h(L0, false);
+              cell.h(L1, false);
+              cell.h(L2, false);
+              cell.h(L3, false);
+              cell.h(L4, false);
 
-            for(int i=3; i>=1; i--) {
-                at40k.cell(i, 0x17).yi(EAST);
-                at40k.cell(i, 0x17).ylut(0x55);
-                at40k.cell(i, 0x17).yo(false);
-            }
+              for(int i=3; i>=1; i--) {
+              at40k.cell(i, 0x17).yi(EAST);
+              at40k.cell(i, 0x17).ylut(0x55);
+              at40k.cell(i, 0x17).yo(false);
+              }
             */
 
             //System.out.println("reading port status: " + Integer.toString(device.readBus() & 0xff, 16));
@@ -123,10 +183,10 @@ public class Demo {
 
             // blank these out
             /*
-            at40k.cell(23, 8).ylut(0xff);
-            at40k.cell(23, 11).ylut(0xff);
-            at40k.iob_right(8, true).enableOutput();
-            at40k.iob_right(11, true).enableOutput();
+              at40k.cell(23, 8).ylut(0xff);
+              at40k.cell(23, 11).ylut(0xff);
+              at40k.iob_right(8, true).enableOutput();
+              at40k.iob_right(11, true).enableOutput();
             */
             //for(int x=4;  x<=22; x++) swap(at40k.cell(x, 22), NW, NORTH);
 
@@ -137,85 +197,85 @@ public class Demo {
             //at40k.cell(4,23).ylut(at40k.cell(4,23).xlut());
             //at40k.cell(4,23).xo(false);
             /*
-            at40k.cell(4,23).xlut(0x55);
-            at40k.cell(4,23).ylut(0x55);
+              at40k.cell(4,23).xlut(0x55);
+              at40k.cell(4,23).ylut(0x55);
             */
             /*
-            at40k.cell(4,23).xlut(0x71);
-            at40k.cell(4,23).ylut(0x44);
-            at40k.cell(4,23).c(YLUT);
-            at40k.cell(4,23).f(false);
-            at40k.cell(4,23).t(false, false, true);
+              at40k.cell(4,23).xlut(0x71);
+              at40k.cell(4,23).ylut(0x44);
+              at40k.cell(4,23).c(YLUT);
+              at40k.cell(4,23).f(false);
+              at40k.cell(4,23).t(false, false, true);
             */
 
             //for(int x=6;  x<=23; x++) copy(at40k.cell(x, 23), NW, WEST);  // top row copies to the right
             /*
-            copy(at40k.cell(5, 22), NW, NORTH);
-            for(int x=6;  x<=22; x++) copy(at40k.cell(x, 22), NW, WEST);  // second top row copies to the right
-            //for(int y=22; y>=10; y--) copy(at40k.cell(23, y), NW, NORTH); // right edge copies down
-            for(int y=21; y>=9;  y--) copy(at40k.cell(22, y), NW, NORTH); // second right edge copies down
-            copy(at40k.cell(23, 9), NW, WEST);                            // second output
+              copy(at40k.cell(5, 22), NW, NORTH);
+              for(int x=6;  x<=22; x++) copy(at40k.cell(x, 22), NW, WEST);  // second top row copies to the right
+              //for(int y=22; y>=10; y--) copy(at40k.cell(23, y), NW, NORTH); // right edge copies down
+              for(int y=21; y>=9;  y--) copy(at40k.cell(22, y), NW, NORTH); // second right edge copies down
+              copy(at40k.cell(23, 9), NW, WEST);                            // second output
             */
             /*
-            handshaker(at40k.cell(4,23));
-            at40k.cell(4,23).xi(NW);
-            at40k.cell(4,23).yi(SOUTH);
+              handshaker(at40k.cell(4,23));
+              at40k.cell(4,23).xi(NW);
+              at40k.cell(4,23).yi(SOUTH);
 
-            //handshaker(at40k.cell(5,23));
-            //at40k.cell(5,23).yi(NORTH);
+              //handshaker(at40k.cell(5,23));
+              //at40k.cell(5,23).yi(NORTH);
 
-            at40k.cell(5,23).yi(NORTH);
-            at40k.cell(5,23).xlut(0x55);
-            at40k.cell(5,23).xi(SW);
-            at40k.cell(5,23).ylut(0x55);
-            at40k.cell(5,22).yi(NORTH);
-            at40k.cell(5,22).xlut(0x55);
+              at40k.cell(5,23).yi(NORTH);
+              at40k.cell(5,23).xlut(0x55);
+              at40k.cell(5,23).xi(SW);
+              at40k.cell(5,23).ylut(0x55);
+              at40k.cell(5,22).yi(NORTH);
+              at40k.cell(5,22).xlut(0x55);
 
-            bounce(at40k.cell(4,22));
+              bounce(at40k.cell(4,22));
 
-            // cell southeast of entry cell
-            at40k.cell(3,22).xi(NE);      // NW->xin
-            at40k.cell(3,22).ylut(0x33);  // xin->y
-            at40k.cell(3,22).yo(false);   // y->yout
-            copy(at40k.cell(3, 21), NW, NORTH);  // second top row copies to the right
-            copy(at40k.cell(4, 21), NW, EAST);  // second top row copies to the right
-            copy(at40k.cell(5, 21), NW, EAST);  // second top row copies to the right
-            copy(at40k.cell(6, 21), NW, EAST);  // second top row copies to the right
-            copy(at40k.cell(6, 22), NW, SOUTH);  // second top row copies to the right
+              // cell southeast of entry cell
+              at40k.cell(3,22).xi(NE);      // NW->xin
+              at40k.cell(3,22).ylut(0x33);  // xin->y
+              at40k.cell(3,22).yo(false);   // y->yout
+              copy(at40k.cell(3, 21), NW, NORTH);  // second top row copies to the right
+              copy(at40k.cell(4, 21), NW, EAST);  // second top row copies to the right
+              copy(at40k.cell(5, 21), NW, EAST);  // second top row copies to the right
+              copy(at40k.cell(6, 21), NW, EAST);  // second top row copies to the right
+              copy(at40k.cell(6, 22), NW, SOUTH);  // second top row copies to the right
             */
             /*
-            at40k.cell(05,22).xlut(0xff);
-            at40k.cell(05,22).ylut(0xff);
-            at40k.cell(05,22).c(XLUT);
-            at40k.cell(05,22).f(false);
-            at40k.cell(05,22).b(false);
-            at40k.cell(05,22).oe(NONE);
-            at40k.cell(05,22).v(L3, true);
-            at40k.cell(05,22).out(L3, true);
+              at40k.cell(05,22).xlut(0xff);
+              at40k.cell(05,22).ylut(0xff);
+              at40k.cell(05,22).c(XLUT);
+              at40k.cell(05,22).f(false);
+              at40k.cell(05,22).b(false);
+              at40k.cell(05,22).oe(NONE);
+              at40k.cell(05,22).v(L3, true);
+              at40k.cell(05,22).out(L3, true);
             */
             /*
-            at40k.cell(4,23).ylut(~0xCC);
-            at40k.cell(4,23).xlut(~0xAA);
-            at40k.cell(5,23).ylut(~0xAA);
-            at40k.cell(5,23).xlut(~0xAA);
-            for(int i=6; i<PIPELEN+2; i++) {
-                at40k.cell(i, 23).ylut(0xAA);
-                at40k.cell(i, 23).xlut(0xCC);
-                at40k.cell(i, 23).yi(WEST);
-            }
+              at40k.cell(4,23).ylut(~0xCC);
+              at40k.cell(4,23).xlut(~0xAA);
+              at40k.cell(5,23).ylut(~0xAA);
+              at40k.cell(5,23).xlut(~0xAA);
+              for(int i=6; i<PIPELEN+2; i++) {
+              at40k.cell(i, 23).ylut(0xAA);
+              at40k.cell(i, 23).xlut(0xCC);
+              at40k.cell(i, 23).yi(WEST);
+              }
             */
 
             /* LAST
-            System.out.println("doit");
-            if (mullers) doitx(at40k, device);
-            //System.out.println("counter");
-            //counter(at40k, device);
+               System.out.println("doit");
+               if (mullers) doitx(at40k, device);
+               //System.out.println("counter");
+               //counter(at40k, device);
 
-            at40k.cell(21,15).yi(WEST);
-            at40k.cell(21,15).ylut(0xAA);
+               at40k.cell(21,15).yi(WEST);
+               at40k.cell(21,15).ylut(0xAA);
 
-            at40k.cell(22,15).yi(WEST);
-            at40k.cell(22,15).ylut(0xAA);
+               at40k.cell(22,15).yi(WEST);
+               at40k.cell(22,15).ylut(0xAA);
             */
 
             Fpslic.Cell root = at40k.cell(10,20);
@@ -354,14 +414,14 @@ public class Demo {
 
             // catch a rising transition
             /*
-            c = c.west();
-            c.v(L2, false);
-            c.h(L2, true);
-            c.out(L2, true);
-            c.f(false);
-            c.b(false);
-            c.oe(NONE);
-            c.c(YLUT);
+              c = c.west();
+              c.v(L2, false);
+              c.h(L2, true);
+              c.out(L2, true);
+              c.f(false);
+              c.b(false);
+              c.oe(NONE);
+              c.c(YLUT);
             */
             c.hwire(L2).west().drives(c.hwire(L2), false);
             c.hwire(L2).east().drives(c.hwire(L2), false);
@@ -421,60 +481,60 @@ public class Demo {
             //}
 
             /*
-            at40k.cell(22,11).ylut(0xff);
-            at40k.cell(23,11).yi(L3);
-            //at40k.cell(23,11).yi(WEST);
-            //at40k.cell(23,11).xi(L1);
-            at40k.cell(23,11).ylut(0xAA);
-            at40k.iob_right(11, true).enableOutput(WEST);
-            at40k.cell(23,11).v(L3, true);
-            at40k.cell(23,11).yo(false);
-            //at40k.flush();
-            */
+              at40k.cell(22,11).ylut(0xff);
+              at40k.cell(23,11).yi(L3);
+              //at40k.cell(23,11).yi(WEST);
+              //at40k.cell(23,11).xi(L1);
+              at40k.cell(23,11).ylut(0xAA);
+              at40k.iob_right(11, true).enableOutput(WEST);
+              at40k.cell(23,11).v(L3, true);
+              at40k.cell(23,11).yo(false);
+              //at40k.flush();
+              */
             int vx=04;
             int vv=23;
             /*
-            System.out.println("correct: " + at40k.cell(19,15).hwire(L3) + " drives " + at40k.cell(20,15).hwire(L3));
-            System.out.println("correct: " + at40k.cell(15,15).hwire(L3) + " drives " + at40k.cell(19,15).hwire(L3));
-            System.out.println("correct: " + at40k.cell(11,15).hwire(L3) + " drives " + at40k.cell(15,15).hwire(L3));
-            System.out.println("correct: " + at40k.cell(07,15).hwire(L3) + " drives " + at40k.cell(11,15).hwire(L3));
+              System.out.println("correct: " + at40k.cell(19,15).hwire(L3) + " drives " + at40k.cell(20,15).hwire(L3));
+              System.out.println("correct: " + at40k.cell(15,15).hwire(L3) + " drives " + at40k.cell(19,15).hwire(L3));
+              System.out.println("correct: " + at40k.cell(11,15).hwire(L3) + " drives " + at40k.cell(15,15).hwire(L3));
+              System.out.println("correct: " + at40k.cell(07,15).hwire(L3) + " drives " + at40k.cell(11,15).hwire(L3));
 
-            at40k.cell(19,15).hwire(L3).drives(at40k.cell(20,15).hwire(L3), true);
-            at40k.cell(15,15).hwire(L3).drives(at40k.cell(19,15).hwire(L3), true);
-            at40k.cell(11,15).hwire(L3).drives(at40k.cell(15,15).hwire(L3), true);
-            at40k.cell(07,15).hwire(L3).drives(at40k.cell(11,15).hwire(L3), true);
+              at40k.cell(19,15).hwire(L3).drives(at40k.cell(20,15).hwire(L3), true);
+              at40k.cell(15,15).hwire(L3).drives(at40k.cell(19,15).hwire(L3), true);
+              at40k.cell(11,15).hwire(L3).drives(at40k.cell(15,15).hwire(L3), true);
+              at40k.cell(07,15).hwire(L3).drives(at40k.cell(11,15).hwire(L3), true);
             */
             //at40k.cell(05,vv).xlut(0xff);
             //at40k.cell(05,vv).ylut(0xff);
             /*
-            at40k.cell(vx,vv).c(YLUT);
-            at40k.cell(vx,vv).f(false);
-            at40k.cell(vx,vv).b(false);
-            at40k.cell(vx,vv).oe(NONE);
-            at40k.cell(vx,vv).v(L3, true);
-            at40k.cell(vx,vv).out(L3, true);
+              at40k.cell(vx,vv).c(YLUT);
+              at40k.cell(vx,vv).f(false);
+              at40k.cell(vx,vv).b(false);
+              at40k.cell(vx,vv).oe(NONE);
+              at40k.cell(vx,vv).v(L3, true);
+              at40k.cell(vx,vv).out(L3, true);
             */
             /*
-            at40k.cell(vx,15).v(L3, true);
-            at40k.cell(vx,15).h(L3, true);
-            at40k.cell(vx,19).vwire(L3).drives(at40k.cell(vx,15).vwire(L3), true);
-            at40k.cell(vx,23).vwire(L3).drives(at40k.cell(vx,19).vwire(L3), true);
+              at40k.cell(vx,15).v(L3, true);
+              at40k.cell(vx,15).h(L3, true);
+              at40k.cell(vx,19).vwire(L3).drives(at40k.cell(vx,15).vwire(L3), true);
+              at40k.cell(vx,23).vwire(L3).drives(at40k.cell(vx,19).vwire(L3), true);
             */
 
             //at40k.cell(5,23).ylut(0x00);
             //at40k.cell(6,22).ylut(0xff);
             //at40k.cell(22,11).ylut(0xff);
             /*
-            Fpslic.Cell cell = at40k.cell(4, 16);
-            cell.xlut(0xff);
-            cell.ylut(0xff);
-            cell.b(false);
-            cell.f(false);
-            cell.c(XLUT);
-            cell.h(L3, true);
-            cell.v(L3, true);
-            cell.out(L3, true);
-            cell.oe(NONE);
+              Fpslic.Cell cell = at40k.cell(4, 16);
+              cell.xlut(0xff);
+              cell.ylut(0xff);
+              cell.b(false);
+              cell.f(false);
+              cell.c(XLUT);
+              cell.h(L3, true);
+              cell.v(L3, true);
+              cell.out(L3, true);
+              cell.oe(NONE);
             */
             //scan(at40k, cell, YLUT, true);
             //scan(at40k, cell, YLUT, false);
@@ -528,22 +588,22 @@ public class Demo {
 
 
             /*
-            Visualizer v = new Visualizer(at40k, device);
-            v.show();
-            v.setSize(1380, 1080);
-            Fpslic.Cell cell = at40k.cell(4, 23);
+              Visualizer v = new Visualizer(at40k, device);
+              v.show();
+              v.setSize(1380, 1080);
+              Fpslic.Cell cell = at40k.cell(4, 23);
             */
             //Image img = v.createImage(v.getWidth(), v.getHeight());
             /*
-            int x = 1;
-            int y = 14;
-            cell = at40k.cell(x,y);
-            scan(at40k, cell, YLUT, true);
-            cell.c(YLUT);
-            cell.b(false);
-            cell.f(false);
-            cell.oe(NONE);
-            cell.ylut(0xff);
+              int x = 1;
+              int y = 14;
+              cell = at40k.cell(x,y);
+              scan(at40k, cell, YLUT, true);
+              cell.c(YLUT);
+              cell.b(false);
+              cell.f(false);
+              cell.oe(NONE);
+              cell.ylut(0xff);
             */
             //int x = 5;
             //int y = 11;
@@ -571,130 +631,79 @@ public class Demo {
             //at40k.cell(0x04, 0x17).xo();
 
             /*
-            at40k.cell(0x01, 0x17).xi(L0);
-            at40k.cell(0x01, 0x17).h(L0, true);
+              at40k.cell(0x01, 0x17).xi(L0);
+              at40k.cell(0x01, 0x17).h(L0, true);
             */
             /*
-            at40k.cell(0x03, 0x17).xlut((byte)0x55);
-            at40k.cell(0x03, 0x17).ylut((byte)0x55);
-            at40k.cell(0x03, 0x17).yi(EAST);
-            at40k.cell(0x03, 0x17).ylut((byte)0x55);
-            at40k.cell(0x03, 0x17).yo(true);
+              at40k.cell(0x03, 0x17).xlut((byte)0x55);
+              at40k.cell(0x03, 0x17).ylut((byte)0x55);
+              at40k.cell(0x03, 0x17).yi(EAST);
+              at40k.cell(0x03, 0x17).ylut((byte)0x55);
+              at40k.cell(0x03, 0x17).yo(true);
 
-            at40k.cell(0x03, 0x17).f(false);
-            at40k.cell(0x03, 0x17).c(XLUT);
-            at40k.cell(0x03, 0x17).oe(NONE);
-            at40k.cell(0x03, 0x17).out(L0, true);
+              at40k.cell(0x03, 0x17).f(false);
+              at40k.cell(0x03, 0x17).c(XLUT);
+              at40k.cell(0x03, 0x17).oe(NONE);
+              at40k.cell(0x03, 0x17).out(L0, true);
 
-            at40k.cell(0x02, 0x17).yi(EAST);
-            at40k.cell(0x02, 0x17).ylut((byte)0x55);
-            at40k.cell(0x02, 0x17).yo(false);
+              at40k.cell(0x02, 0x17).yi(EAST);
+              at40k.cell(0x02, 0x17).ylut((byte)0x55);
+              at40k.cell(0x02, 0x17).yo(false);
 
-            at40k.cell(0x01, 0x17).yi(EAST);
-            at40k.cell(0x01, 0x17).ylut((byte)0x55);
-            at40k.cell(0x01, 0x17).yo(false);
+              at40k.cell(0x01, 0x17).yi(EAST);
+              at40k.cell(0x01, 0x17).ylut((byte)0x55);
+              at40k.cell(0x01, 0x17).yo(false);
 
-            at40k.cell(0x01, 0x17).h(L0, true);
-            at40k.cell(0x01, 0x17).v(L0, false);
+              at40k.cell(0x01, 0x17).h(L0, true);
+              at40k.cell(0x01, 0x17).v(L0, false);
             */
             //at40k.cell(0x01, 0x17).yi(L0);
             //at40k.cell(0x01, 0x17).xi(L0);
             //at40k.cell(0x01, 0x17).ylut((byte)0x33);
 
             /*
-            at40k.cell(0x03, 0x17).h(L0, true);
-            at40k.cell(0x03, 0x17).out(L0, true);
-            at40k.cell(0x03, 0x17).c(XLUT);
-            at40k.cell(0x03, 0x17).f(false);
+              at40k.cell(0x03, 0x17).h(L0, true);
+              at40k.cell(0x03, 0x17).out(L0, true);
+              at40k.cell(0x03, 0x17).c(XLUT);
+              at40k.cell(0x03, 0x17).f(false);
             */
             /*
-            at40k.cell(0x01, 0x17).xin(4);
-            at40k.cell(0x01, 0x17).yin(4);
-            at40k.cell(0x01, 0x16).ylut((byte)0x00);
-            device.mode4(2, 0x17, 0x01, 0);
+              at40k.cell(0x01, 0x17).xin(4);
+              at40k.cell(0x01, 0x17).yin(4);
+              at40k.cell(0x01, 0x16).ylut((byte)0x00);
+              device.mode4(2, 0x17, 0x01, 0);
 
-            for(int i=0; i<10; i++) {
-                Thread.sleep(3000);
-                System.out.println("tick");
-                //at40k.cell(0x01, 0x17).xlut((byte)0xFF);
-                at40k.cell(0x00, 0x17).ylut((byte)0x00);
-                device.flush();
-                Thread.sleep(3000);
-                System.out.println("tick");
-                //at40k.cell(0x01, 0x17).xlut((byte)0x00);
-                at40k.cell(0x00, 0x17).ylut((byte)0xFF);
-                device.flush();
-            }
+              for(int i=0; i<10; i++) {
+              Thread.sleep(3000);
+              System.out.println("tick");
+              //at40k.cell(0x01, 0x17).xlut((byte)0xFF);
+              at40k.cell(0x00, 0x17).ylut((byte)0x00);
+              device.flush();
+              Thread.sleep(3000);
+              System.out.println("tick");
+              //at40k.cell(0x01, 0x17).xlut((byte)0x00);
+              at40k.cell(0x00, 0x17).ylut((byte)0xFF);
+              device.flush();
+              }
             */
 
 
             /*
-            at40k.iob_top(0, true).output(0);
-            at40k.iob_top(0, true).oe(false);
-            at40k.iob_top(0, true).pullup();
-            device.flush();
-            Thread.sleep(3000);
+              at40k.iob_top(0, true).output(0);
+              at40k.iob_top(0, true).oe(false);
+              at40k.iob_top(0, true).pullup();
+              device.flush();
+              Thread.sleep(3000);
 
-            Log.info(Demo.class, "issuing command");
-            at40k.iob_top(1, true).pulldown();
-            device.flush();
+              Log.info(Demo.class, "issuing command");
+              at40k.iob_top(1, true).pulldown();
+              device.flush();
             */
             Log.info(Demo.class, "done");
             System.exit(0);
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    public static void scan(Fpslic dev, Fpslic.Cell cell, int source, boolean setup) {
-        if (setup) {
-            if (source != NONE) cell.c(source);
-            if (cell.b()) cell.b(false);
-            if (cell.f()) cell.f(false);
-        }
-        if (cell.out(L3)!=setup) cell.out(L3, setup);
-        if (cell.vx(L3)!=setup) cell.v(L3, setup);
-
-        Fpslic.SectorWire sw = cell.vwire(L3);
-        //System.out.println("wire is: " + sw);
-
-        if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
-            sw.north().drives(sw, false);
-        while(sw.row > (12 & ~0x3) && sw.south() != null) {
-            //System.out.println(sw + " -> " + sw.south());
-            if (sw.drives(sw.south())!=setup) sw.drives(sw.south(), setup);
-            sw = sw.south();
-        }
-        if (sw.row < (12 & ~0x3) && sw.south() != null && sw.south().drives(sw))
-            sw.north().drives(sw, false);
-        while(sw.row < (12 & ~0x3) && sw.north() != null) {
-            //System.out.println(sw + " -> " + sw.north());
-            if (sw.drives(sw.north())!=setup) sw.drives(sw.north(), setup);
-            sw = sw.north();
-        }
-
-        //cell = dev.cell(19, 15);
-        cell = dev.cell(cell.col, 15);
-        /*
-        System.out.println("cell is " + cell);
-        cell.xlut(0xff);
-        cell.ylut(0xff);
-        cell.b(false);
-        cell.f(false);
-        cell.c(XLUT);
-        cell.out(L3, true);
-        cell.oe(NONE);
-        */
-        if (cell.hx(L3) != setup) cell.h(L3, setup);
-        if (cell.vx(L3) != setup) cell.v(L3, setup);
-        sw = cell.hwire(L3);
-
-        if (sw.west()!=null && sw.west().drives(sw)) { sw.west().drives(sw, false); }
-        while(sw.east() != null) {
-            //System.out.println(sw + " -> " + sw.east());
-            if (sw.drives(sw.east())!=setup) sw.drives(sw.east(), setup);
-            sw = sw.east();
-        }
-
-    }
 
     public static void copy(Fpslic.Cell c, int xdir, int ydir) {
         switch(xdir) {
@@ -933,39 +942,39 @@ public class Demo {
         c = at40k.cell(13, 22);
         c.xlut(0x00);
         c.xlut(LUT_OTHER);// | 0xF0);
-*/
+        */
         //c = at40k.cell(13, 22);
         //copy(c, NW, EAST);
         /*
-        c.ylut(0x00);
-        c.c(YLUT);
-        c.f(false);
-        c.b(false);
-        c.t(false, false, true);
-        c.xi(SE);
-        c.yi(NORTH);
-        c.yo(false);
-        c.xo(false);
-        c.ylut(0x54);  // (x || z) & !y
+          c.ylut(0x00);
+          c.c(YLUT);
+          c.f(false);
+          c.b(false);
+          c.t(false, false, true);
+          c.xi(SE);
+          c.yi(NORTH);
+          c.yo(false);
+          c.xo(false);
+          c.ylut(0x54);  // (x || z) & !y
         */
 
         /*        
-        c = at40k.cell(2, 21);
-        c.ylut(0x00);
-        c.c(YLUT);
-        c.f(false);
-        c.b(false);
-        c.t(false, false, true);
-        c.xi(SE);
-        c.yi(WEST);
-        c.yo(false);
-        c.xo(false);
-        c.ylut(0xE8);
+                  c = at40k.cell(2, 21);
+                  c.ylut(0x00);
+                  c.c(YLUT);
+                  c.f(false);
+                  c.b(false);
+                  c.t(false, false, true);
+                  c.xi(SE);
+                  c.yi(WEST);
+                  c.yo(false);
+                  c.xo(false);
+                  c.ylut(0xE8);
  
-       //at40k.cell(2, 21).xlut(0xF0);
+                  //at40k.cell(2, 21).xlut(0xF0);
 
-        at40k.cell(3, 22).ylut(LUT_OTHER);
-        at40k.cell(3, 22).xi(SW);
+                  at40k.cell(3, 22).ylut(LUT_OTHER);
+                  at40k.cell(3, 22).xi(SW);
         */
         //at40k.iob_top(5, true).enableOutput(SOUTH);
         //at40k.iob_top(5, false).enableOutput(SE);
@@ -1066,20 +1075,20 @@ public class Demo {
         muller(at40k.cell(5, 22), NE, SOUTH);
         muller(at40k.cell(5, 21), NW, EAST);
         /*
-        for(int x=4; x>=0; x--) {
-            at40k.cell(x, 21).ylut(0xAA);
-            at40k.cell(x, 21).yi(EAST);
-            at40k.cell(x, 21).yo(false);
-        }
+          for(int x=4; x>=0; x--) {
+          at40k.cell(x, 21).ylut(0xAA);
+          at40k.cell(x, 21).yi(EAST);
+          at40k.cell(x, 21).yo(false);
+          }
 
-        at40k.cell(0, 22).ylut(0xAA);
-        at40k.cell(0, 22).yi(SOUTH);
-        at40k.cell(0, 22).yo(false);
+          at40k.cell(0, 22).ylut(0xAA);
+          at40k.cell(0, 22).yi(SOUTH);
+          at40k.cell(0, 22).yo(false);
 
-        at40k.cell(0, 23).ylut(~0xAA);
-        at40k.cell(0, 23).xlut(~0xcc);
-        at40k.cell(0, 23).yi(SOUTH);
-        at40k.cell(0, 23).yo(false);
+          at40k.cell(0, 23).ylut(~0xAA);
+          at40k.cell(0, 23).xlut(~0xcc);
+          at40k.cell(0, 23).yi(SOUTH);
+          at40k.cell(0, 23).yo(false);
         */
         for(int x=3; x<=23; x+=2) {
             pulse_detect(at40k.cell(x-1, 19), SW,    false);

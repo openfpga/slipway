@@ -216,6 +216,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                     g.setColor(BLUE);
                     g.drawString(v+"="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
                 } };
+            /*
         try {
             scan(dev, cell, NONE, true);
             drone.readBus(bc);
@@ -225,6 +226,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
+            */
     }
 
     public void mouseMoved(MouseEvent e) {
@@ -448,6 +450,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                             //if (x==PIPELEN-1 && y==22) System.out.println("time: " + (System.currentTimeMillis()-then));
                         }
                     };
+                /*
                 scan(dev, cell, NONE, true);
                 try {
                     drone.readBus(bc);
@@ -458,6 +461,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
+                */
             }
         }
     }

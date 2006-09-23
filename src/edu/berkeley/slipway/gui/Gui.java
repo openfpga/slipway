@@ -729,7 +729,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public void scan(final Gui.Cell c) {
         try {
             final Fpslic.Cell cell = c.cell;
-            Demo.scan(at40k, cell, NONE, true);
+            scan(at40k, cell, NONE, true);
             boolean safe = !cell.fb_relevant();
             if (cell.xo()) safe = false;
             if (cell.yo()) safe = false;
@@ -741,23 +741,115 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 if (cell.xlut_relevant()) {
                     cell.c(XLUT);
                     drone.readBus(new BCB(c, XLUT));
+                } else {
+                    c.xknown = false;
                 }
                 if (cell.ylut_relevant()) {
                     cell.c(YLUT);
                     drone.readBus(new BCB(c, YLUT));
+                } else {
+                    c.yknown = false;
                 }
                 cell.c(oldc);
             } else {
                 switch(cell.c()) {
-                    case XLUT: if (cell.xlut_relevant()) drone.readBus(new BCB(c, XLUT)); break;
-                    case YLUT: if (cell.ylut_relevant()) drone.readBus(new BCB(c, YLUT)); break;
+                    case XLUT:
+                        if (!cell.xlut_relevant()) {
+                            c.xknown = false;
+                        } else {
+                            drone.readBus(new BCB(c, XLUT));
+                        }
+                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
+                            if (c2!=null && !c2.relevant()) {
+                                scan(at40k, cell, NONE, false);
+                                c2.yo(cell);
+                                scan(at40k, c2, NONE, true);
+                                c2.c(YLUT);
+                                drone.readBus(new BCB(c, YLUT));
+                                scan(at40k, c2, NONE, false);
+                                c2.yi(NONE);
+                                return;
+                            }
+                        c.yknown = false;
+                        break;
+                    case YLUT:
+                        if (!cell.ylut_relevant()) {
+                            c.yknown = false;
+                        } else {
+                            drone.readBus(new BCB(c, YLUT));
+                        }
+                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
+                            if (c2!=null && !c2.relevant()) {
+                                scan(at40k, cell, NONE, false);
+                                c2.xo(cell);
+                                scan(at40k, c2, NONE, true);
+                                c2.c(XLUT);
+                                drone.readBus(new BCB(c, XLUT));
+                                scan(at40k, c2, NONE, false);
+                                c2.xi(NONE);
+                                return;
+                            }
+                        c.xknown = false;
+                        break;
                 }
                 
             }
-            Demo.scan(at40k, cell, NONE, false);
+            scan(at40k, cell, NONE, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static void scan(Fpslic dev, Fpslic.Cell cell, int source, boolean setup) {
+        if (setup) {
+            if (source != NONE) cell.c(source);
+            if (cell.b()) cell.b(false);
+            if (cell.f()) cell.f(false);
+        }
+        if (cell.out(L3)!=setup) cell.out(L3, setup);
+        if (cell.vx(L3)!=setup) cell.v(L3, setup);
+
+        Fpslic.SectorWire sw = cell.vwire(L3);
+        //System.out.println("wire is: " + sw);
+
+        if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
+            sw.north().drives(sw, false);
+        while(sw.row > (12 & ~0x3) && sw.south() != null) {
+            //System.out.println(sw + " -> " + sw.south());
+            if (sw.drives(sw.south())!=setup) sw.drives(sw.south(), setup);
+            sw = sw.south();
+        }
+        if (sw.row < (12 & ~0x3) && sw.south() != null && sw.south().drives(sw))
+            sw.north().drives(sw, false);
+        while(sw.row < (12 & ~0x3) && sw.north() != null) {
+            //System.out.println(sw + " -> " + sw.north());
+            if (sw.drives(sw.north())!=setup) sw.drives(sw.north(), setup);
+            sw = sw.north();
+        }
+
+        //cell = dev.cell(19, 15);
+        cell = dev.cell(cell.col, 15);
+        /*
+        System.out.println("cell is " + cell);
+        cell.xlut(0xff);
+        cell.ylut(0xff);
+        cell.b(false);
+        cell.f(false);
+        cell.c(XLUT);
+        cell.out(L3, true);
+        cell.oe(NONE);
+        */
+        if (cell.hx(L3) != setup) cell.h(L3, setup);
+        if (cell.vx(L3) != setup) cell.v(L3, setup);
+        sw = cell.hwire(L3);
+
+        if (sw.west()!=null && sw.west().drives(sw)) { sw.west().drives(sw, false); }
+        while(sw.east() != null) {
+            //System.out.println(sw + " -> " + sw.east());
+            if (sw.drives(sw.east())!=setup) sw.drives(sw.east(), setup);
+            sw = sw.east();
+        }
+
     }
 
 
@@ -771,8 +863,6 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         }
         public void call(byte b) throws Exception {
             boolean on = (b & 0x80) != 0;
-            c.xknown = false;
-            c.yknown = false;
             switch(who) {
                 case YLUT:
                     c.yknown = true;

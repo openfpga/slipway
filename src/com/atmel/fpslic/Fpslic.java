@@ -602,14 +602,17 @@ public abstract class Fpslic {
 
 
         // Relevance //////////////////////////////////////////////////////////////////////////////
+        public boolean relevant() {
+            return xo_relevant() || yo_relevant() || out_relevant();
+        }
 
         public boolean xo_relevant() { return xo_relevant(NE) || xo_relevant(SE) || xo_relevant(NW) || xo_relevant(SW); }
         public boolean xo_relevant(int direction) {
             switch(direction) {
-                case NE: return ne() != null && ne().xi()==SW /*&& ne().xi_relevant()*/;
-                case NW: return nw() != null && nw().xi()==SE /*&& nw().xi_relevant()*/;
-                case SE: return se() != null && se().xi()==NW /*&& se().xi_relevant()*/;
-                case SW: return sw() != null && sw().xi()==NE /*&& sw().xi_relevant()*/;
+                case NE: return ne() != null && ne().xi()==SW;
+                case NW: return nw() != null && nw().xi()==SE;
+                case SE: return se() != null && se().xi()==NW;
+                case SW: return sw() != null && sw().xi()==NE;
                 default: return false;
             }
         }
