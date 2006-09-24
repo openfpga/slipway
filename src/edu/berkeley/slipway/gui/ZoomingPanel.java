@@ -199,8 +199,8 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
         else switch(k.getKeyCode()) {
             case VK_ESCAPE: scale = 1.0; recenter = null; repaint(); return;
 
-            case VK_0: case VK_1: case VK_2: case VK_3: case VK_4: {
-                int i = L0 + (k.getKeyChar() - '0');
+            case VK_BACK_QUOTE: case VK_0: case VK_1: case VK_2: case VK_3: case VK_4: {
+                int i = k.getKeyCode()==VK_BACK_QUOTE ? NONE : (L0 + (k.getKeyChar() - '0'));
                 switch(lastChar) {
                     case 'x': c.xi(i); break;
                     case 'y': case 'q': c.yi(i); break;
@@ -241,13 +241,20 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
 
             case VK_T:
                 switch(c.t()) {
-                    case TMUX_FB: c.t(TMUX_W_AND_FB); break;
-                    case TMUX_W_AND_FB: c.t(TMUX_W); break;
-                    case TMUX_W: c.t(TMUX_W_AND_Z); break;
-                    case TMUX_W_AND_Z: c.t(TMUX_Z); break;
-                    case TMUX_Z: c.t(TMUX_FB); break;
+                    case TMUX_FB:
+                    case TMUX_W_AND_FB:
+                        c.t(TMUX_W_AND_Z);
+                        break;
+
+                    case TMUX_Z:
+                    case TMUX_W_AND_Z:
+                        c.t(TMUX_W);
+                        break;
+
+                    case TMUX_W:
+                        c.t(TMUX_W_AND_FB);
+                        break;
                 }
-                System.err.println("set " + c.t());
                 repaint();
                 return;
 

@@ -630,7 +630,16 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                          getWidth() - 200 + 10, (line += 15));
             g.drawString("z-in mux: " + (newcell.cell.zi()==NONE ? "." : ("L"+(newcell.cell.zi()-L0))),
                          getWidth() - 200 + 10, (line += 15));
-            g.drawString("t-in mux: ", getWidth() - 200 + 10, (line += 15));
+
+            String tm = "??";
+            switch(newcell.cell.t()) {
+                case TMUX_FB:       tm = "fb"; break;
+                case TMUX_W_AND_FB: tm = "w&fb"; break;
+                case TMUX_Z:        tm = "z"; break;
+                case TMUX_W_AND_Z:  tm = "w&z"; break;
+                case TMUX_W:        tm = "w"; break;
+            }
+            g.drawString("t-in mux: " + tm, getWidth() - 200 + 10, (line += 15));
 
             g.drawString(" set/rst: " + (newcell.cell.ff_reset_value() ? "reset=SET" : "."),
                          getWidth() - 200 + 10, (line += 15));

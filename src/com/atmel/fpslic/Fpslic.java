@@ -309,14 +309,11 @@ public abstract class Fpslic {
         }
 
         public int t() {
-            System.err.println("found " + (mode4(1, row, col) & 0x34));
-            switch(mode4(1, row, col) & 0x34) {
-                case 0x20: return TMUX_Z;
-                case 0x24: return TMUX_W_AND_Z;
-                case 0x34: return TMUX_FB;
-                case 0x14: return TMUX_W_AND_FB;
+            switch(mode4(1, row, col) & 0x30) {
                 case 0x00: return TMUX_W;
-                    //default: throw new RuntimeException("unknown!");
+                case 0x10: return wi()==NONE ? TMUX_FB : TMUX_W_AND_FB;
+                case 0x20: return wi()==NONE ? TMUX_Z  : TMUX_W_AND_Z;
+                case 0x30: throw new RuntimeException("illegal!");
                 default: return TMUX_W; 
             }
         }
@@ -324,15 +321,14 @@ public abstract class Fpslic {
         public void t(int code) {
             int result = 0;
             switch(code) {
-                case TMUX_W:        result = 0x34; break;
-                case TMUX_Z:        result = 0x20; break; // TOTALLYBOGUS throw new Error("not implemented, but should be possible");
-                case TMUX_W_AND_Z:  result = 0x00; break;
-                case TMUX_FB:       result = 0x34; break; /* I think this is actually W_AND_FB, sadly */
-                case TMUX_W_AND_FB: result = 0x14; break;
-                    //default: throw new RuntimeException("unknown code! " + code);
+                case TMUX_W:        result = 0x00; break;
+                case TMUX_Z:        result = 0x20; break;
+                case TMUX_W_AND_Z:  result = 0x20; break;
+                case TMUX_FB:       result = 0x10; break;
+                case TMUX_W_AND_FB: result = 0x10; break;
                 default: result = 0x00; break;
             }
-            mode4(1, row, col, result, 0x34);
+            mode4(1, row, col, result, 0x30);
         }
         /*
         private void fmux(int source) {
