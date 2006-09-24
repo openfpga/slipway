@@ -79,6 +79,7 @@ public class FpslicBoot {
 
     public OutputStream getOutputStream() throws IOException { return pins.getUartOutputStream(); }
     public InputStream  getInputStream() throws IOException { return pins.getUartInputStream(); }
+    public void purge() throws IOException { pins.purge(); }
 
     public void selfTest() throws Exception {
         boolean pin;

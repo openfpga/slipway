@@ -109,14 +109,16 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
         }
         Gui.Cell cell = whichCell(mousex, mousey);
         Fpslic.Cell c = cell == null ? null : cell.cell;
-        if ((k.getModifiers() & k.ALT_MASK) != 0)
+        if ((k.getModifiers() & k.ALT_MASK) != 0 || (k.getModifiers() & k.META_MASK) != 0)
             switch(k.getKeyCode()) {
                 case VK_S:
                     writeMode4();
                     break;
+                    /*
                 case VK_O:
                     readMode4();
                     break;
+                    */
                 case VK_0: {
                     c.xlut(0x00);
                     c.ylut(0x00);
@@ -126,6 +128,69 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 case VK_1: {
                     c.xlut(0xff);
                     c.ylut(0xff);
+                    repaint();
+                    return;
+                }
+                case VK_BACK_QUOTE: {
+                    c.xlut(0xff);
+                    c.ylut(0xff);
+                    repaint();
+                    return;
+                }
+                case VK_A: {
+                    c.xlut(LUT_SELF & LUT_OTHER);
+                    c.ylut(LUT_SELF & LUT_OTHER);
+                    repaint();
+                    return;
+                }
+                case VK_2:
+                case VK_G:
+                    {
+                    c.generalized_c_element();
+                    repaint();
+                    return;
+                }
+                case VK_3: {
+                    c.generalized_c_element();
+                    c.xlut((LUT_SELF & ~LUT_OTHER) | (LUT_Z & ~LUT_OTHER) | (LUT_Z & LUT_SELF & LUT_OTHER));
+                    c.ylut(LUT_Z);
+                    c.c(XLUT);
+                    repaint();
+                    return;
+                }
+                case VK_Z: {
+                    c.xlut(LUT_Z);
+                    c.ylut(LUT_Z);
+                    repaint();
+                    return;
+                }
+                case VK_W: {
+                    c.xlut(LUT_Z);
+                    c.ylut(LUT_SELF);
+                    c.t(TMUX_W);
+                    repaint();
+                    return;
+                }
+                case VK_T: {
+                    //c.t(;
+                    repaint();
+                    return;
+                }
+                case VK_O: {
+                    c.xlut(LUT_SELF | LUT_OTHER);
+                    c.ylut(LUT_SELF | LUT_OTHER);
+                    repaint();
+                    return;
+                }
+                case VK_X: {
+                    c.xlut(LUT_SELF);
+                    c.ylut(LUT_OTHER);
+                    repaint();
+                    return;
+                }
+                case VK_Y: {
+                    c.xlut(LUT_OTHER);
+                    c.ylut(LUT_SELF);
                     repaint();
                     return;
                 }

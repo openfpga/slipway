@@ -256,8 +256,8 @@ public abstract class Fpslic {
 
         public void h(int plane, boolean enable) {
             switch(plane) {
-                case 0: mode4(0x08, row, col, 2, enable); return;
-                case 1: mode4(0x08, row, col, 0, enable); return;
+                case 0: mode4(0x08, row, col, 0, enable); return;
+                case 1: mode4(0x08, row, col, 2, enable); return;
                 case 2: mode4(0x08, row, col, 5, enable); return;
                 case 3: mode4(0x08, row, col, 6, enable); return;
                 case 4: mode4(0x00, row, col, 6, enable); return;
@@ -267,8 +267,8 @@ public abstract class Fpslic {
         
         public boolean hx(int plane) {
             switch(plane) {
-                case 0: return (mode4(0x08, row, col) & (1<<2)) != 0;
-                case 1: return (mode4(0x08, row, col) & (1<<0)) != 0;
+                case 0: return (mode4(0x08, row, col) & (1<<0)) != 0;
+                case 1: return (mode4(0x08, row, col) & (1<<2)) != 0;
                 case 2: return (mode4(0x08, row, col) & (1<<5)) != 0;
                 case 3: return (mode4(0x08, row, col) & (1<<6)) != 0;
                 case 4: return (mode4(0x00, row, col) & (1<<6)) != 0;
@@ -324,11 +324,11 @@ public abstract class Fpslic {
         public void t(int code) {
             int result = 0;
             switch(code) {
+                case TMUX_W:        result = 0x34; break;
                 case TMUX_Z:        result = 0x20; break; // TOTALLYBOGUS throw new Error("not implemented, but should be possible");
-                case TMUX_W_AND_Z:  result = 0x24; break;
+                case TMUX_W_AND_Z:  result = 0x00; break;
                 case TMUX_FB:       result = 0x34; break; /* I think this is actually W_AND_FB, sadly */
                 case TMUX_W_AND_FB: result = 0x14; break;
-                case TMUX_W:        result = 0x00; break;
                     //default: throw new RuntimeException("unknown code! " + code);
                 default: result = 0x00; break;
             }
@@ -469,11 +469,13 @@ public abstract class Fpslic {
                 case NE: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<6); break;
                 case SE: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<5); break;
                 case NW: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<4); break;
-                case L4: mode4(0x03, row, col, 4, true);  mode4(0x05, row, col,    0); break;
-                case L3: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<0); break;
-                case L2: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<1); break;
-                case L1: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<2); break;
+
                 case L0: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<3); break;
+                case L1: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<2); break;
+                case L2: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<1); break;
+                case L3: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 1<<0); break;
+                case L4: mode4(0x03, row, col, 4, true);  mode4(0x05, row, col,    0); break;
+
                 case NONE: mode4(0x03, row, col, 4, false); mode4(0x05, row, col, 0); break;
                 default: throw new RuntimeException("invalid argument");
             }
@@ -587,7 +589,7 @@ public abstract class Fpslic {
         }
 
         public int zi() {
-            switch(mode4(0x02, row, col) & 0xDB) {
+            switch(mode4(0x02, row, col) & 0x9B) {
                 case (1<<7): return L4;
                 case (1<<5): return L3;
                 case (1<<4): return L2;
@@ -596,8 +598,33 @@ public abstract class Fpslic {
                 case (1<<1): return NONE;  /* huh? */
                 case (1<<0): return NONE;  /* huh? */
                 case 0:      return NONE;
-                default: throw new RuntimeException("invalid argument: zi=="+(mode4(0x02, row, col) & 0xDB));
+                default: throw new RuntimeException("invalid argument: zi=="+(mode4(0x02, row, col) & 0x9B));
             }
+        }
+
+
+        public void generalized_c_element() {
+
+            /*
+            ylut(LUT_SELF & (~LUT_OTHER));
+            xlut((~LUT_SELF) | LUT_OTHER);
+            c(ZMUX);
+            zi(L2);
+            //h(L2, true);
+            out(L2, true);
+            xo(true);
+            yo(true);
+            */
+
+            //ylut(0xB2);
+            ylut((LUT_SELF & ~LUT_OTHER) | (LUT_Z & ~LUT_OTHER) | (LUT_Z & LUT_SELF & LUT_OTHER));
+            xlut(LUT_Z);
+            c(YLUT);
+            f(false);
+            b(false);
+            t(false, false, true);
+            yo(false);
+            xo(false);
         }
 
 
@@ -670,6 +697,10 @@ public abstract class Fpslic {
             boolean out = false;
             boolean connect = false;
             for(int i=0; i<4; i++) {
+
+                // FIXME FIXME FIXME
+                if (i==3) continue;
+
                 if (out(L0+i)) out = true;
                 if (hx(L0+i)) connect = true;
                 if (vx(L0+i)) connect = true;

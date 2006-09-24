@@ -77,6 +77,7 @@ public class FtdiBoard extends Fpslic implements Board {
                 bytes[3] == (byte)'T' &&
                 bytes[4] == (byte)'S') {
                 System.out.println("\rsignature: got proper signature                  ");
+                chip.purge();
                 break;
             }
         }
@@ -89,6 +90,7 @@ public class FtdiBoard extends Fpslic implements Board {
                         while(callbacks.size() == 0) Thread.sleep(500);
                         byte b = in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
+                        //System.out.println("readback " + b + " in " + (System.currentTimeMillis()-bc.time));
                         bc.call(b);
                         synchronized(lock) {
                             lock.notifyAll();
@@ -111,7 +113,7 @@ public class FtdiBoard extends Fpslic implements Board {
         return cache[x][y][z];
     }
 
-    public void mode4(int z, int y, int x, int d) {
+    public synchronized void mode4(int z, int y, int x, int d) {
         try {
             if (cache[x & 0xff]==null) cache[x & 0xff] = new byte[24][];
             if (cache[x & 0xff][y & 0xff]==null) cache[x & 0xff][y & 0xff] = new byte[256];
@@ -141,19 +143,19 @@ public class FtdiBoard extends Fpslic implements Board {
         synchronized(lock) {
             try {
                 while (callbacks.size() >= limit) {
-                    System.out.println("block");
                     lock.wait(100);
-                    System.out.println("unblock => " + callbacks.size());
                 }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
+        bcb.time = System.currentTimeMillis();
         callbacks.add(bcb);
     }
 
     public static abstract class ByteCallback {
         public int result;
+        public long time;
         public abstract void call(byte b) throws Exception;
     }
 

@@ -127,7 +127,7 @@ inline void conf(int z, int y, int x, int d) {
 
 ISR(SIG_FPGA_INTERRUPT15) { 
   interrupt_count++;
-  fpga_interrupts(1);
+  //fpga_interrupts(1);
   sei();
 }
 
@@ -153,9 +153,8 @@ inline int hex(char c) {
 }
 
 int readFPGA() {
-  fpga_interrupts(0);
   int ret = FISUA;
-  fpga_interrupts(1);
+  //fpga_interrupts(1);
   return ret;
 }
 
@@ -177,6 +176,7 @@ int main() {
   cts(1);
 
   int x=0, y=0, z=0;
+  int flag=0;
   for(;;) {
     int i, d=0;
     int r = recv();
@@ -187,7 +187,8 @@ int main() {
         send('I');
         send('T');
         send('S');
-        PORTE |=  (1<<3);
+        fpga_interrupts(0);
+        if (flag) {PORTE |=  (1<<5);}
         break;
 
       case 1:
@@ -199,9 +200,10 @@ int main() {
         break;
 
       case 2:
+        flag=1;
         send(readFPGA());
         break;
-
+        /*
       case 3: {
         int32_t local_interrupt_count = interrupt_count;
         interrupt_count = 0;
@@ -211,7 +213,7 @@ int main() {
         send((local_interrupt_count >>  0) & 0xff);
         break;
       }
-
+        */
         /*
       case 3:
         //init_timer();

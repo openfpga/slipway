@@ -21,62 +21,7 @@ public class Demo {
     public static int PIPELEN=20;
 
     public static void main(String[] s) throws Exception {
-        FtdiBoard device = new FtdiBoard();
-        Fpslic at40k = device;
-
-        long begin = System.currentTimeMillis();
-        //FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), device);
-        long end = System.currentTimeMillis();
-        Log.info(Demo.class, "finished in " + ((end-begin)/1000) + "s");
-        Thread.sleep(1000);
-        Log.info(Demo.class, "issuing command");
-
-        for(int i=0; i<24; i++) {
-            at40k.iob_bot(i, true).enableOutput(NORTH);
-            at40k.iob_bot(i, false).enableOutput(NW);
-            at40k.cell(i, 0).xlut(0xff);
-            at40k.cell(i, 0).ylut(0xff);
-        }
-
-        at40k.cell(23,15).h(3, true);
-        at40k.cell(23,15).yi(L3);
-        at40k.cell(23,15).ylut(0xAA);
-        at40k.iob_right(15, true).enableOutput(WEST);
-
-        device.flush();
-
-        Fpslic.Cell root = at40k.cell(10,20);
-            
-        root.yo(root.north());
-        root.ylut(~LUT_SELF);
-        root.c(YLUT);
-        root = root.north();
-
-        root.yo(root.east());
-        root.ylut(~LUT_SELF);
-        root.c(YLUT);
-        root = root.east();
-
-        root.yo(root.south());
-        root.ylut(~LUT_SELF);
-        root.c(YLUT);
-        root = root.south();
-
-        root.yo(root.west());
-        root.c(YLUT);
-        root = root.west();
-
-        Gui vis = new Gui(at40k, device);
-        Frame fr = new Frame();
-        fr.addKeyListener(vis);
-        fr.setLayout(new BorderLayout());
-        fr.add(vis, BorderLayout.CENTER);
-        fr.pack();
-        fr.setSize(900, 900);
-        vis.repaint();
-        fr.repaint();
-        fr.show();
-        synchronized(Demo.class) { Demo.class.wait(); }
+        new AsyncPaperDemo().main();
     }
 
     public static void mainw(String[] s) throws Exception {

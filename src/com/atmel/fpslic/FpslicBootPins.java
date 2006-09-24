@@ -16,6 +16,7 @@ public interface FpslicBootPins {
     public void    conPin(boolean on)         throws IOException;
 
     public void    flush()                    throws IOException;
+    public void    purge()                    throws IOException;
     public void    close()                    throws IOException;
 
     public InputStream  getUartInputStream()  throws IOException;

@@ -34,9 +34,9 @@ public class FpslicConstants {
 
     public static final int FB    = 29;
 
-    public static final int LUT_SELF  = 0xAA;
-    public static final int LUT_Z     = 0xF0;
-    public static final int LUT_OTHER = 0xCC;
+    public static final int LUT_SELF  = 0xAA;  // 1010 1010
+    public static final int LUT_Z     = 0xF0;  // 1111 0000
+    public static final int LUT_OTHER = 0xCC;  // 1100 1100
 
     public static final int TMUX_W_AND_Z   = 0x00001001;
     public static final int TMUX_W         = 0x00001002;

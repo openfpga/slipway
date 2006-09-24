@@ -56,12 +56,15 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
 
     public Gui(Fpslic at40k, FtdiBoard drone) {
+        this(at40k, drone, 24, 24);
+    }
+    public Gui(Fpslic at40k, FtdiBoard drone, int width, int height) {
         this.at40k = at40k;
         this.drone = drone;
         for(int i=0; i<ca.length; i++)
             ca[i] = new Cell[128];
-        for(int x=9; x<14; x++)
-            for(int y=19; y<at40k.getHeight(); y++)
+        for(int x=0; x<width; x++)
+            for(int y=0; y<height; y++)
                 new Cell(x,y, at40k.cell(x, y));
 
 
@@ -102,19 +105,21 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         }
         public void draw() {
 
-            drawWires();
-            drawLocal();
-
-            AffineTransform t = g.getTransform();
-
-            drawBuffer();
-            g.transform(rotateInnerTransform());
-            drawMux();
-            drawRegister();
-            drawInternalRouting();
-            g.setTransform(t);
-
-            drawGates();
+            if (cell.relevant() || scanme) {
+                drawWires();
+                drawLocal();
+                
+                AffineTransform t = g.getTransform();
+                
+                drawBuffer();
+                g.transform(rotateInnerTransform());
+                drawMux();
+                drawRegister();
+                drawInternalRouting();
+                g.setTransform(t);
+                
+                drawGates();
+            }
             drawBorder();
         }
         public void drawBuffer() {
@@ -142,11 +147,13 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         public void drawWires() {
             gg.color(MAGENTA);
             for(int i=0; i<5; i++)
+                if (i!=3)
                 if (cell.hwire(i).isDriven()) {
                     gg.color(cell.out(i) ? ORANGE : MAGENTA);
                     gg.line(0, SIZE-(2*(1+RINGS)+2*i), SIZE, SIZE-(2*(1+RINGS)+2*i));
                 }
             for(int i=0; i<5; i++)
+                if (i!=3)
                 if (cell.vwire(i).isDriven()) {
                     gg.color(cell.out(i) ? ORANGE : MAGENTA);
                     gg.line(2*(1+RINGS)+2*i, 0, 2*(1+RINGS)+2*i, SIZE);
@@ -415,18 +422,27 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 //g.drawRect(0, 0, CORE_SIZE, CORE_SIZE);
                 //g.scale(1, -1);
 
-                Gate gate = new Muller();
 
                 g.translate(2,   5f);
-                if (xlut_relevant(cell))
+                if (xlut_relevant(cell) || scanme) {
+                    Gate gate = getGate(cell.xlut(), true);
                     gate.draw(g,
                               !xknown ? Color.gray : xon ? Color.red : Color.white,
-                              (xon && xknown) ? Color.white : Color.red);
+                              (xon && xknown) ? Color.white : Color.red,
+                              xon ? Color.white : Color.red
+                              );
+                }
+
                 g.translate(34f, 0f);
-                if (cell.ylut_relevant())
+                if (cell.ylut_relevant() || scanme) {
+                    Gate gate = getGate(cell.ylut(), false);
                     gate.draw(g,
                               !yknown ? Color.gray : yon ? Color.blue : Color.white,
-                              (yon && yknown) ? Color.white : Color.blue);
+                              (yon && yknown) ? Color.white : Color.blue,
+                              yon ? Color.white : Color.blue
+                              );
+                }
+
             } finally {
                 g.setTransform(t);
             }
@@ -540,6 +556,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         repaint();
     }
     public void drawKeyboard(Image keyboardImage, Graphics2D g) {
+        /*
                 int width = 300;
                 int height = (keyboardImage.getHeight(null) * width) / keyboardImage.getWidth(null);
                 g.drawImage(keyboardImage,
@@ -548,6 +565,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                             0, 0,
                             keyboardImage.getWidth(null), keyboardImage.getHeight(null),
                             null);
+        */
     }
 
     public void _paint(Graphics2D g) {
@@ -759,12 +777,13 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         } else {
                             drone.readBus(new BCB(c, XLUT));
                         }
+                        if (!cell.yo())
                         for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
                             if (c2!=null && !c2.relevant()) {
                                 scan(at40k, cell, NONE, false);
                                 c2.yo(cell);
-                                scan(at40k, c2, NONE, true);
                                 c2.c(YLUT);
+                                scan(at40k, c2, NONE, true);
                                 drone.readBus(new BCB(c, YLUT));
                                 scan(at40k, c2, NONE, false);
                                 c2.yi(NONE);
@@ -778,6 +797,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         } else {
                             drone.readBus(new BCB(c, YLUT));
                         }
+                        if (!cell.xo())
                         for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
                             if (c2!=null && !c2.relevant()) {
                                 scan(at40k, cell, NONE, false);
@@ -791,6 +811,35 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                             }
                         c.xknown = false;
                         break;
+                    case ZMUX: {
+                        scan(at40k, cell, NONE, false);
+                        c.xknown = false;
+                        c.yknown = false;
+                        if (!cell.xo())
+                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
+                            if (c2!=null && !c2.relevant()) {
+                                scan(at40k, cell, NONE, false);
+                                c2.xo(cell);
+                                scan(at40k, c2, NONE, true);
+                                c2.c(XLUT);
+                                drone.readBus(new BCB(c, XLUT));
+                                scan(at40k, c2, NONE, false);
+                                c2.xi(NONE);
+                                return;
+                            }
+                        if (!cell.yo())
+                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
+                            if (c2!=null && !c2.relevant()) {
+                                c2.yo(cell);
+                                c2.c(YLUT);
+                                scan(at40k, c2, NONE, true);
+                                drone.readBus(new BCB(c, YLUT));
+                                scan(at40k, c2, NONE, false);
+                                c2.yi(NONE);
+                                break;
+                            }
+                        return;
+                    }
                 }
                 
             }
@@ -879,6 +928,28 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         }
     }
 
+    public Gate getGate(byte lut, boolean xlut) {
+        for(Gate g : knownGates)
+            if (g.setLut(lut, xlut))
+                return g;
+        return unknownGate;
+    }
+
+    public Gate unknownGate = new Circle("?");
+    public Gate[] knownGates =
+        new Gate[] {
+            new And(),
+            new Or(),
+            new Circle("0") { public boolean result(boolean x, boolean y, boolean z) { return false; } },
+            new Circle("1") { public boolean result(boolean x, boolean y, boolean z) { return true; } },
+            new Circle("x") { public boolean result(boolean x, boolean y, boolean z) { return x; } },
+            new Circle("y") { public boolean result(boolean x, boolean y, boolean z) { return y; } },
+            new Circle("z") { public boolean result(boolean x, boolean y, boolean z) { return z; } },
+            new Circle("~x") { public boolean result(boolean x, boolean y, boolean z) { return !x; } },
+            new Circle("~y") { public boolean result(boolean x, boolean y, boolean z) { return !y; } },
+            new Circle("~z") { public boolean result(boolean x, boolean y, boolean z) { return !z; } }
+        };
+
     // FIXME: 2-input gates?
     public abstract class Gate {
         public boolean invert_x;
@@ -886,7 +957,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         public boolean invert_z;
         public boolean invert_out;
         public abstract boolean result(boolean x, boolean y, boolean z);
-        public void draw(Graphics2D g, Color fill, Color stroke) {
+        public void draw(Graphics2D g, Color fill, Color stroke, Color text) {
             GeneralPath p = new GeneralPath();
             makePath(p);
             g.setColor(fill);
@@ -896,28 +967,36 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
             AffineTransform a = g.getTransform();
             g.scale(1, -1);
-            g.setColor(Color.white);
-            if (label() != null) g.drawString(label(), 7, -14);
+            if (label() != null) {
+                g.setColor(text);
+                g.drawString(label(), 7, -14);
+            }
             g.setTransform(a);
         }
         public String label() { return null; }
-        public boolean setLut(int lut) {
+        public boolean setLut(int lut, boolean xlut) {
+            /*
             for(int inverts = 0; inverts < 16; inverts++) {
                 invert_x   = (inverts & 0x1) != 0;
                 invert_y   = (inverts & 0x2) != 0;
                 invert_z   = (inverts & 0x4) != 0;
                 invert_out = (inverts & 0x8) != 0;
+            */
+                boolean good = true;
                 for(int bit=0; bit<8; bit++) {
-                    boolean x = (bit & 0x1) != 0;
-                    boolean y = (bit & 0x2) != 0;
+                    boolean x = xlut ? ((bit & 0x1) != 0) : ((bit & 0x2) != 0);
+                    boolean y = xlut ? ((bit & 0x2) != 0) : ((bit & 0x1) != 0);
                     boolean z = (bit & 0x4) != 0;
                     boolean expect = (lut & (1<<bit)) != 0;
 
                     // FIXME symmetry issues here....
                     boolean result = result(x ^ invert_x, y ^ invert_y, z ^ invert_z) ^ invert_out;
-                    if (result == expect) return true;
+                    if (result != expect) { good = false; break; }
                 }
+                if (good) return true;
+                /*
             }
+                */
             return false;
         }
         public abstract void makePath(GeneralPath gp);
@@ -926,11 +1005,11 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public class Or extends Gate {
         public boolean result(boolean x, boolean y, boolean z) { return x || y || z; }
         public String label() { return "+"; }
-        public void draw(Graphics2D g, Color fill, Color stroke) {
+        public void draw(Graphics2D g, Color fill, Color stroke, Color text) {
             AffineTransform at = g.getTransform();
             g.scale(1, -1);
             g.translate(0, -40);
-            super.draw(g, fill, stroke);
+            super.draw(g, fill, stroke, text);
             g.setTransform(at);
         }
         public void makePath(GeneralPath gp) {
@@ -945,6 +1024,22 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                        6.444f+x, -2.686f+y,
                        14.32f+x, -3.58f+y);
             gp.curveTo(22.697f, 33.616f, 23.413f, 34.512f, 29.141f, 36.301f);
+        }
+    }
+
+    public class Circle extends Gate {
+        String label;
+        public Circle(String label) { this.label = label; }
+        public boolean result(boolean x, boolean y, boolean z) { return false; }
+        public String label() { return label; }
+        public void makePath(GeneralPath gp) {
+            int S = 30;
+            gp.moveTo(0, S/2);
+            gp.lineTo(S/2, S);
+            gp.lineTo(S, S/2);
+            gp.lineTo(S/2, 0);
+            gp.lineTo(0, S/2);
+            gp.closePath();
         }
     }
 
@@ -963,8 +1058,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
     public class Muller extends And {
         public String label() { return "C"; }
-        public void draw(Graphics2D g, Color fill, Color stroke) {
-            super.draw(g, fill, stroke);
+        public void draw(Graphics2D g, Color fill, Color stroke, Color text) {
+            super.draw(g, fill, stroke, text);
             g.setColor(stroke);
             g.drawLine(0, 0, 23, 0);
         }
@@ -973,8 +1068,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     public class Xor extends Or {
         public boolean result(boolean x, boolean y, boolean z) { return x ^ y ^ z; }
         public String label() { return "^"; }
-        public void draw(Graphics2D g, Color fill, Color stroke) {
-            super.draw(g, fill, stroke);
+        public void draw(Graphics2D g, Color fill, Color stroke, Color text) {
+            super.draw(g, fill, stroke, text);
             g.setColor(stroke);
             AffineTransform at = g.getTransform();
             g.scale(1, -1);
