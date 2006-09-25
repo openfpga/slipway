@@ -166,7 +166,7 @@ public class AsyncPaperDemo {
 
 
         if (count>0 && count<size/2-1) {
-            reconfigTopLeftPreserve(yes);
+            reconfigTopLeftPreserve(!yes);
         } else {
             reconfigTopLeft();
         }
