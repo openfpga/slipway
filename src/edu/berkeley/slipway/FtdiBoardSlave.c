@@ -13,6 +13,8 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+volatile int32_t upper = 0;
+
 int err = 0;
 
 void initUART0(unsigned int baudRate, unsigned int doubleRate) {
@@ -70,15 +72,19 @@ inline int write_nearlyFull() {
   return (write_buf_tail-write_buf_head) > (BUFSIZE/2);
 }
 
+int32_t timer = 0;
+
 inline char recv() {
   int q;
   char ret;
+
+  PORTE |=  (1<<3);
   while(read_empty()) cts(1);
+  PORTE &= ~(1<<3);
+
   ret = read_buf[read_buf_head];
   read_buf_head = inc(read_buf_head);
   if (!read_nearlyFull()) cts(1);
-  if (PORTE & (1<<3)) PORTE &= ~(1<<3);
-  else                PORTE |=  (1<<3);
   return ret;
 }
 
@@ -96,11 +102,11 @@ ISR(SIG_UART0_DATA) {
 }
 
 void send(char c) {
+  PORTE |=  (1<<2);
   while (write_full());
+  PORTE &= ~(1<<2);
   write_buf[write_buf_tail] = c;
   write_buf_tail = inc(write_buf_tail);
-  if (PORTE & (1<<2)) PORTE &= ~(1<<2);
-  else                PORTE |=  (1<<2);
   UCSR0B |= (1 << UDRIE0);
 }
 
@@ -131,12 +137,35 @@ ISR(SIG_FPGA_INTERRUPT0) {
   sei();
 }
 
-void die() { cli(); PORTE|=(1<<5); _delay_ms(2000); while(1) { } }
+volatile int dead = 0;
+
+ISR(SIG_OVERFLOW1) { 
+  upper = upper + 1;
+
+  if (!dead) {
+    if (PORTE & (1<<5)) PORTE &= ~(1<<5);
+    else                PORTE |=  (1<<5);
+  }
+
+  TCNT1 = 0;
+  sei();
+}
+
+//void die() { dead = 1; cli(); PORTE|=(1<<5); _delay_ms(2000); while(1) { } }
+
+void die(int two, int three, int five) {
+  dead = 1;
+  PORTE &~ ((1<<2) | (1<<3) | (1<<5));
+  if (two) PORTE |= (1<<2);
+  if (three) PORTE |= (1<<3);
+  if (five) PORTE |= (1<<5);
+  while(1) { }
+}
 
 ISR(SIG_UART0_RECV) {
-  if (UCSR0A & (1 << FE0))    err = 201;//{ portd(2,0); portd(3,1); die(); }  // framing error, lock up with LED=01
-  if ((UCSR0A & (1 << OR0)))  err = 202;//{ portd(2,1); portd(3,0); die(); }  // overflow; lock up with LED=10
-  if (read_full())            err = 203;//{ portd(2,1); portd(3,1); die(); }  // buffer overrun
+  if (UCSR0A & (1 << FE0))   die(0, 0, 1);
+  if ((UCSR0A & (1 << OR0))) die(0, 1, 1);
+  if (read_full()) die(1, 0, 1);
 
   read_buf[read_buf_tail] = UDR0;
   read_buf_tail = inc(read_buf_tail);
@@ -163,15 +192,22 @@ int main() {
   DDRE  = (1<<7) | (1<<5) | (1<<3) | (1<<2);
   PORTE = 0;
 
+  PORTE |=  (1<<5);
+
   read_buf_head = 0;
   read_buf_tail = 0;
   write_buf_head = 0;
   write_buf_tail = 0;
-  initUART0(0, 0);  //for slow board
+  initUART0(1, 0);  //for slow board
 
   EIMF = 0xFF;
   SREG = INT0;
   sei();
+
+  TCNT1 = 0;
+  TIFR&=~(1<<TOV1);
+  TIMSK|=(1<<TOIE1);
+  TCCR1B = 3;
 
   cts(0);
   cts(1);
@@ -188,8 +224,8 @@ int main() {
         send('I');
         send('T');
         send('S');
-        fpga_interrupts(0);
-        if (flag) {PORTE |=  (1<<5);}
+        fpga_interrupts(1);
+        if (flag) die(1, 1, 1);
         break;
 
       case 1:
@@ -212,6 +248,19 @@ int main() {
         send((local_interrupt_count >> 16) & 0xff);
         send((local_interrupt_count >>  8) & 0xff);
         send((local_interrupt_count >>  0) & 0xff);
+ 
+        int32_t local_timer = TCNT1;
+        int32_t local_upper = upper;
+        TCCR1B = 0;
+        TIFR&=~(1<<TOV1);
+        TIMSK|=(1<<TOIE1);
+        upper = 0;
+        TCNT1 = 0;
+        TCCR1B = 3;
+        send((local_upper >>  8) & 0xff);
+        send((local_upper >>  0) & 0xff);
+        send((local_timer >>  8) & 0xff);
+        send((local_timer >>  0) & 0xff);
         break;
       }
 

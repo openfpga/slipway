@@ -172,15 +172,37 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 case VK_2:
                 case VK_G:
                     {
-                    c.generalized_c_element();
+                c.c(YLUT);
+                c.ylut(0x00);
+                c.xlut(0x00);
+                c.wi(L0);
+                c.t(TMUX_W_AND_FB);
+                c.ylut((LUT_SELF & ~LUT_OTHER) |
+                       (LUT_Z & ~LUT_OTHER) |
+                       (LUT_Z & LUT_SELF));
+                c.fpslic().flush();
+                c.xlut(LUT_Z);
+                c.fpslic().flush();
+                c.wi(NONE);
+                c.fpslic().flush();
                     repaint();
                     return;
                 }
                 case VK_3: {
-                    c.generalized_c_element();
-                    c.xlut((LUT_SELF & ~LUT_OTHER) | (LUT_Z & ~LUT_OTHER) | (LUT_Z & LUT_SELF & LUT_OTHER));
-                    c.ylut(LUT_Z);
-                    c.c(XLUT);
+
+                c.c(XLUT);
+                c.xlut(0x00);
+                c.ylut(0x00);
+                c.wi(L0);
+                c.t(TMUX_W_AND_FB);
+                c.xlut((LUT_SELF & ~LUT_OTHER) |
+                       (LUT_Z & ~LUT_OTHER) |
+                       (LUT_Z & LUT_SELF));
+                c.fpslic().flush();
+                c.ylut(LUT_Z);
+                c.fpslic().flush();
+                c.wi(NONE);
+                c.fpslic().flush();
                     repaint();
                     return;
                 }

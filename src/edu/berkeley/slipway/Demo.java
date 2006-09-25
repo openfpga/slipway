@@ -21,7 +21,7 @@ public class Demo {
     public static int PIPELEN=20;
 
     public static void main(String[] s) throws Exception {
-        new AsyncPaperDemo().main();
+        new AsyncPaperDemo().main(s);
     }
 
     public static void mainw(String[] s) throws Exception {

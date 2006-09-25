@@ -9,7 +9,7 @@ endif
 ## slipway ############################################################################
 
 run: slipway.jar 
-	java -cp slipway.jar edu.berkeley.slipway.Demo
+	java -cp slipway.jar edu.berkeley.slipway.Demo 30
 
 build/src/com/ftdi/usb/FtdiUart.c: src/com/ftdi/usb/FtdiUart.i
 	mkdir -p `dirname $@`

@@ -69,11 +69,16 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 new Cell(x,y, at40k.cell(x, y));
 
 
-        new Thread() {
+
+        /*
+          new Thread() {
             public void run() {
+                try { Thread.sleep(2000); } catch (Exception e) { }
                 while(true) scan();
             }
-        }.start();
+            }.start();
+        */
+
 
         /*
         Fpslic.Cell c = at40k.cell(0,0);
@@ -829,6 +834,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         c.xknown = false;
                         break;
                     case ZMUX: {
+                        /*
                         scan(at40k, cell, NONE, false);
                         c.xknown = false;
                         c.yknown = false;
@@ -856,6 +862,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                                 break;
                             }
                         return;
+                        */
                     }
                 }
                 

@@ -729,7 +729,9 @@ public abstract class Fpslic {
             }
             return out && connect;
         }
+
         public boolean fb_relevant() {
+            /*
             if (!(zi_to_xlut_relevant()) ||
                 !(zi_to_ylut_relevant())) return false;
             switch(ti()) {
@@ -739,6 +741,8 @@ public abstract class Fpslic {
                 case 0x30: return true;
             }
             return false;
+            */
+            return true;
         }
 
 

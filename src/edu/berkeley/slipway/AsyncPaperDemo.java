@@ -21,57 +21,30 @@ public class AsyncPaperDemo {
         fpslic = new FtdiBoard();
     }
 
-    public void main() throws Exception {
+    Fpslic.Cell start;
+    public void main(String[] s) throws Exception {
 
         turnOnLeds();
         setupScanCell();
 
-        Fpslic.Cell root = fpslic.cell(2, 2);
-            
-        root.yo(root.north());
-        root.ylut(~LUT_SELF);
-        root.c(YLUT);
-        root = root.north();
+        //runGui(24, 24);
 
-        root.yo(root.east());
-        root.ylut(~LUT_SELF);
-        root.c(YLUT);
-        root = root.east();
+        for(int i=0; i<255; i++)
+            fpslic.readCount();
 
-        root.yo(root.south());
-        root.ylut(~LUT_SELF);
-        root.c(YLUT);
-        root = root.south();
+        //System.in.read();
+        for(int i=46; i<400; i+=2) {
+            go(i);
+        }
+        System.out.println("done");
 
-        root.yo(root.west());
-        root.c(YLUT);
-        root = root.west();
+    }
 
-        root = fpslic.cell(3, 7);
-        root.h(1, true);
-        root.h(2, true);
-        root.wi(L1);
-        root.zi(L2);
-        root.c(YLUT);
-        root.t(TMUX_W);
-        root.b(false);
-        root.f(false);
-        root.ylut(LUT_SELF);
-        root.yi(EAST);
-        root.xlut(LUT_Z);
-        root.xo(false);
-
-        root.west().out(2, true);
-        root.west().h(2, true);
-        root.west().c(YLUT);
-
-        root.west().west().out(1, true);
-        root.west().west().h(1, true);
-        root.west().west().c(YLUT);
-
-        root.ne().xo(root);
-
-        createPipeline(fpslic.cell(20, 22), true, 40, true);
+    public void go(int size) throws Exception {
+        start = fpslic.cell(20, 21);
+        int rsize = size-createPipeline(start, true, size, false);
+        System.out.println("actual size => " + rsize);
+        pipe(start.west().north(), start.west(), new int[] { NE, EAST, SW, SOUTH });
 
         for(int i=1; i<22; i+=2)
             divider(fpslic.cell(21, i));
@@ -79,91 +52,171 @@ public class AsyncPaperDemo {
         fpslic.cell(21,22).yo(fpslic.cell(20,22));
         fpslic.cell(21,22).xo(fpslic.cell(20,22));
 
-        runGui(24, 24);
+        reconfigTopLeft();
+        reconfigTopRight();
+        fpslic.flush();
 
-        Thread.sleep(5000);
+        Thread.sleep(2000);
 
-        for(int i=0; i<20; i++) test(i);
-        synchronized(Demo.class) { Demo.class.wait(); }
+        String sizes = rsize+"";
+        while(sizes.length()<3) sizes = "0"+sizes;
+        String fname = "data/size"+sizes+".csv";
+        if (!new File(fname).exists()) {
+            PrintWriter outfile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(fname)));
+            for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
+            outfile.flush();
+            outfile.close();
+        }
+        System.out.println("done.");
     }
 
-    public void test(int count) throws Exception {
-        flush();
-        fill(count);
+    public void test(int count, int size, PrintWriter outfile) throws Exception {
+        fpslic.flush();
+        drain(count);
+        fpslic.flush();
+        fill(count, size);
 
         fpslic.flush();
 
         fpslic.readCount();
         long now = System.currentTimeMillis();
-        Thread.sleep(4000);
-        int save1y = fpslic.cell(19,22).ylut();
-        int save1x = fpslic.cell(19,22).xlut();
-        fpslic.cell(19,22).ylut(0xff);
-        fpslic.cell(19,22).xlut(0xff);
+        Thread.sleep(2000);
+        topLeft().ylut(0xff);
+        topLeft().xlut(0xff);
         fpslic.flush();
         long then = System.currentTimeMillis();
-        fpslic.cell(19,22).ylut(save1y);
-        fpslic.cell(19,22).xlut(save1x);
 
         int tokens = fpslic.readCount();
-        System.out.println(count + ", " + (tokens*1000)/(then-now));
+        double elapsed = (double)((FtdiBoard)fpslic).timer;
+        
+        double occupancy = ((double)(2*count))/((double)size);
+
+        //double elapsed = (then-now);
+        double result = (tokens*1000)/elapsed;
+
+        // eleven dividers...
+        //result *= 2*2*2*2*2*2*2*2*2*2*2;
+
+        // ...and the interrupt pin counts *pairs* of transitions
+        //result *= 2;
+
+        // result is transitions/sec => 633mcell/sec velocity! =)
+        outfile.println(occupancy + ", " + result);
+        System.out.println((2*count)+"/"+size+"  "+occupancy + ", " + result + " @ " + elapsed);
+        outfile.flush();
     }
 
-    private void flush() {
-        int save1y = fpslic.cell(19,22).ylut();
-        int save1x = fpslic.cell(19,22).xlut();
-        int save2y = fpslic.cell(20,22).ylut();
-        int save2x = fpslic.cell(20,22).xlut();
-        fpslic.cell(19,22).ylut(0x00);
-        fpslic.cell(19,22).xlut(0x00);
-        for(int i=0; i<800; i++) {
-            fpslic.cell(20,22).ylut(0xff);
-            fpslic.cell(20,22).xlut(0xff);
-            fpslic.cell(20,22).ylut(0x00);
-            fpslic.cell(20,22).xlut(0x00);
+    private void drain(int size) {
+        while(true){
+        topLeft().xlut(0x00);
+        for(int i=0; i<size*4; i++) {
+            topLeft().ylut(0xff);
+            fpslic.flush();
+            topLeft().ylut(0x00);
+            fpslic.flush();
         }
+
         fpslic.flush();
-        fpslic.cell(20,22).ylut(save2y);
-        fpslic.cell(20,22).xlut(save2x);
-        fpslic.cell(19,22).ylut(save2y);
-        fpslic.cell(19,22).xlut(save2x);
-        fpslic.flush();
-        fpslic.cell(19,22).ylut(save1y);
-        fpslic.cell(19,22).xlut(save1x);
-        fpslic.flush();
+        fpslic.readCount();
         fpslic.readCount();
         try { Thread.sleep(100); } catch (Exception e) { }
         int rc = fpslic.readCount();
-        if (rc!=0)
-            throw new Error("flush() failed => " + rc);
+        if (rc!=0) {
+            System.err.println("flush() failed REALLY BADLY => " + rc);
+            //try { System.in.read(); }  catch (Exception _) { }
+            continue;
+        }
+
+        reconfigTopLeft();
+
+        fpslic.flush();
+        fpslic.readCount();
+        fpslic.readCount();
+        try { Thread.sleep(100); } catch (Exception e) { }
+        rc = fpslic.readCount();
+        if (rc!=0) {
+            System.err.println("flush() failed => " + rc);
+            //try { System.in.read(); }  catch (Exception _) { }
+            continue;
+        }
+        break;
+        }
     }
 
-    private void fill(int count) {
-        int save1y = fpslic.cell(19,22).ylut();
-        int save1x = fpslic.cell(19,22).xlut();
-        int save2y = fpslic.cell(20,22).ylut();
-        int save2x = fpslic.cell(20,22).xlut();
-        fpslic.cell(19,22).ylut(0xff);
-        fpslic.cell(19,22).xlut(0xff);
-        fpslic.cell(20,22).ylut(0xff);
-        fpslic.cell(20,22).xlut(0xff);
-        boolean yes = true;
+    private void fill(int count, int size) {
+        //topLeft().ylut((count>0 && count<size/2-1) ? 0xff : 0x00);
+        topLeft().ylut(0x00);
+        boolean yes = false;
         for(int i=0; i<count; i++) {
-            if (yes) {
-                fpslic.cell(19,22).ylut(0xff);
-                fpslic.cell(19,22).xlut(0xff);
-            } else {
-                fpslic.cell(19,22).ylut(0x00);
-                fpslic.cell(19,22).xlut(0x00);
-            }
+                if (yes) {
+                    topLeft().xlut(0xff);
+                } else {
+                    topLeft().xlut(0x00);
+                }
+                fpslic.flush();
             yes = !yes;
+            //System.out.println("fill => " + yes);
+            //try { Thread.sleep(500); } catch (Exception _) { }
         }
-        fpslic.cell(19,22).ylut(save1y);
-        fpslic.cell(19,22).xlut(save1x);
-        fpslic.cell(20,22).ylut(save2y);
-        fpslic.cell(20,22).xlut(save2x);
+        //System.out.println("done filling.");
+        //try { Thread.sleep(2000); } catch (Exception _) { }
+
+        //System.out.println("reconfigured.");
+        //try { System.in.read(); }  catch (Exception _) { }
+
+
+        if (count>0 && count<size/2-1) {
+            reconfigTopLeftPreserve(yes);
+        } else {
+            reconfigTopLeft();
+        }
+
+        //System.out.println("running.");
+        //try { System.in.read(); }  catch (Exception _) { }
+
+        //try { Thread.sleep(2000); } catch (Exception _) { }
+    }
+
+    private Fpslic.Cell topLeft() { return start.north().north(); }
+    private Fpslic.Cell topRight() { return start.north().ne(); }
+    private void reconfigTopLeft() {
+        Fpslic.Cell c = topLeft();
+                c.c(YLUT);
+                c.ylut(0x00);
+                c.xlut(0x00);
+                c.wi(L0);
+                c.t(TMUX_W_AND_FB);
+                c.ylut((LUT_SELF & ~LUT_OTHER) |
+                       (LUT_Z & ~LUT_OTHER) |
+                       (LUT_Z & LUT_SELF));
+            fpslic.flush();
+                c.xlut(LUT_Z);
+            fpslic.flush();
+                c.wi(NONE);
+            fpslic.flush();
+    }
+    private void reconfigTopLeftNice() {
+        Fpslic.Cell c = topLeft();
+        c.c(YLUT);
+        c.xlut(LUT_Z);
+        fpslic.flush();
+        c.ylut((LUT_SELF & ~LUT_OTHER) |
+               (LUT_Z & ~LUT_OTHER) |
+               (LUT_Z & LUT_SELF));
         fpslic.flush();
     }
+    private void reconfigTopLeftPreserve(boolean on) {
+        Fpslic.Cell c = topLeft();
+        fpslic.flush();
+        if (on) c.ylut(0x00);
+        c.xlut(LUT_Z);
+        fpslic.flush();
+        c.ylut((LUT_SELF & ~LUT_OTHER) |
+               (LUT_Z & ~LUT_OTHER) |
+               (LUT_Z & LUT_SELF));
+        fpslic.flush();
+    }
+    private void reconfigTopRight() { micropipelineStage(topRight(), topRight().west(), topRight().sw()); }
 
     private Fpslic.Cell pipe(Fpslic.Cell c, Fpslic.Cell prev, int[] dirs) {
         for(int i=0; i<dirs.length; i++) {
@@ -175,17 +228,22 @@ public class AsyncPaperDemo {
         return c;
     }
 
-    private void createPipeline(Fpslic.Cell c, boolean downward, int length, boolean start) {
-        length -= 8;
+    private int createPipeline(Fpslic.Cell c, boolean downward, int length, boolean start) {
+        boolean stop = false;
+        do {
         if (downward) {
             if (c.row < 6) {
+                if (length < 10+4) { stop = true; break; }
+                length -= 10;
                 c = pipe(c, c.north(), new int[] { SW, EAST, SW, WEST, NW, NORTH });
                 c = c.se();
                 c = pipe(c, c.north(), new int[] { NE, NORTH });
                 c = c.sw().west();
                 downward = false;
             } else {
-                c = micropipelineStage(c, start ? c.west() : c.north(), c.sw());
+                if (length < 8+4) { stop = true; break; }
+                length -= 8;
+                c = micropipelineStage(c, c.north(), c.sw());
                 c = micropipelineStage(c, c.ne(),    c.south());
                 c = micropipelineStage(c, c.north(), c.se());
                 c = micropipelineStage(c, c.nw(),    c.south());
@@ -193,25 +251,30 @@ public class AsyncPaperDemo {
                 c = micropipelineStage(c, c.south(), c.ne());
                 c = micropipelineStage(c, c.sw(),    c.north());
                 c = micropipelineStage(c, c.south(), c.nw());
-                micropipelineStage(c, c.se(),    start ? c.east() : c.north());
+                micropipelineStage(c, c.se(),    c.north());
                 c = c.south().south().south().south().east();
             }
         } else {
             if (c.row > c.fpslic().getHeight()-7) {
+                if (length < 10+4) { stop = true; break; }
+                length -= 10;
                 c = pipe(c, c.south(), new int[] { NW, SOUTH });
                 c = c.nw();
                 c = pipe(c, c.south(), new int[] { NE, EAST, SE, WEST, SE, SOUTH });
                 c = c.nw().west();
                 downward = true;
             } else {
+                if (length < 8+4) { stop = true; break; }
+                length -= 8;
                 Fpslic.Cell ret = c = pipe(c, c.south(), new int[] { NE, NORTH, NW, NORTH });
                 c = c.se();
                 c = pipe(c, c.north(), new int[] { SW, SOUTH, SE, SOUTH });
                 c = ret;
             }
         }
-        if (length >= 8) createPipeline(c, downward, length, false);
-        else {
+        } while(false);
+        if (stop) {
+            length -= 4;
             if (downward) {
                 c = micropipelineStage(c, c.north(), c.sw());
                 c = micropipelineStage(c, c.ne(), c.west());
@@ -220,6 +283,9 @@ public class AsyncPaperDemo {
             } else {
                 c = pipe(c, c.south(), new int[] { NW, EAST, SE, SOUTH });
             }
+            return length;
+        } else {
+            return createPipeline(c, downward, length, false);
         }
     }
 
@@ -251,41 +317,68 @@ public class AsyncPaperDemo {
     */
 
     private Fpslic.Cell micropipelineStage(Fpslic.Cell c, Fpslic.Cell prev, Fpslic.Cell next) {
+        return micropipelineStage(c, prev, next, true);
+    }
+    private Fpslic.Cell micropipelineStage(Fpslic.Cell c, Fpslic.Cell prev, Fpslic.Cell next, boolean configDir) {
+        c.b(false);
+        c.f(false);
+        c.yo(false);
+        c.xo(false);
         switch(c.dir(next)) {
             case NORTH: case SOUTH: case EAST: case WEST:
                 switch (c.dir(prev)) {
                     case NORTH: case SOUTH: case EAST: case WEST: throw new Error("cannot have prev&next both use y");
                 }
-                c.ylut((LUT_SELF & ~LUT_OTHER) | (LUT_Z & ~LUT_OTHER) | (LUT_Z & LUT_SELF & LUT_OTHER));
-                c.xlut(LUT_Z);
+                if (configDir) {
+                    c.yi(next);
+                    c.xi(prev);
+                }
+
                 c.c(YLUT);
-                c.yi(next);
-                c.xi(prev);
+                c.ylut(0x00);
+                c.xlut(0x00);
+                c.wi(L0);
+                c.t(TMUX_W_AND_FB);
+                c.ylut((LUT_SELF & ~LUT_OTHER) |
+                       (LUT_Z & ~LUT_OTHER) |
+                       (LUT_Z & LUT_SELF));
+                c.xlut(LUT_Z);
+            fpslic.flush();
+                c.wi(NONE);
+            fpslic.flush();
                 break;
             case NW: case SE: case SW: case NE:
                 switch (c.dir(prev)) {
                     case NW: case SE: case SW: case NE: throw new Error("cannot have prev&next both use x");
                 }
-                c.xlut((LUT_SELF & ~LUT_OTHER) | (LUT_Z & ~LUT_OTHER) | (LUT_Z & LUT_SELF & LUT_OTHER));
-                c.ylut(LUT_Z);
+                if (configDir) {
+                    c.xi(next);
+                    c.yi(prev);
+                }
+
                 c.c(XLUT);
-                c.xi(next);
-                c.yi(prev);
+                c.xlut(0x00);
+                c.ylut(0x00);
+                c.wi(L0);
+                c.t(TMUX_W_AND_FB);
+                c.xlut((LUT_SELF & ~LUT_OTHER) |
+                       (LUT_Z & ~LUT_OTHER) |
+                       (LUT_Z & LUT_SELF));
+                c.ylut(LUT_Z);
+            fpslic.flush();
+                c.wi(NONE);
+            fpslic.flush();
                 break;
             default: throw new Error();
         }
-        c.b(false);
-        c.f(false);
-        c.t(TMUX_FB);
-        c.yo(false);
-        c.xo(false);
+        //c.t(TMUX_FB);
         return next;
     }
 
     private void turnOnLeds() {
         for(int i=0; i<24; i++) {
-            fpslic.iob_bot(i, true).enableOutput(NORTH);
-            fpslic.iob_bot(i, false).enableOutput(NW);
+            //fpslic.iob_bot(i, true).enableOutput(NORTH);
+            //fpslic.iob_bot(i, false).enableOutput(NW);
             fpslic.cell(i, 0).xlut(0xff);
             fpslic.cell(i, 0).ylut(0xff);
         }
@@ -299,6 +392,7 @@ public class AsyncPaperDemo {
 
         fpslic.cell(23,0).ylut(0x00);
         fpslic.iob_right(0, true).enableOutput(WEST);
+        fpslic.flush();
     }
 
     private void divider(Fpslic.Cell c) {

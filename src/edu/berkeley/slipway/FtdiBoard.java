@@ -23,7 +23,7 @@ public class FtdiBoard extends Fpslic implements Board {
 
     public FtdiBoard() throws Exception {
         super(24, 24);
-        chip = new FpslicBoot(new FpslicBootPinsUsb(new FtdiUart(0x6666, 0x3133, 1500 * 1000)));
+        chip = new FpslicBoot(new FpslicBootPinsUsb(new FtdiUart(0x6666, 0x3133, 1500 * 1000/2)));
         String bstFile = this.getClass().getName();
         bstFile = bstFile.substring(0, bstFile.lastIndexOf('.'));
         bstFile = bstFile.replace('.', '/')+"/slipway_drone.bst";
@@ -87,7 +87,7 @@ public class FtdiBoard extends Fpslic implements Board {
             public void run() {
                 while(true) {
                     try {
-                        while(callbacks.size() == 0) Thread.sleep(500);
+                        while(callbacks.size() == 0) Thread.sleep(50);
                         byte b = in.readByte();
                         ByteCallback bc = (ByteCallback)callbacks.remove(0);
                         //System.out.println("readback " + b + " in " + (System.currentTimeMillis()-bc.time));
@@ -129,7 +129,8 @@ public class FtdiBoard extends Fpslic implements Board {
         }
     }
 
-    public void flush() { try { out.flush(); } catch (IOException e) { throw new RuntimeException(e); } }
+    public synchronized void flush() {
+        try { out.flush(); } catch (IOException e) { throw new RuntimeException(e); } }
 
 
     // Callbacks //////////////////////////////////////////////////////////////////////////////
@@ -168,6 +169,12 @@ public class FtdiBoard extends Fpslic implements Board {
                             ((in.read() & 0xff) << 16) |
                             ((in.read() & 0xff) << 8) |
                             ((in.read() & 0xff) << 0);
+                        timer =
+                            ((in.read() & 0xff) << 24) |
+                            ((in.read() & 0xff) << 16) |
+                            ((in.read() & 0xff) << 8) |
+                            ((in.read() & 0xff) << 0);
+                        //System.out.println("timer => " + Integer.toString(timer, 16));
                         this.notify();
                     }
                 };
@@ -181,18 +188,20 @@ public class FtdiBoard extends Fpslic implements Board {
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
+    public int timer = 0;
     public synchronized void readBus(ByteCallback bc) throws IOException {
         enqueue(bc);
         out.writeByte(2);
         out.flush();
     }
 
+    /*
     public synchronized void readInterrupts(ByteCallback bc) throws IOException {
         enqueue(bc);
         out.writeByte(3);
         out.flush();
     }
-
+    */
 
     // Util //////////////////////////////////////////////////////////////////////////////
 
