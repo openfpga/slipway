@@ -63,8 +63,8 @@ public class AsyncPaperDemo {
         String fname = "data/size"+sizes+".csv";
         if (!new File(fname).exists()) {
             PrintWriter outfile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(fname)));
-            //for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
-            for(int i=rsize/2; i>=0; i--) test(i, rsize, outfile);
+            for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
+            //for(int i=rsize/2; i>=0; i--) test(i, rsize, outfile);
             outfile.flush();
             outfile.close();
         }
