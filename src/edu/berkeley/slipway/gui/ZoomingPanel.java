@@ -27,7 +27,10 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
     private   Point2D recenter;
     private   Point2D recenter2;
 
-    public ZoomingPanel() {
+    private FtdiBoard ftdiboard;
+
+    public ZoomingPanel(FtdiBoard ftdiboard) {
+        this.ftdiboard = ftdiboard;
         setDoubleBuffered(true);
         addKeyListener(this);
         addMouseMotionListener(this);
@@ -131,6 +134,29 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                     repaint();
                     return;
                 }
+                case VK_F: {
+                    int save1y = c.fpslic().cell(19,22).ylut();
+                    int save1x = c.fpslic().cell(19,22).xlut();
+                    int save2y = c.fpslic().cell(20,22).ylut();
+                    int save2x = c.fpslic().cell(20,22).xlut();
+                    c.fpslic().cell(19,22).ylut(0xff);
+                    c.fpslic().cell(19,22).xlut(0xff);
+                    for(int i=0; i<800; i++) {
+                        c.fpslic().cell(20,22).ylut(0xff);
+                        c.fpslic().cell(20,22).xlut(0xff);
+                        c.fpslic().flush();
+                        c.fpslic().cell(20,22).ylut(0x00);
+                        c.fpslic().cell(20,22).xlut(0x00);
+                        c.fpslic().flush();
+                    }
+                    c.fpslic().cell(19,22).ylut(save1y);
+                    c.fpslic().cell(19,22).xlut(save1x);
+                    c.fpslic().cell(20,22).ylut(save2y);
+                    c.fpslic().cell(20,22).xlut(save2x);
+                    System.out.println("done");
+                    repaint();
+                    return;
+                }
                 case VK_BACK_QUOTE: {
                     c.xlut(0xff);
                     c.ylut(0xff);
@@ -191,6 +217,11 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
                 case VK_Y: {
                     c.xlut(LUT_OTHER);
                     c.ylut(LUT_SELF);
+                    repaint();
+                    return;
+                }
+                case VK_I: {
+                    System.out.println("interrupt count => " + ftdiboard.readCount());
                     repaint();
                     return;
                 }

@@ -59,6 +59,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         this(at40k, drone, 24, 24);
     }
     public Gui(Fpslic at40k, FtdiBoard drone, int width, int height) {
+        super(drone);
         this.at40k = at40k;
         this.drone = drone;
         for(int i=0; i<ca.length; i++)
@@ -99,13 +100,16 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
             this.cell = cell;
             cells.add(this);
         }
+        public boolean scanme() { 
+            return cell.relevant();
+        }
         public void clear() {
-            gg.color(in ? selectedcell : (scanme ? new Color(0xbb, 0xbb, 0xbb) : nonselectedcell));
+            gg.color(in ? selectedcell : (scanme() ? new Color(0xbb, 0xbb, 0xbb) : nonselectedcell));
             g.fillRect(0, 0, SIZE, SIZE);
         }
         public void draw() {
 
-            if (cell.relevant() || scanme) {
+            if (cell.relevant() || scanme()) {
                 drawWires();
                 drawLocal();
                 
@@ -424,7 +428,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
                 g.translate(2,   5f);
-                if (xlut_relevant(cell) || scanme) {
+                if (xlut_relevant(cell) || scanme()) {
                     Gate gate = getGate(cell.xlut(), true);
                     gate.draw(g,
                               !xknown ? Color.gray : xon ? Color.red : Color.white,
@@ -434,7 +438,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 }
 
                 g.translate(34f, 0f);
-                if (cell.ylut_relevant() || scanme) {
+                if (cell.ylut_relevant() || scanme()) {
                     Gate gate = getGate(cell.ylut(), false);
                     gate.draw(g,
                               !yknown ? Color.gray : yon ? Color.blue : Color.white,
@@ -750,7 +754,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         for(int x=0; x<at40k.getWidth(); x++)
             for(int y=0; y<at40k.getHeight(); y++)
                 if (ca[x][y] != null)
-                    if (ca[x][y].scanme)
+                    if (ca[x][y].scanme())
                         scan(ca[x][y]);
     }
     public void scan(final Gui.Cell c) {
@@ -786,6 +790,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         } else {
                             drone.readBus(new BCB(c, XLUT));
                         }
+                        /*
                         if (!cell.yo())
                         for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
                             if (c2!=null && !c2.relevant()) {
@@ -798,6 +803,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                                 c2.yi(NONE);
                                 return;
                             }
+                        */
                         c.yknown = false;
                         break;
                     case YLUT:
@@ -806,6 +812,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         } else {
                             drone.readBus(new BCB(c, YLUT));
                         }
+                        /*
                         if (!cell.xo())
                         for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
                             if (c2!=null && !c2.relevant()) {
@@ -818,6 +825,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                                 c2.xi(NONE);
                                 return;
                             }
+                        */
                         c.xknown = false;
                         break;
                     case ZMUX: {

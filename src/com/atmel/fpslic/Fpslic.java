@@ -176,6 +176,8 @@ public abstract class Fpslic {
             this.col = col;
         }
         
+        public Fpslic fpslic() { return Fpslic.this; }
+
         // Accessors for Neighbors //////////////////////////////////////////////////////////////////////////////
 
         public SectorWire hwire(int plane)  { return new SectorWire(true, plane, col, row); }
@@ -598,6 +600,30 @@ public abstract class Fpslic {
             }
         }
 
+        public Cell dir(int i) {
+            switch(i) {
+                case NORTH: return north();
+                case SOUTH: return south();
+                case EAST: return east();
+                case WEST: return west();
+                case NW: return nw();
+                case SW: return sw();
+                case SE: return se();
+                case NE: return ne();
+            }
+            return null;
+        }
+        public int dir(Cell c) {
+            if      (c.row==row-1 && c.col==col-1) return SW;
+            else if (c.row==row+1 && c.col==col-1) return NW;
+            else if (c.row==row-1 && c.col==col+1) return SE;
+            else if (c.row==row+1 && c.col==col+1) return NE;
+            else if (c.row==row-1 && c.col==col)   return SOUTH;
+            else if (c.row==row+1 && c.col==col)   return NORTH;
+            else if (c.row==row   && c.col==col-1) return WEST;
+            else if (c.row==row   && c.col==col+1) return EAST;
+            return -1;
+        }
 
         public void generalized_c_element() {
 

@@ -65,6 +65,7 @@ bitstreams/slipway_drone.bst: build/slipway_drone.hex
 	rm /afs/research.cs.berkeley.edu/user/megacz/edu.berkeley.obits/usbdrone.hex
 	diff -u /afs/research.cs.berkeley.edu/user/megacz/stupid/fpslic_stupid.bst $@ && exit -1; true
 	mv /afs/research.cs.berkeley.edu/user/megacz/stupid/fpslic_stupid.bst $@
+	touch $@
 
 
 

@@ -109,9 +109,9 @@ void fpga_interrupts(int on) {
   if (on) {
     //FISUA = 0x1;
     FISCR = 0x80;
-    FISUD = 0x08;
+    FISUA = 0x01;
   } else {
-    FISUD = 0;
+    FISUA = 0;
     FISCR = 0;
   }
 }
@@ -125,9 +125,9 @@ inline void conf(int z, int y, int x, int d) {
 
 #define TIMERVAL 100
 
-ISR(SIG_FPGA_INTERRUPT15) { 
+ISR(SIG_FPGA_INTERRUPT0) { 
   interrupt_count++;
-  //fpga_interrupts(1);
+  fpga_interrupts(1);
   sei();
 }
 
@@ -153,8 +153,9 @@ inline int hex(char c) {
 }
 
 int readFPGA() {
+  fpga_interrupts(0);
   int ret = FISUA;
-  //fpga_interrupts(1);
+  fpga_interrupts(1);
   return ret;
 }
 
@@ -203,7 +204,7 @@ int main() {
         flag=1;
         send(readFPGA());
         break;
-        /*
+
       case 3: {
         int32_t local_interrupt_count = interrupt_count;
         interrupt_count = 0;
@@ -213,7 +214,7 @@ int main() {
         send((local_interrupt_count >>  0) & 0xff);
         break;
       }
-        */
+
         /*
       case 3:
         //init_timer();
