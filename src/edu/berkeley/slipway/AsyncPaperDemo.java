@@ -27,13 +27,13 @@ public class AsyncPaperDemo {
         turnOnLeds();
         setupScanCell();
 
-        //runGui(24, 24);
+        runGui(24, 24);
 
         for(int i=0; i<255; i++)
             fpslic.readCount();
 
         //System.in.read();
-        for(int i=46; i<400; i+=2) {
+        for(int i=90; i<400; i+=2) {
             go(i);
         }
         System.out.println("done");
@@ -42,7 +42,7 @@ public class AsyncPaperDemo {
 
     public void go(int size) throws Exception {
         start = fpslic.cell(20, 21);
-        int rsize = size-createPipeline(start, true, size, false);
+        int rsize = size-createPipeline(start, true, size, false)+2;
         System.out.println("actual size => " + rsize);
         pipe(start.west().north(), start.west(), new int[] { NE, EAST, SW, SOUTH });
 
@@ -63,8 +63,8 @@ public class AsyncPaperDemo {
         String fname = "data/size"+sizes+".csv";
         if (!new File(fname).exists()) {
             PrintWriter outfile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(fname)));
-            for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
-            //for(int i=rsize/2; i>=0; i--) test(i, rsize, outfile);
+            //for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
+            for(int i=rsize/2; i>=0; i--) test(i, rsize, outfile);
             outfile.flush();
             outfile.close();
         }
@@ -149,16 +149,21 @@ public class AsyncPaperDemo {
         if (count>0)
             topLeft().ylut(0x00);
         boolean yes = true;
-        for(int i=0; i<count; i++) {
+        if (count==1) {
+            topLeft().xlut(0x00);
+            yes = true;
+        } else {
+            for(int i=0; i<count-1; i++) {
                 if (yes) {
                     topLeft().xlut(0xff);
                 } else {
                     topLeft().xlut(0x00);
                 }
                 fpslic.flush();
-            yes = !yes;
+                yes = !yes;
             //System.out.println("fill => " + yes);
             //try { Thread.sleep(500); } catch (Exception _) { }
+            }
         }
         //System.out.println("done filling.");
         //try { Thread.sleep(2000); } catch (Exception _) { }
@@ -167,7 +172,7 @@ public class AsyncPaperDemo {
         //try { System.in.read(); }  catch (Exception _) { }
 
 
-        if (count>0 && count<size/2-1) {
+        if (count>0 && count!=size/2-1) {
             reconfigTopLeftPreserve(yes);
         } else if (count>0) {
             topLeft().xlut(0xff);
