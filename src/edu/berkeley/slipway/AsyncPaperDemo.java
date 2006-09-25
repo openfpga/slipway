@@ -63,7 +63,8 @@ public class AsyncPaperDemo {
         String fname = "data/size"+sizes+".csv";
         if (!new File(fname).exists()) {
             PrintWriter outfile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(fname)));
-            for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
+            //for(int i=0; i<rsize/2+1; i++) test(i, rsize, outfile);
+            for(int i=rsize/2; i>=0; i--) test(i, rsize, outfile);
             outfile.flush();
             outfile.close();
         }
@@ -145,8 +146,9 @@ public class AsyncPaperDemo {
 
     private void fill(int count, int size) {
         //topLeft().ylut((count>0 && count<size/2-1) ? 0xff : 0x00);
-        topLeft().ylut(0x00);
-        boolean yes = false;
+        if (count>0)
+            topLeft().ylut(0x00);
+        boolean yes = true;
         for(int i=0; i<count; i++) {
                 if (yes) {
                     topLeft().xlut(0xff);
@@ -166,10 +168,13 @@ public class AsyncPaperDemo {
 
 
         if (count>0 && count<size/2-1) {
-            reconfigTopLeftPreserve(!yes);
-        } else {
-            reconfigTopLeft();
-        }
+            reconfigTopLeftPreserve(yes);
+        } else if (count>0) {
+            topLeft().xlut(0xff);
+            fpslic.flush();
+            topLeft().ylut(0xff);
+            reconfigTopLeftPreserve(false);
+        } 
 
         //System.out.println("running.");
         //try { System.in.read(); }  catch (Exception _) { }
@@ -209,6 +214,8 @@ public class AsyncPaperDemo {
         Fpslic.Cell c = topLeft();
         fpslic.flush();
         if (on) c.ylut(0x00);
+        //else    c.ylut(0xff);
+        //fpslic.flush();
         c.xlut(LUT_Z);
         fpslic.flush();
         c.ylut((LUT_SELF & ~LUT_OTHER) |
