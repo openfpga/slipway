@@ -70,14 +70,13 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
 
-        /*
-          new Thread() {
+
+        new Thread() {
             public void run() {
-                try { Thread.sleep(2000); } catch (Exception e) { }
                 while(true) scan();
             }
-            }.start();
-        */
+        }.start();
+
 
 
         /*
