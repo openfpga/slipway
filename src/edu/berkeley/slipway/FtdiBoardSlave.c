@@ -163,7 +163,7 @@ void die(int two, int three, int five) {
 
 ISR(SIG_UART0_RECV) {
   if (UCSR0A & (1 << FE0))   die(0, 0, 1);
-  if ((UCSR0A & (1 << OR0))) die(0, 1, 1);
+  if ((UCSR0A & (1 << OR0))) die(1, 1, 1);
   if (read_full()) die(1, 0, 1);
 
   read_buf[read_buf_tail] = UDR0;
@@ -224,7 +224,7 @@ int main() {
         send('T');
         send('S');
         fpga_interrupts(1);
-        if (flag) die(1, 1, 1);
+        if (flag) die(0, 1, 1);
         break;
 
       case 1:

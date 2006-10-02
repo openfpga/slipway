@@ -28,12 +28,12 @@ public class AsyncPaperDemo {
         setupScanCell();
 
         //runGui(24, 24);
-
+        
         for(int i=0; i<255; i++)
             fpslic.readCount();
 
         //System.in.read();
-        for(int i=16; i<400; i+=2) {
+        for(int i=240; i<400; i+=2) {
             go(i);
         }
         //System.out.println("done");
@@ -44,7 +44,8 @@ public class AsyncPaperDemo {
         start = fpslic.cell(20, 21);
         int rsize = size-createPipeline(start, true, size-4, false);
         System.out.println("actual size => " + rsize);
-        pipe(start.west().north(), start.west(), new int[] { NE, EAST, SW, SOUTH });
+        pipe(start.west().north(), start.west(),
+             new int[] { NE, EAST, SW, SOUTH });
 
         Fpslic.Cell div = start.east();
         while(true) {
@@ -62,12 +63,26 @@ public class AsyncPaperDemo {
         reconfigTopRight();
         fpslic.flush();
 
+        for(int i=0; i<23; i++){
+            Fpslic.Cell c = fpslic.cell(0, i);
+            c.ylut(0x00);
+            c.c(YLUT);
+            c.out(L3, true);
+            c.h(L3, true);
+            for(Fpslic.SectorWire sw = c.hwire(L3).east();
+                sw!=null;
+                sw=sw.east())
+                sw.west().drives(sw, true);
+        }
+
         String sizes = rsize+"";
         while(sizes.length()<3) sizes = "0"+sizes;
         String fname = "data/size"+sizes+".csv";
         if (!new File(fname).exists()) {
             PrintWriter outfile = new PrintWriter(new OutputStreamWriter(new FileOutputStream(fname)));
-            for(int i=rsize/2; i>=0; i--) test(i, rsize, outfile);
+            for(int i=rsize/2; i>=0; i--) {
+                test(i, rsize, outfile);
+            }
             outfile.flush();
             outfile.close();
         }
@@ -84,7 +99,7 @@ public class AsyncPaperDemo {
 
         fpslic.readCount();
         long now = System.currentTimeMillis();
-        Thread.sleep(2000);
+        Thread.sleep(1000);
         topLeft().ylut(0xff);
         topLeft().xlut(0xff);
         fpslic.flush();
@@ -113,7 +128,9 @@ public class AsyncPaperDemo {
     }
 
     private void drain(int size) {
+
         while(true){
+            /*
             topLeft().xlut(0x00);
             for(int i=0; i<size*4; i++) {
                 topLeft().ylut(0xff);
@@ -125,21 +142,29 @@ public class AsyncPaperDemo {
             try { Thread.sleep(100); } catch (Exception e) { }
             int rc = fpslic.readCount();
             if (rc!=0) { System.err.println("flush() failed REALLY BADLY => " + rc); continue; }
-            
             reconfigTopLeft();
+            */
             for(int x=0; x<24; x++)
-                for(int y=0; y<24; y++)
-                    fpslic.cell(x,y).wi(L0);
+                for(int y=0; y<24; y++) {
+                    fpslic.cell(x,y).wi(L3);
+                    fpslic.cell(x,y).h(L3, true);
+                }
             fpslic.flush();
             for(int x=0; x<24; x++)
-                for(int y=0; y<24; y++)
+                for(int y=0; y<24; y++) {
                     fpslic.cell(x,y).wi(NONE);
+                    //fpslic.cell(x,y).h(L3, false);
+                }
             fpslic.flush();
             
             fpslic.readCount();
             try { Thread.sleep(100); } catch (Exception e) { }
-            rc = fpslic.readCount();
-            if (rc!=0) { System.err.println("flush() failed => " + rc); continue; }
+            int rc = fpslic.readCount();
+            if (rc!=0) {
+                System.err.println("flush() failed => " + rc);
+                try { Thread.sleep(1000); } catch (Exception e) { }
+                continue;
+            }
             break;
         }
     }
@@ -347,12 +372,32 @@ public class AsyncPaperDemo {
         if (c.row==topLeft().row && c.col==topLeft().col) {
             c.yo(false);
             c.xo(false);
+            c.c(YLUT);
         } else {
-            c.yo(false);
+            //c.yo(true);
+            c.yo(true);
             c.xo(true);
+            //c.xo(false);
+
+            c.c(ZMUX);
+            c.zi(L3);
+            c.h(L3, true);
+
+            //c.c(YLUT);
+            /*
+            Fpslic.SectorWire sw = c.vwire(L3);
+            while(sw.south() != null) {
+                sw.south().drives(sw, true);
+                sw = sw.south();
+            }
+            fpslic.cell(sw.col,0).ylut(0x00);
+            fpslic.cell(sw.col,0).c(YLUT);
+            fpslic.cell(sw.col,0).out(L3, true);
+            fpslic.cell(sw.col,0).v(L3, true);
+            */
         }
 
-                c.c(YLUT);
+
                 c.ylut(0x00);
                 c.xlut(0x00);
                 c.wi(L0);
