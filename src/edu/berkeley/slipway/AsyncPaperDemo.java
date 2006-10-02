@@ -370,9 +370,11 @@ public class AsyncPaperDemo {
                 }
 
         c.yo(true);
-        c.xo(false);
+        c.xo(true);
+        c.c(ZMUX);
+        c.zi(NONE);
 
-                c.c(XLUT);
+        //c.c(XLUT);
                 c.xlut(0x00);
                 c.ylut(0x00);
                 c.wi(L0);
