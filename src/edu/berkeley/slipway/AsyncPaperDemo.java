@@ -33,7 +33,7 @@ public class AsyncPaperDemo {
             fpslic.readCount();
 
         //System.in.read();
-        for(int i=0; i<400; i+=2) {
+        for(int i=16; i<400; i+=2) {
             go(i);
         }
         //System.out.println("done");
@@ -344,8 +344,13 @@ public class AsyncPaperDemo {
                     c.xi(prev);
                 }
 
-        c.yo(false);
-        c.xo(true);
+        if (c.row==topLeft().row && c.col==topLeft().col) {
+            c.yo(false);
+            c.xo(false);
+        } else {
+            c.yo(false);
+            c.xo(true);
+        }
 
                 c.c(YLUT);
                 c.ylut(0x00);
