@@ -33,7 +33,7 @@ public class AsyncPaperDemo {
             fpslic.readCount();
 
         //System.in.read();
-        for(int i=256; ; i+=2) {
+        for(int i=0; i<400; i+=2) {
             go(i);
         }
         //System.out.println("done");
@@ -334,8 +334,6 @@ public class AsyncPaperDemo {
     private Fpslic.Cell micropipelineStage(Fpslic.Cell c, Fpslic.Cell prev, Fpslic.Cell next, boolean configDir) {
         c.b(false);
         c.f(false);
-        c.yo(false);
-        c.xo(false);
         switch(c.dir(next)) {
             case NORTH: case SOUTH: case EAST: case WEST:
                 switch (c.dir(prev)) {
@@ -345,6 +343,9 @@ public class AsyncPaperDemo {
                     c.yi(next);
                     c.xi(prev);
                 }
+
+        c.yo(false);
+        c.xo(true);
 
                 c.c(YLUT);
                 c.ylut(0x00);
@@ -367,6 +368,9 @@ public class AsyncPaperDemo {
                     c.xi(next);
                     c.yi(prev);
                 }
+
+        c.yo(true);
+        c.xo(false);
 
                 c.c(XLUT);
                 c.xlut(0x00);
