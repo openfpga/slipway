@@ -127,8 +127,15 @@ public class AsyncPaperDemo {
             if (rc!=0) { System.err.println("flush() failed REALLY BADLY => " + rc); continue; }
             
             reconfigTopLeft();
-            
+            for(int x=0; x<24; x++)
+                for(int y=0; y<24; y++)
+                    fpslic.cell(x,y).wi(L0);
             fpslic.flush();
+            for(int x=0; x<24; x++)
+                for(int y=0; y<24; y++)
+                    fpslic.cell(x,y).wi(NONE);
+            fpslic.flush();
+            
             fpslic.readCount();
             try { Thread.sleep(100); } catch (Exception e) { }
             rc = fpslic.readCount();

@@ -133,7 +133,6 @@ inline void conf(int z, int y, int x, int d) {
 
 ISR(SIG_FPGA_INTERRUPT0) { 
   interrupt_count++;
-  fpga_interrupts(1);
   sei();
 }
 
