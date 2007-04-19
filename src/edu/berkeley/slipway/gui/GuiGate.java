@@ -11,6 +11,11 @@ public class GuiGate {
 
     private GeneralPath gp = new GeneralPath();
 
+    int rotation = 1;
+    R gateArea;
+    R r;
+    boolean disabled = false;
+
     public GuiGate() {
         gp.moveTo(29.141f, 36.301f);
         gp.lineTo(29.141f, 36.301f-7.161f);
@@ -30,11 +35,6 @@ public class GuiGate {
         gp.transform(AffineTransform.getTranslateInstance(-width/2, -height/2));
         gp.transform(AffineTransform.getScaleInstance(1.0/factor, -1.0/factor));
     }
-
-    int rotation = 1;
-    R gateArea;
-    R r;
-    boolean disabled = false;
 
     public void draw(G g, int color) {
         if (disabled) return;
