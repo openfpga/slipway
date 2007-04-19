@@ -77,4 +77,9 @@ public class GuiGate {
         }
     }
 
+    public void route(G g, P p, R ring, int input) {
+        g.route(p, ring, getInput(input));
+        g.line(getInput(input), getInputDest(input));
+    }
+
 }

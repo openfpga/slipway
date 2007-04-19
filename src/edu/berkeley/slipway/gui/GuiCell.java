@@ -84,27 +84,15 @@ public class GuiCell {
         g.color(XGATE_COLOR);
         P p = r.corner(fpslicCell.xi());
         if (p!=null) {
-            if (ygate != null) {
-                g.route(p, xring, ygate.getInput(1));
-                g.line(ygate.getInput(1), ygate.getInputDest(1));
-            }
-            if (xgate != null) {
-                g.route(p, xring, xgate.getInput(0));
-                g.line(xgate.getInput(0), xgate.getInputDest(0));
-            }
+            if (ygate != null) ygate.route(g, p, xring, 1);
+            if (xgate != null) xgate.route(g, p, xring, 0);
         }
 
         p = r.corner(fpslicCell.yi());
         g.color(YGATE_COLOR);
         if (p!=null) {
-            if (ygate != null) {
-                g.route(p, yring, ygate.getInput(0));
-                g.line(ygate.getInput(0), ygate.getInputDest(0));
-            }
-            if (xgate != null) {
-                g.route(p, yring, xgate.getInput(1));
-                g.line(xgate.getInput(1), xgate.getInputDest(1));
-            }
+            if (ygate != null) ygate.route(g, p, yring, 0);
+            if (xgate != null) xgate.route(g, p, yring, 1);
         }
 
         if (xgater != null) {
