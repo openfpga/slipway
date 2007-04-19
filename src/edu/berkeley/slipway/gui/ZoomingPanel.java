@@ -16,7 +16,7 @@ import javax.swing.*;
 
 public abstract class ZoomingPanel extends JComponent implements KeyListener, MouseMotionListener, MouseListener {
 
-    double scale = 1.0;
+    double scale = 0.3;
     double oscale = 1.0;
     public    int dragx = 0;
     public    int dragy = 0;
@@ -24,7 +24,7 @@ public abstract class ZoomingPanel extends JComponent implements KeyListener, Mo
     protected int mousex;
     protected int mousey;
     protected AffineTransform transform = new AffineTransform();
-    private   Point2D recenter;
+    private   Point2D recenter = new Point2D.Double(-100, 2500);
     private   Point2D recenter2;
 
     private FtdiBoard ftdiboard;

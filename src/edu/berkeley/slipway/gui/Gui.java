@@ -71,6 +71,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
 
+
         new Thread() {
             public void run() {
                 while(true) scan();
@@ -108,7 +109,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
             return cell.relevant();
         }
         public void clear() {
-            gg.color(in ? selectedcell : (scanme() ? new Color(0xbb, 0xbb, 0xbb) : nonselectedcell));
+            gg.color(0xffffff);
+            //gg.color(in ? selectedcell : (scanme() ? new Color(0xbb, 0xbb, 0xbb) : nonselectedcell));
             g.fillRect(0, 0, SIZE, SIZE);
         }
         public void draw() {
@@ -564,7 +566,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         repaint();
     }
     public void drawKeyboard(Image keyboardImage, Graphics2D g) {
-        /*
+
                 int width = 300;
                 int height = (keyboardImage.getHeight(null) * width) / keyboardImage.getWidth(null);
                 g.drawImage(keyboardImage,
@@ -573,7 +575,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                             0, 0,
                             keyboardImage.getWidth(null), keyboardImage.getHeight(null),
                             null);
-        */
+
     }
 
     public void _paint(Graphics2D g) {
@@ -1153,8 +1155,11 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         public boolean result(boolean x, boolean y, boolean z) { return z; }
     }
 
-    private static Image keyboard1 = Toolkit.getDefaultToolkit().createImage("keyboard1.png");
-    private static Image keyboard2 = Toolkit.getDefaultToolkit().createImage("keyboard2.png");
-    private static Image keyboard3 = Toolkit.getDefaultToolkit().createImage("keyboard3.png");
+    private static Image keyboard1 =
+        Toolkit.getDefaultToolkit().createImage("images/keyboard1.png");
+    private static Image keyboard2 =
+        Toolkit.getDefaultToolkit().createImage("images/keyboard2.png");
+    private static Image keyboard3 =
+        Toolkit.getDefaultToolkit().createImage("images/keyboard3.png");
 
 }

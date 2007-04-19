@@ -495,7 +495,7 @@ public abstract class Fpslic {
         public int yi() {
             if ((mode4(0x02, row, col) & (1<<6))!=0) return L4;
             switch(mode4(0x04, row, col) & 0xff) {
-                case 0x80: return NORTH;
+                case (1<<7): return NORTH;
                 case (1<<5): return SOUTH;
                 case (1<<6): return WEST;
                 case (1<<4): return EAST;

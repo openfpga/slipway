@@ -27,16 +27,16 @@ public class AsyncPaperDemo {
         //turnOnLeds();
         setupScanCell();
 
-        //runGui(24, 24);
-        
         for(int i=0; i<255; i++)
             fpslic.readCount();
 
+
         //System.in.read();
-        for(int i=240; i<400; i+=2) {
+        for(int i=400; i<402; i+=2) {
             go(i);
         }
-        //System.out.println("done");
+        runGui(24, 24);
+        System.out.println("done");
 
     }
 
@@ -62,7 +62,7 @@ public class AsyncPaperDemo {
         reconfigTopLeft();
         reconfigTopRight();
         fpslic.flush();
-
+        /*
         for(int i=0; i<23; i++){
             Fpslic.Cell c = fpslic.cell(0, i);
             c.ylut(0x00);
@@ -74,7 +74,7 @@ public class AsyncPaperDemo {
                 sw=sw.east())
                 sw.west().drives(sw, true);
         }
-
+        */
         String sizes = rsize+"";
         while(sizes.length()<3) sizes = "0"+sizes;
         String fname = "data/size"+sizes+".csv";
@@ -515,6 +515,7 @@ public class AsyncPaperDemo {
     private void runGui(int width, int height) throws Exception {
         Gui vis = new Gui(fpslic, fpslic, width, height);
         Frame fr = new Frame();
+        fr.setTitle("SLIPWAY Live Fabric Debugger");
         fr.addKeyListener(vis);
         fr.setLayout(new BorderLayout());
         fr.add(vis, BorderLayout.CENTER);

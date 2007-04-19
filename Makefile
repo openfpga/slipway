@@ -11,6 +11,9 @@ endif
 run: slipway.jar 
 	java -cp slipway.jar edu.berkeley.slipway.Demo 30
 
+demo: slipway.jar 
+	java -cp slipway.jar edu.berkeley.slipway.Demo2 30
+
 build/src/com/ftdi/usb/FtdiUart.c: src/com/ftdi/usb/FtdiUart.i
 	mkdir -p `dirname $@`
 	mkdir -p src/com/ftdi/usb
@@ -25,10 +28,10 @@ build/$(jnilib): build/src/com/ftdi/usb/FtdiUart.c upstream/libusb/.built
 		$(linkerflags) \
 		-o $@ -dynamiclib -framework JavaVM
 
-slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) bitstreams/slipway_drone.bst
+slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) bitstreams/slipway_drone_complete.bst
 	mkdir -p build
 	javac -d build $(shell find src build/src -name \*.java)
-	cp bitstreams/slipway_drone.bst build/edu/berkeley/slipway/
+	cp bitstreams/slipway_drone_complete.bst build/edu/berkeley/slipway/
 	cd build; jar cvf ../$@ .
 
 
@@ -57,14 +60,15 @@ build/slipway_drone.hex: src/edu/berkeley/slipway/FtdiBoardSlave.c  upstream/avr
 	upstream/prefix/bin/avr-objcopy -O ihex $@.o $@
 
 # this only works on my personal setup [adam]
-bitstreams/slipway_drone.bst: build/slipway_drone.hex
-	cp $< /afs/research.cs.berkeley.edu/user/megacz/edu.berkeley.obits/usbdrone.hex
-	fs flush /afs/research.cs.berkeley.edu/user/megacz/edu.berkeley.obits/usbdrone.hex
+bitstreams/slipway_drone_complete.bst: build/slipway_drone.hex
+	cp $<    /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
+	fs flush /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
 	echo okay...
 	read
-	rm /afs/research.cs.berkeley.edu/user/megacz/edu.berkeley.obits/usbdrone.hex
-	diff -u /afs/research.cs.berkeley.edu/user/megacz/stupid/fpslic_stupid.bst $@ && exit -1; true
-	mv /afs/research.cs.berkeley.edu/user/megacz/stupid/fpslic_stupid.bst $@
+	rm /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
+	diff -u /afs/research.cs.berkeley.edu/user/megacz/slipway/$@ $@ && \
+		exit -1; true
+	mv /afs/research.cs.berkeley.edu/user/megacz/slipway/$@ $@
 	touch $@
 
 
