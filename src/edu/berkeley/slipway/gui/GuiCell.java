@@ -42,10 +42,10 @@ public class GuiCell {
     private void drawGlobalRouting(G g, R r) {
         g.color(GLOBAL_WIRE_COLOR);
         for(int i=1; i<6; i++) {
-            g.line(r.minx() + 2*i, r.miny(),
-                   r.minx() + 2*i, r.maxy());
-            g.line(r.minx(),       r.miny() + 2*i,
-                   r.maxx(),       r.miny() + 2*i);
+            g.line(r.corner(SW).translate(2*i,0),
+                   r.corner(NW).translate(2*i,0));
+            g.line(r.corner(SW).translate(0,2*i),
+                   r.corner(SE).translate(0,2*i));
         }
     }
 
