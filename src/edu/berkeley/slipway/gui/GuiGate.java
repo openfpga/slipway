@@ -32,14 +32,15 @@ public class GuiGate {
 
     int rotation = 1;
     R gateArea;
+    R r;
 
-    public void draw(G g, R rect, int color) {
+    public void draw(G g, int color) {
         g.pushTransform();
         g.g.translate(gateArea.cx(), gateArea.cy());
         g.g.rotate((2 * Math.PI * rotation)/4);
         g.g.translate(-1 * gateArea.cx(), -1 * gateArea.cy());
-        AffineTransform at = AffineTransform.getTranslateInstance(rect.cx(), rect.cy());
-        at.scale(rect.getWidth(), rect.getHeight());
+        AffineTransform at = AffineTransform.getTranslateInstance(r.cx(), r.cy());
+        at.scale(r.getWidth(), r.getHeight());
         g.color(0xffffffff);
         g.g.fill(gp.createTransformedShape(at));
         g.color(color);
@@ -47,7 +48,7 @@ public class GuiGate {
         g.popTransform();
     }
 
-    public P getInput(int index, R r) {
+    public P getInput(int index) {
         AffineTransform at = new AffineTransform();
         at.translate(gateArea.cx(), gateArea.cy());
         at.rotate((2 * Math.PI * rotation)/4);
@@ -56,7 +57,7 @@ public class GuiGate {
                      r.miny() - 3).transform(at);
     }
 
-    public P getInputDest(int index, R r) {
+    public P getInputDest(int index) {
         AffineTransform at = new AffineTransform();
         at.translate(gateArea.cx(), gateArea.cy());
         at.rotate((2 * Math.PI * rotation)/4);

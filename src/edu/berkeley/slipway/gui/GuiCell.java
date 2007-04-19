@@ -64,8 +64,8 @@ public class GuiCell {
             ygater = gateArea.plus(factor, 0, 0, -factor);
         }
 
-        R xring = gateArea.plus(4, 4, -4, -4);
-        R yring = gateArea.plus(6, 6, -6, -6);
+        R xring = gateArea.plus(-4, -4, 4, 4);
+        R yring = gateArea.plus(-6, -6, 6, 6);
 
         int rot = 0;
         switch (fpslicCell.yi()) {
@@ -78,10 +78,12 @@ public class GuiCell {
         if (xgate != null) {
             xgate.rotation = rot;
             xgate.gateArea = gateArea;
+            xgate.r = xgater;
         }
         if (ygate != null) {
             ygate.rotation = rot;
             ygate.gateArea = gateArea;
+            ygate.r = ygater;
         }
 
         int TSIZE   = 10;
@@ -96,12 +98,12 @@ public class GuiCell {
         }
         if (p!=null) {
             if (ygate != null) {
-                g.route(p, xring, ygate.getInput(1, ygater));
-                g.line(ygate.getInput(1, ygater), ygate.getInputDest(1, ygater));
+                g.route(p, xring, ygate.getInput(1));
+                g.line(ygate.getInput(1), ygate.getInputDest(1));
             }
             if (xgate != null) {
-                g.route(p, xring, xgate.getInput(0, xgater));
-                g.line(xgate.getInput(0, xgater), xgate.getInputDest(0, xgater));
+                g.route(p, xring, xgate.getInput(0));
+                g.line(xgate.getInput(0), xgate.getInputDest(0));
             }
         }
 
@@ -115,12 +117,12 @@ public class GuiCell {
         }
         if (p!=null) {
             if (ygate != null) {
-                g.route(p, yring, ygate.getInput(0, ygater));
-                g.line(ygate.getInput(0, ygater), ygate.getInputDest(0, ygater));
+                g.route(p, yring, ygate.getInput(0));
+                g.line(ygate.getInput(0), ygate.getInputDest(0));
             }
             if (xgate != null) {
-                g.route(p, yring, xgate.getInput(1, xgater));
-                g.line(xgate.getInput(1, xgater), xgate.getInputDest(1, xgater));
+                g.route(p, yring, xgate.getInput(1));
+                g.line(xgate.getInput(1), xgate.getInputDest(1));
             }
         }
 
@@ -132,7 +134,7 @@ public class GuiCell {
                 P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
                 R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
                              r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, xgate.getInput(3, xgater));
+                g.route(p2, r2, xgate.getInput(3));
             }
             */
             if (fpslicCell.wi() != NONE) {
@@ -141,10 +143,10 @@ public class GuiCell {
                 P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
                 R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
                              r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, xgate.getInput(2, xgater));
-                g.line(xgate.getInput(2, xgater), xgate.getInputDest(2, xgater));
+                g.route(p2, r2, xgate.getInput(2));
+                g.line(xgate.getInput(2), xgate.getInputDest(2));
             }
-            xgate.draw(g, xgater, XGATE_COLOR);
+            xgate.draw(g, XGATE_COLOR);
         }
         if (ygater != null) {
             /*
@@ -154,7 +156,7 @@ public class GuiCell {
                 P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
                 R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
                              r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, ygate.getInput(3, ygater));
+                g.route(p2, r2, ygate.getInput(3));
             }
             */
             if (fpslicCell.wi() != NONE) {
@@ -163,10 +165,10 @@ public class GuiCell {
                 P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
                 R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
                              r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, ygate.getInput(2, ygater));
-                g.line(ygate.getInput(2, ygater), ygate.getInputDest(2, ygater));
+                g.route(p2, r2, ygate.getInput(2));
+                g.line(ygate.getInput(2), ygate.getInputDest(2));
             }
-            ygate.draw(g, ygater, YGATE_COLOR);
+            ygate.draw(g, YGATE_COLOR);
         }
     }
 }
