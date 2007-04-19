@@ -60,8 +60,8 @@ public class GuiCell {
         else if (ygate==null) xgater = gateArea;
         else {
             double factor = gateArea.width()/2;
-            xgater = gateArea.plus(0, 0, factor, factor);
-            ygater = gateArea.plus(factor, 0, 0, factor);
+            xgater = gateArea.plus(0, 0, -factor, -factor);
+            ygater = gateArea.plus(factor, 0, 0, -factor);
         }
 
         R xring = gateArea.plus(4, 4, -4, -4);
