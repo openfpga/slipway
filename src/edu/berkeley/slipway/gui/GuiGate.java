@@ -34,8 +34,10 @@ public class GuiGate {
     int rotation = 1;
     R gateArea;
     R r;
+    boolean disabled = false;
 
     public void draw(G g, int color) {
+        if (disabled) return;
         g.pushTransform();
         g.g.translate(gateArea.cx(), gateArea.cy());
         g.g.rotate((2 * Math.PI * rotation)/4);
@@ -78,6 +80,7 @@ public class GuiGate {
     }
 
     public void route(G g, P p, R ring, int input, int color) {
+        if (disabled) return;
         g.color(color);
         g.route(p, ring, getInput(input));
         g.line(getInput(input), getInputDest(input));

@@ -14,8 +14,8 @@ public class GuiCell {
     double MAIN_AREA = 0.75;
 
     private final Fpslic.Cell fpslicCell;
-    private GuiGate xgate = null;
-    private GuiGate ygate = null;
+    private GuiGate xgate = new GuiGate();
+    private GuiGate ygate = new GuiGate();
 
     public GuiCell(Fpslic.Cell fpslicCell) {
         this.fpslicCell = fpslicCell;
@@ -32,8 +32,8 @@ public class GuiCell {
         }
         drawGlobalRouting(g, r);
         if (fpslicCell.relevant()) {
-            xgate = fpslicCell.xlut_relevant() ? new GuiGate() : null;
-            ygate = fpslicCell.ylut_relevant() ? new GuiGate() : null;
+            xgate.disabled = !fpslicCell.xlut_relevant();
+            ygate.disabled = !fpslicCell.ylut_relevant();
             drawBody(g, r);
         }
     }
@@ -57,79 +57,36 @@ public class GuiCell {
 
         R body = r;
         g.color(BODY_COLOR);
-        R xgater = null;
-        R ygater = null;
+
         R gateArea = body.plus(12+N, 12+N, -(4+N), -(4+N));
-        if      (xgate==null) ygater = gateArea;
-        else if (ygate==null) xgater = gateArea;
-        else {
-            double factor = gateArea.width()/2;
-            xgater = gateArea.plus(0, 0, -factor, -factor);
-            ygater = gateArea.plus(factor, 0, 0, -factor);
-        }
+        double factor = gateArea.width()/2;
+        R ygater = xgate.disabled || ygate.disabled ? gateArea : gateArea.plus(0, 0, -factor, -factor);
+        R xgater = xgate.disabled || ygate.disabled ? gateArea : gateArea.plus(factor, 0, 0, -factor);
 
         R xring = gateArea.plus(-4, -4, 4, 4);
         R yring = gateArea.plus(-6, -6, 6, 6);
         P xip = r.corner(fpslicCell.xi());
         P yip = r.corner(fpslicCell.yi());
-        if (xgate != null) {
-            xgate.rotation(fpslicCell.yi());
-            xgate.gateArea = gateArea;
-            xgate.r = xgater;
-            if (xip != null) xgate.route(g, xip, xring, 0, XGATE_COLOR);
-            if (yip != null) xgate.route(g, yip, yring, 1, YGATE_COLOR);
-        }
-        if (ygate != null) {
-            ygate.rotation(fpslicCell.yi());
-            ygate.gateArea = gateArea;
-            ygate.r = ygater;
-            if (xip != null) ygate.route(g, xip, xring, 1, XGATE_COLOR);
-            if (yip != null) ygate.route(g, yip, yring, 0, YGATE_COLOR);
-        }
 
-        if (xgater != null) {
-            /*
-            if (fpslicCell.zi() != NONE) {
-                g.color(LOCAL_WIRE_COLOR);
-                int layer = fpslicCell.zi() - L0;
-                P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
-                R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
-                             r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, xgate.getInput(3));
-            }
-            */
-            if (fpslicCell.wi() != NONE) {
-                g.color(LOCAL_WIRE_COLOR);
-                int layer = fpslicCell.wi() - L0;
-                P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
-                R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
-                             r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, xgate.getInput(2));
-                g.line(xgate.getInput(2), xgate.getInputDest(2));
-            }
-            xgate.draw(g, XGATE_COLOR);
-        }
-        if (ygater != null) {
-            /*
-            if (fpslicCell.zi() != NONE) {
-                g.color(LOCAL_WIRE_COLOR);
-                int layer = fpslicCell.zi() - L0;
-                P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
-                R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
-                             r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, ygate.getInput(3));
-            }
-            */
-            if (fpslicCell.wi() != NONE) {
-                g.color(LOCAL_WIRE_COLOR);
-                int layer = fpslicCell.wi() - L0;
-                P p2 = new P(r.minx()+2*(layer+1), r.miny()+2*(layer+1));
-                R r2 = new R(r.minx()+2*(layer+1), r.miny()+2*(layer+1),
-                             r.maxx()-2*(layer+1), r.maxy()-2*(layer+1));
-                g.route(p2, r2, ygate.getInput(2));
-                g.line(ygate.getInput(2), ygate.getInputDest(2));
-            }
-            ygate.draw(g, YGATE_COLOR);
-        }
+        xgate.rotation(fpslicCell.yi());
+        xgate.gateArea = gateArea;
+        xgate.r = xgater;
+        if (xip != null) xgate.route(g, xip, xring, 0, XGATE_COLOR);
+        if (yip != null) xgate.route(g, yip, yring, 2, YGATE_COLOR);
+
+        ygate.rotation(fpslicCell.yi());
+        ygate.gateArea = gateArea;
+        ygate.r = ygater;
+        if (xip != null) ygate.route(g, xip, xring, 2, XGATE_COLOR);
+        if (yip != null) ygate.route(g, yip, yring, 0, YGATE_COLOR);
+
+        int layer = fpslicCell.wi() - L0;
+        P p2 = r.corner(SW).translate(2*(layer+1), 2*(layer+1));
+        R r2 = r.plus(2*(layer+1), 2*(layer+1), -2*(layer+1), -2*(layer+1));
+        ygate.route(g, p2, r2, 1, LOCAL_WIRE_COLOR);
+        xgate.route(g, p2, r2, 1, LOCAL_WIRE_COLOR);
+
+        xgate.draw(g, XGATE_COLOR);
+        ygate.draw(g, YGATE_COLOR);
     }
 }
