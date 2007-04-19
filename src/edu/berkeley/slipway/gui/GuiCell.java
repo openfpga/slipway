@@ -70,29 +70,21 @@ public class GuiCell {
 
         R xring = gateArea.plus(-4, -4, 4, 4);
         R yring = gateArea.plus(-6, -6, 6, 6);
+        P xip = r.corner(fpslicCell.xi());
+        P yip = r.corner(fpslicCell.yi());
         if (xgate != null) {
             xgate.rotation(fpslicCell.yi());
             xgate.gateArea = gateArea;
             xgate.r = xgater;
+            if (xip != null) xgate.route(g, xip, xring, 0, XGATE_COLOR);
+            if (yip != null) xgate.route(g, yip, yring, 1, YGATE_COLOR);
         }
         if (ygate != null) {
             ygate.rotation(fpslicCell.yi());
             ygate.gateArea = gateArea;
             ygate.r = ygater;
-        }
-
-        g.color(XGATE_COLOR);
-        P p = r.corner(fpslicCell.xi());
-        if (p!=null) {
-            if (ygate != null) ygate.route(g, p, xring, 1);
-            if (xgate != null) xgate.route(g, p, xring, 0);
-        }
-
-        p = r.corner(fpslicCell.yi());
-        g.color(YGATE_COLOR);
-        if (p!=null) {
-            if (ygate != null) ygate.route(g, p, yring, 0);
-            if (xgate != null) xgate.route(g, p, yring, 1);
+            if (xip != null) ygate.route(g, xip, xring, 1, XGATE_COLOR);
+            if (yip != null) ygate.route(g, yip, yring, 0, YGATE_COLOR);
         }
 
         if (xgater != null) {
