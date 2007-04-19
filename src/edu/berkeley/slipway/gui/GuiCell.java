@@ -50,11 +50,15 @@ public class GuiCell {
 
     private void drawBody(G g, R r) {
         if (xgate == null && ygate == null) return;
+
+        int N = 7;
+        int TSIZE   = 10;
+        double TSQR = TSIZE / Math.sqrt(2.0);
+
         R body = r;
         g.color(BODY_COLOR);
         R xgater = null;
         R ygater = null;
-        int N = 7;
         R gateArea = body.plus(12+N, 12+N, -(4+N), -(4+N));
         if      (xgate==null) ygater = gateArea;
         else if (ygate==null) xgater = gateArea;
@@ -66,36 +70,19 @@ public class GuiCell {
 
         R xring = gateArea.plus(-4, -4, 4, 4);
         R yring = gateArea.plus(-6, -6, 6, 6);
-
-        int rot = 0;
-        switch (fpslicCell.yi()) {
-            case NORTH: rot = 2; break;
-            case SOUTH: rot = 0; break;
-            case WEST:  rot = 3; break;
-            case EAST:  rot = 1; break;
-            default:    rot = 0;
-        }
         if (xgate != null) {
-            xgate.rotation = rot;
+            xgate.rotation(fpslicCell.yi());
             xgate.gateArea = gateArea;
             xgate.r = xgater;
         }
         if (ygate != null) {
-            ygate.rotation = rot;
+            ygate.rotation(fpslicCell.yi());
             ygate.gateArea = gateArea;
             ygate.r = ygater;
         }
 
-        int TSIZE   = 10;
-        double TSQR = TSIZE / Math.sqrt(2.0);
         g.color(XGATE_COLOR);
-        P p = null;
-        switch (fpslicCell.xi()) {
-            case SW: p = new P(r.minx(), r.miny()); break;
-            case SE: p = new P(r.maxx(), r.miny()); break;
-            case NW: p = new P(r.minx(), r.maxy()); break;
-            case NE: p = new P(r.maxx(), r.maxy()); break;
-        }
+        P p = r.corner(fpslicCell.xi());
         if (p!=null) {
             if (ygate != null) {
                 g.route(p, xring, ygate.getInput(1));
@@ -107,14 +94,8 @@ public class GuiCell {
             }
         }
 
-        p = null;
+        p = r.corner(fpslicCell.yi());
         g.color(YGATE_COLOR);
-        switch (fpslicCell.yi()) {
-            case NORTH: p = new P(r.cx(), r.maxy()); break;
-            case SOUTH: p = new P(r.cx(), r.miny()); break;
-            case WEST:  p = new P(r.minx(), r.cy()); break;
-            case EAST:  p = new P(r.maxx(), r.cy()); break;
-        }
         if (p!=null) {
             if (ygate != null) {
                 g.route(p, yring, ygate.getInput(0));

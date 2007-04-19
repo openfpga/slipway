@@ -5,6 +5,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*;
 import java.awt.color.*;
+import static com.atmel.fpslic.FpslicConstants.*;
 
 public class GuiGate {
 
@@ -64,6 +65,16 @@ public class GuiGate {
         at.translate(-1 * gateArea.cx(), -1 * gateArea.cy());
         return new P(r.minx() + ((index + 1) * r.width()) / 4,
                      r.miny() + r.height()/2).transform(at);
+    }
+
+    public void rotation(int dir) {
+        switch (dir) {
+            case NORTH: rotation = 2; break;
+            case SOUTH: rotation = 0; break;
+            case WEST:  rotation = 3; break;
+            case EAST:  rotation = 1; break;
+            default:    rotation = 0;
+        }
     }
 
 }

@@ -2,6 +2,7 @@ package edu.berkeley.slipway.gui;
 
 import com.atmel.fpslic.*;
 import java.awt.geom.*;
+import static com.atmel.fpslic.FpslicConstants.*;
 
 public class R {
 
@@ -43,5 +44,19 @@ public class R {
                      miny()+minyplus,
                      maxx()+maxxplus,
                      maxy()+maxyplus);
+    }
+
+    public P corner(int dir) {
+        switch (dir) {
+            case SW: return new P(minx(), miny());
+            case SE: return new P(maxx(), miny());
+            case NW: return new P(minx(), maxy());
+            case NE: return new P(maxx(), maxy());
+            case NORTH: return new P(cx(), maxy());
+            case SOUTH: return new P(cx(), miny());
+            case WEST:  return new P(minx(), cy());
+            case EAST:  return new P(maxx(), cy());
+            default: return null;
+        }
     }
 }
