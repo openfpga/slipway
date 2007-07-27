@@ -77,8 +77,8 @@ public abstract class Fpslic {
         private int z(int z)       { return (horizontal ? 0x30 : 0x20) | z; }
         public int code(boolean topleft) {
             switch(plane) {
-                case 0: return z(6)+(topleft?0:1);
-                case 1: return z(8)+(topleft?0:1);
+                case 0: return z(8)+(topleft?0:1);
+                case 1: return z(6)+(topleft?0:1);
                 case 2: return z(2*(4-plane))+(topleft?0:1);
                 case 3: return z(2*(4-plane))+(topleft?0:1);
                 case 4: return z(2*(4-plane))+(topleft?0:1);
@@ -117,10 +117,12 @@ public abstract class Fpslic {
         }
 
         public void drives(SectorWire w, boolean enable) {
+            // FIXME: better error checks?
             mode4zyx(switchbox(w), enable?0x02:0x00, 0x07);
         }
 
         public boolean drives(SectorWire w) {
+            // FIXME: better error checks?
             int connect = (mode4zyx(switchbox(w)) >> (global?3:0)) & 0x7;
             return (connect & 0x2)!=0;
         }
@@ -171,12 +173,20 @@ public abstract class Fpslic {
         public final int col;
         public final int row;
 
+        public String toString() { return "cell@("+col+","+row+")"; }
+
         public Cell(int col, int row) {
             this.row = row;
             this.col = col;
         }
         
         public Fpslic fpslic() { return Fpslic.this; }
+        public int hashCode() { return col ^ row ^ Fpslic.this.hashCode(); }
+        public boolean equals(Object o) {
+            if (o==null || (!(o instanceof Cell))) return false;
+            Cell c = (Cell)o;
+            return c.col == col && c.row == row && c.fpslic()==fpslic();
+        }
 
         // Accessors for Neighbors //////////////////////////////////////////////////////////////////////////////
 

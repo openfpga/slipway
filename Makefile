@@ -28,10 +28,10 @@ build/$(jnilib): build/src/com/ftdi/usb/FtdiUart.c upstream/libusb/.built
 		$(linkerflags) \
 		-o $@ -dynamiclib -framework JavaVM
 
-slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) bitstreams/slipway_drone_complete.bst
+slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) misc/slipway_drone.bst
 	mkdir -p build
-	javac -d build $(shell find src build/src -name \*.java)
-	cp bitstreams/slipway_drone_complete.bst build/edu/berkeley/slipway/
+	$(javac) -d build $(shell find src build/src -name \*.java)
+	cp misc/slipway_drone.bst build/edu/berkeley/slipway/
 	cd build; jar cvf ../$@ .
 
 
@@ -49,6 +49,7 @@ upstream/libusb/.built: upstream/libusb
 		make
 	touch $@
 
+javac = javac -cp upstream/jhdl-edifparser.jar
 #java = java -Djava.library.path=$(shell pwd)/lib/ -cp lib/RXTXcomm.jar:slipway.jar
 
 
@@ -60,7 +61,7 @@ build/slipway_drone.hex: src/edu/berkeley/slipway/FtdiBoardSlave.c  upstream/avr
 	upstream/prefix/bin/avr-objcopy -O ihex $@.o $@
 
 # this only works on my personal setup [adam]
-bitstreams/slipway_drone_complete.bst: build/slipway_drone.hex
+misc/slipway_drone.bst: build/slipway_drone.hex
 	cp $<    /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
 	fs flush /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
 	echo okay...
@@ -113,3 +114,32 @@ upstream/avr-libc/.built: upstream/avr-libc upstream/gcc/.built
 		PATH=$$PATH:$(shell pwd)/upstream/prefix/bin make && \
 		PATH=$$PATH:$(shell pwd)/upstream/prefix/bin make install
 	touch $@
+
+mpardemo: upstream/jhdl-edifparser.jar slipway.jar
+	iverilog  -t fpga -s main -o out.edf misc/mpardemo.v
+	java -cp slipway.jar:upstream/jhdl-edifparser.jar MPARDemo out.edf
+
+
+## edif parser ##########################################################################
+
+upstream/jhdl-edifparser.jar:
+	mkdir -p upstream
+	curl -o $@- http://reliability.ee.byu.edu/edif/jars/release_0.3.0/edif-0.3.0.jar
+	mv $@- $@
+
+## javadoc ##############################################################################
+
+javadoc:
+	rm -rf doc/api
+	mkdir -p doc/api
+	javadoc \
+		-linksource \
+		-windowtitle "abits" \
+		-sourcepath src \
+		-public \
+		-notree \
+		-noindex \
+		-nonavbar \
+		-noqualifier all \
+		-d doc/api \
+		`find src -name \*.java`

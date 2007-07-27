@@ -33,7 +33,11 @@ public class G {
         g.draw(new Line2D.Double(x1, y1, x2, y2));
         g.setStroke(new BasicStroke(1));
     }
-
+    public void setFont(Font f) { g.setFont(f); }
+    public void drawString(String s, P p) { drawString(s, p.x, p.y); }
+    public void drawString(String s, double x, double y) {
+        g.drawString(s, (int)x, (int)y);
+    }
     public void color(Color c) { g.setColor(c); }
     public void color(int color) {
         g.setColor(new Color((color >> 16) & 0xff,
@@ -45,6 +49,7 @@ public class G {
     private ArrayList<AffineTransform> transformStack =
         new ArrayList<AffineTransform>();
 
+    public AffineTransform getTransform() { return g.getTransform(); }
     public void pushTransform() {
         transformStack.add(new AffineTransform(g.getTransform()));
     }

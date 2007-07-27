@@ -8,15 +8,19 @@ public class GuiCell {
     public static final int BORDER_COLOR      = 0x00BBBBBB;
     public static final int BODY_COLOR        = 0x00555555;
     public static final int GLOBAL_WIRE_COLOR = 0x00008000;
+    public static final int DRIVEN_WIRE_COLOR = 0x00ff0000;
     public static final int LOCAL_WIRE_COLOR  = 0x000FF000;
     public static final int XGATE_COLOR       = 0x00800000;
     public static final int YGATE_COLOR       = 0x00000080;
 
     private static final int LOCAL_ROUTING_CHANNEL_WIDTH = 7;
 
-    private final Fpslic.Cell fpslicCell;
-    private GuiGate xgate = new GuiGate();
-    private GuiGate ygate = new GuiGate();
+    public boolean val = false;
+    public final Fpslic.Cell fpslicCell;
+    private GuiGate xgate = new GuiGate(this);
+    private GuiGate ygate = new GuiGate(this);
+
+    R gateArea = null;
 
     public GuiCell(Fpslic.Cell fpslicCell) {
         this.fpslicCell = fpslicCell;
@@ -40,21 +44,23 @@ public class GuiCell {
     }
 
     private void drawGlobalRouting(G g, R r) {
-        g.color(GLOBAL_WIRE_COLOR);
         for(int i=1; i<6; i++) {
-            g.line(r.corner(SW).translate(2*i,0),
-                   r.corner(NW).translate(2*i,0));
-            g.line(r.corner(SW).translate(0,2*i),
-                   r.corner(SE).translate(0,2*i));
+            g.color(fpslicCell.out(L0 + i-1) && fpslicCell.vx(L0+i-1)
+                    ? DRIVEN_WIRE_COLOR
+                    : GLOBAL_WIRE_COLOR);
+            g.line(r.corner(SW).translate(2*i,0), r.corner(NW).translate(2*i,0));
+            g.color(fpslicCell.out(L0 + i-1) && fpslicCell.hx(L0+i-1)
+                    ? DRIVEN_WIRE_COLOR
+                    : GLOBAL_WIRE_COLOR);
+            g.line(r.corner(SW).translate(0,2*i), r.corner(SE).translate(0,2*i));
         }
+        
     }
 
     private void drawBody(G g, R r) {
         if (xgate.disabled && ygate.disabled) return;
 
-        R gateArea =
-            xgate.gateArea = 
-            ygate.gateArea = 
+        gateArea =
             r.plus(12+LOCAL_ROUTING_CHANNEL_WIDTH,
                    12+LOCAL_ROUTING_CHANNEL_WIDTH,
                    -(4+LOCAL_ROUTING_CHANNEL_WIDTH),
@@ -88,8 +94,8 @@ public class GuiCell {
     }
 
     private void drawGates(G g) {
-        xgate.draw(g, XGATE_COLOR);
-        ygate.draw(g, YGATE_COLOR);
+        xgate.draw(g, XGATE_COLOR, val ? XGATE_COLOR : 0xffffff);
+        ygate.draw(g, YGATE_COLOR, val ? YGATE_COLOR : 0xffffff);
     }
 
 }

@@ -9,14 +9,15 @@ import static com.atmel.fpslic.FpslicConstants.*;
 
 public class GuiGate {
 
+    private final GuiCell cell;
     private GeneralPath gp = new GeneralPath();
 
     int rotation = 1;
-    R gateArea;
     R r;
     boolean disabled = false;
 
-    public GuiGate() {
+    public GuiGate(GuiCell cell) {
+        this.cell = cell;
         gp.moveTo(29.141f, 36.301f);
         gp.lineTo(29.141f, 36.301f-7.161f);
         gp.curveTo(27.71f, 11.24f, 23.413f, 9.45f, 14.82f, 0.5f);
@@ -36,15 +37,15 @@ public class GuiGate {
         gp.transform(AffineTransform.getScaleInstance(1.0/factor, -1.0/factor));
     }
 
-    public void draw(G g, int color) {
+    public void draw(G g, int color, int fill) {
         if (disabled) return;
         g.pushTransform();
-        g.g.translate(gateArea.cx(), gateArea.cy());
+        g.g.translate(cell.gateArea.cx(), cell.gateArea.cy());
         g.g.rotate((2 * Math.PI * rotation)/4);
-        g.g.translate(-1 * gateArea.cx(), -1 * gateArea.cy());
+        g.g.translate(-1 * cell.gateArea.cx(), -1 * cell.gateArea.cy());
         AffineTransform at = AffineTransform.getTranslateInstance(r.cx(), r.cy());
         at.scale(r.getWidth(), r.getHeight());
-        g.color(0xffffffff);
+        g.color(fill);
         g.g.fill(gp.createTransformedShape(at));
         g.color(color);
         g.g.draw(gp.createTransformedShape(at));
@@ -53,18 +54,18 @@ public class GuiGate {
 
     public P getInput(int index) {
         AffineTransform at = new AffineTransform();
-        at.translate(gateArea.cx(), gateArea.cy());
+        at.translate(cell.gateArea.cx(), cell.gateArea.cy());
         at.rotate((2 * Math.PI * rotation)/4);
-        at.translate(-1 * gateArea.cx(), -1 * gateArea.cy());
+        at.translate(-1 * cell.gateArea.cx(), -1 * cell.gateArea.cy());
         return new P(r.minx() + ((index + 1) * r.width()) / 4,
                      r.miny() - 3).transform(at);
     }
 
     public P getInputDest(int index) {
         AffineTransform at = new AffineTransform();
-        at.translate(gateArea.cx(), gateArea.cy());
+        at.translate(cell.gateArea.cx(), cell.gateArea.cy());
         at.rotate((2 * Math.PI * rotation)/4);
-        at.translate(-1 * gateArea.cx(), -1 * gateArea.cy());
+        at.translate(-1 * cell.gateArea.cx(), -1 * cell.gateArea.cy());
         return new P(r.minx() + ((index + 1) * r.width()) / 4,
                      r.miny() + r.height()/2).transform(at);
     }

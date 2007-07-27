@@ -15,7 +15,7 @@ import gnu.io.*;
 
 public class AsyncPaperDemo {
 
-    FtdiBoard fpslic;
+    public FtdiBoard fpslic;
 
     public AsyncPaperDemo() throws Exception {
         fpslic = new FtdiBoard();
@@ -464,7 +464,7 @@ public class AsyncPaperDemo {
         fpslic.flush();
     }
 
-    private void divider(Fpslic.Cell c) {
+    public static void divider(Fpslic.Cell c) {
         Fpslic.Cell detect1 = c;
         Fpslic.Cell detect2 = c.east();
 
@@ -512,7 +512,7 @@ public class AsyncPaperDemo {
 
     }
 
-    private void runGui(int width, int height) throws Exception {
+    public void runGui(int width, int height) throws Exception {
         Gui vis = new Gui(fpslic, fpslic, width, height);
         Frame fr = new Frame();
         fr.setTitle("SLIPWAY Live Fabric Debugger");

@@ -7,6 +7,7 @@ import static com.atmel.fpslic.FpslicConstants.*;
 public class R {
 
     private double x1, x2, y1, y2;
+    public R(P p1, P p2) { this(p1.x, p1.y, p2.x, p2.y); }
     public R(double x1, double y1, double x2, double y2) {
         this.x1 = x1;
         this.x2 = x2;
@@ -58,5 +59,12 @@ public class R {
             case EAST:  return new P(maxx(), cy());
             default: return null;
         }
+    }
+
+    public boolean within(R r) {
+        return minx() >= r.minx()
+            && miny() >= r.miny()
+            && maxx() <= r.maxx()
+            && maxy() <= r.maxy();
     }
 }

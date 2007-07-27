@@ -40,4 +40,7 @@ public class P {
         return new P(dx+x, dy+y);
     }
 
+    public P scale(double factor) {
+        return new P(x*factor, y*factor);
+    }
 }
