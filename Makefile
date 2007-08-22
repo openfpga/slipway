@@ -117,7 +117,7 @@ upstream/avr-libc/.built: upstream/avr-libc upstream/gcc/.built
 
 mpardemo: upstream/jhdl-edifparser.jar slipway.jar
 	iverilog  -t fpga -s main -o out.edf misc/mpardemo.v
-	java -cp slipway.jar:upstream/jhdl-edifparser.jar MPARDemo out.edf
+	java -cp slipway.jar:upstream/jhdl-edifparser.jar edu.berkeley.slipway.mpar.MPARDemo out.edf
 
 
 ## edif parser ##########################################################################
