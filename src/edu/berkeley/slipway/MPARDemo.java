@@ -7,10 +7,27 @@ import edu.berkeley.slipway.*;
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 
+// FIXME: sometimes gets stuck in a loop routing the last few nets
+
+// FEATURE: ability to rip up only one branch of a multi-terminal net
+
+// FEATURE: re-placement based on routing congestion
+//          note: must assign a cost to "bare wire" -- if not, the
+//          placer will fail to recognize moves that put blocks closer
+//          together, thereby decreasing the potential for future
+//          congestion.
+
+// FEATURE: A* search (chap7 of independence thesis)
+
+// FIXME: distinguish out,xo,yo                                                                                              
+// FIXME: y-axis shortcuts                                                                                                   
+// FEATURE: ability to use a cell for routing purposes                                                                       
+// FEATURE: global two-sector-long wires                                                                                     
+
 public class MPARDemo {
 
     public static final double alphaParameter = 00.9;
-    public static final double betaParameter  = 20.0;
+    public static final double betaParameter  = 02.5;
     public static final double gammaParameter =  1.0;
 
     public static class FlatNetlist {
@@ -89,7 +106,7 @@ public class MPARDemo {
                         this.net.add(p);
                     }
                 }
-                public void route(Fpslic fpslic, Port[] dests, PhysicalDevice pd) {
+                public void route(Fpslic fpslic, Port[] dests, PhysicalDevice pd, FlatNetlist.Net owner) {
                     PhysicalDevice.PhysicalNet[] destsp = new PhysicalDevice.PhysicalNet[dests.length];
                     for(int i=0; i<dests.length; i++) {
                         Port dest = dests[i];
@@ -101,7 +118,7 @@ public class MPARDemo {
                     }
                     //System.out.println(physicalCell.getNet("out"));
                     //System.out.println(destsp[0]);
-                    pd.route(physicalCell.getNet("out"), destsp);
+                    pd.route(physicalCell.getNet("out"), destsp, owner);
 
                     /*
                     Fpslic.Cell driverCell = fpslic.cell(getNode().x,getNode().y);
@@ -154,8 +171,23 @@ public class MPARDemo {
             public Net() { nets.add(this); }
             public Iterator<Node.Port> iterator() { return ports.iterator(); }
             public int getSize() { return ports.size(); }
+            public HashSet<PhysicalDevice.PhysicalPip> pips = new HashSet<PhysicalDevice.PhysicalPip>();
+            public HashSet<PhysicalDevice.PhysicalNet> pns = new HashSet<PhysicalDevice.PhysicalNet>();
+            public boolean routed = false;
+            public void unroute() {
+                for(PhysicalDevice.PhysicalPip pip : pips)
+                    pip.set(false);
+                for(PhysicalDevice.PhysicalNet net : pns) {
+                    net.owners.remove(this);
+                    net.load--;
+                }
+                pips.clear();
+                pns.clear();
+                routed = false;
+            }
             public void route(Fpslic fpslic, PhysicalDevice pd) {
                 if (driver == null) return;
+                if (routed) return;
                 //System.out.println();
                 //System.out.println("routing " + this);
                 Node.Port[] dests = new Node.Port[ports.size() - (ports.contains(driver) ? 1 : 0)];
@@ -163,7 +195,8 @@ public class MPARDemo {
                 for(Node.Port p : ports)
                     if (p != driver)
                         dests[i++] = p;
-                driver.route(fpslic, dests, pd);
+                driver.route(fpslic, dests, pd, this);
+                routed = true;
             }
             public void add(Node.Port p) {
                 if (p.driver) {
@@ -343,6 +376,7 @@ public class MPARDemo {
         }
 
         int trial = 0;
+        HashSet<FlatNetlist.Net> needUnroute = new HashSet<FlatNetlist.Net>();
         while(true) {
             System.out.println();
             System.out.println("routing trial " + (++trial));
@@ -352,24 +386,33 @@ public class MPARDemo {
             }
             double congestion = 0;
             int overrouted = 0;
+            needUnroute.clear();
             for(PhysicalDevice.PhysicalNet pn : pd.allPhysicalNets) {
                 if (pn.load > 1) {
-                    //System.out.println("overrouted: " + pn + ", congestion="+pn.congestion);
+                    //System.out.println("overrouted: " + pn + ", congestion="+pn.congestion + ", load=" + pn.load);
                     overrouted++;
                     congestion += pn.congestion;
                 }
                 pn.congestion = pn.congestion * alphaParameter;
                 if (pn.load > 1) {
                     pn.congestion += betaParameter;
+                    // don't do this here
+                    //pn.congestion += betaParameter;
+                    for(FlatNetlist.Net n : pn.owners)
+                        needUnroute.add(n);
                 }
-                pn.load = 0;
             }
-            System.out.println("  overrouted="+overrouted+", congestion="+congestion);
+            System.out.println("  overrouted="+overrouted+", congestion="+congestion +", ripping up " + needUnroute.size() +" nets of " + fnl.nets.size());
             if (overrouted <= 0) break;
+            //for(FlatNetlist.Net net : fnl.nets)
+            for(FlatNetlist.Net net : needUnroute)
+                net.unroute();
+            /*
             for(PhysicalDevice.PhysicalNet pn : pd.allPhysicalNets)
                 for(PhysicalDevice.PhysicalPip pip : pn) {
                     pip.set(false);
                 }
+            */
         }
 
         // set up scan cell
@@ -583,7 +626,7 @@ public class MPARDemo {
 
         }
 
-        public void route(PhysicalNet source, PhysicalNet[] dests) {
+        public void route(PhysicalNet source, PhysicalNet[] dests, FlatNetlist.Net owner) {
             HashSet<PhysicalNet> remainingDests = new HashSet<PhysicalNet>();
             for(PhysicalNet dest : dests) remainingDests.add(dest);
 
@@ -599,9 +642,10 @@ public class MPARDemo {
                 double frontier = pn.distance;
                 for(PhysicalPip pip : pn)
                     for(PhysicalNet net : pip.getDrivenNets()) {
-                        double newfrontier = frontier + (1/*pip.getCost(pn, net)*/ * (1.0+net.congestion));
+                        double newfrontier = frontier + 0.05 + net.congestion;
 
-                        if (net.load >= 1) newfrontier = newfrontier + 200;
+                        // penalty for using any net already routed in this iteration (makes routing order-sensitive)
+                        if (net.load >= 1) newfrontier = newfrontier + 20;
 
                         if (net.distance <= newfrontier) continue;
                         pq.remove(net);  // if already in there
@@ -612,6 +656,14 @@ public class MPARDemo {
                         if (remainingDests.contains(net)) {
                             remainingDests.remove(net);
                             if (remainingDests.size()==0) break OUTER;
+                            
+                            // Vaughn Betz style multiterminal routing: once we reach one sink, make every node on the path
+                            // "distance zero" from the source.
+                            for(PhysicalNet pnx = net; pnx != null; pnx = pnx.backpointer) {
+                                //pnx.distance = 0;
+                                pq.add(pnx);
+                            }
+                            break;
                         }
                     }
             }
@@ -619,12 +671,16 @@ public class MPARDemo {
             for(PhysicalNet dest : dests) {
                 PhysicalNet pn = dest;
                 while(pn != null && pn.backpointer != null) {
+                    pn.owners.add(owner);
+                    owner.pns.add(pn);
                     if (pn.distance != Double.MAX_VALUE) {
                         pn.distance = Double.MAX_VALUE;
                         pn.load++;
+                        if (pn.load>=2) pn.congestion += betaParameter;
                     }
                     PhysicalPip pip = pn.getPipFrom(pn.backpointer);
                     pip.set(true);
+                    owner.pips.add(pip);
                     pn = pn.backpointer;
                 }
                 // FIXME: check pn==source at this point
@@ -667,6 +723,7 @@ public class MPARDemo {
                             return pip;
                 return null;
             }
+            public HashSet<FlatNetlist.Net> owners = new HashSet<FlatNetlist.Net>();
         }
         
         public abstract class PhysicalPip {

@@ -1,4 +1,6 @@
 package edu.berkeley.slipway.gui;
+// gui: use colors to distinguish planes?  dot-dash lines?
+
 
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
