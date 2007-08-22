@@ -107,77 +107,64 @@ public class MPARDemo {
         EdifLibrary initLib = new EdifLibrary(elm, "initLib");
         EdifEnvironment env = EdifMergeParser.parseAndMerge(s, initLib);
         System.out.println("top is " + env.getTopCell());
-        FlatNetlist fnl = new FlatNetlist();
+        NetList fnl = new NetList();
 
         for(Iterator<EdifCellInstance> it = (Iterator<EdifCellInstance>)env.getTopCell().cellInstanceIterator();
             it.hasNext();
             ) {
-            FlatNetlist.Node n = fnl.createNode(it.next(), null);
+            NetList.Node n = fnl.createNode(it.next(), null);
         }
 
         Fpslic fpslic = new FtdiBoard();
-        PhysicalDevice pd = new PhysicalDevice(fpslic, 20, 20);
+        int width = 20;
+        int height = 20;
+        PhysicalDevice pd = new PhysicalFpslic(fpslic, width, height);
 
         int px = 0;
         int py = 0;
 
         // crude map
         Random rand = new Random();
-        boolean[][] used = new boolean[pd.width][pd.height];
-        for(FlatNetlist.Node n : fnl.nodes) {
+        boolean[][] used = new boolean[width][height];
+        for(NetList.Node n : fnl.nodes) {
             while(true) {
-                px = Math.abs(rand.nextInt()) % pd.width;
-                py = Math.abs(rand.nextInt()) % pd.height;
+                px = Math.abs(rand.nextInt()) % width;
+                py = Math.abs(rand.nextInt()) % height;
                 if (!used[px][py]) {
                     used[px][py] = true;
-                    n.x = px;
-                    n.y = py;
-                    n.physicalCell = pd.getCell(px, py);
                     System.out.println("placed " + n + " at ("+px+","+py+")");
-                    n.place(fpslic);
+                    pd.getCell(px, py).place(n);
                     break;
                 }
             }
         }
 
         int trial = 0;
-        HashSet<FlatNetlist.Net> needUnroute = new HashSet<FlatNetlist.Net>();
+        HashSet<NetList.LogicalNet> needUnroute = new HashSet<NetList.LogicalNet>();
         while(true) {
             System.out.println();
             System.out.println("routing trial " + (++trial));
-            for(FlatNetlist.Net net : fnl.nets) {
+            for(NetList.LogicalNet net : fnl.nets) {
                 if (net.getSize() <= 1) continue;
                 net.route(fpslic, pd);
             }
             double congestion = 0;
             int overrouted = 0;
             needUnroute.clear();
-            for(PhysicalDevice.PhysicalNet pn : pd.allPhysicalNets) {
-                if (pn.load > 1) {
-                    //System.out.println("overrouted: " + pn + ", congestion="+pn.congestion + ", load=" + pn.load);
+            for(PhysicalDevice.PhysicalNet pn : pd) {
+                if (pn.isCongested()) {
                     overrouted++;
-                    congestion += pn.congestion;
+                    congestion += pn.getCongestion();
                 }
-                pn.congestion = pn.congestion * alphaParameter;
-                if (pn.load > 1) {
-                    pn.congestion += betaParameter;
-                    // don't do this here
-                    //pn.congestion += betaParameter;
-                    for(FlatNetlist.Net n : pn.owners)
+                pn.updateCongestion();
+                if (pn.isCongested())
+                    for(NetList.LogicalNet n : pn.getLogicalNets())
                         needUnroute.add(n);
-                }
             }
-            System.out.println("  overrouted="+overrouted+", congestion="+congestion +", ripping up " + needUnroute.size() +" nets of " + fnl.nets.size());
+            System.out.println("  overrouted="+overrouted+", congestion="+congestion +
+                               ", ripping up " + needUnroute.size() +" nets of " + fnl.nets.size());
             if (overrouted <= 0) break;
-            //for(FlatNetlist.Net net : fnl.nets)
-            for(FlatNetlist.Net net : needUnroute)
-                net.unroute();
-            /*
-            for(PhysicalDevice.PhysicalNet pn : pd.allPhysicalNets)
-                for(PhysicalDevice.PhysicalPip pip : pn) {
-                    pip.set(false);
-                }
-            */
+            for(NetList.LogicalNet net : needUnroute) net.unroute();
         }
 
         // set up scan cell
@@ -189,10 +176,10 @@ public class MPARDemo {
         fpslic.iob_right(0, true).enableOutput(WEST);
         fpslic.flush();
 
-        int width = 8;
+        int xwidth = 8;
         while(true) {
-            int a = Math.abs(rand.nextInt()) % (1 << width);
-            int b = Math.abs(rand.nextInt()) % (1 << width);
+            int a = Math.abs(rand.nextInt()) % (1 << xwidth);
+            int b = Math.abs(rand.nextInt()) % (1 << xwidth);
             setInput(fnl, fpslic, "a",  a);
             setInput(fnl, fpslic, "b",  b);
             setInput(fnl, fpslic, "ci", 0);
@@ -279,9 +266,9 @@ public class MPARDemo {
 
     }
 
-        public static void setInput(FlatNetlist fnl, Fpslic fpslic, String prefix, int val) {
+        public static void setInput(NetList fnl, Fpslic fpslic, String prefix, int val) {
             for(int i=0; ; i++) {
-                FlatNetlist.Node n = fnl.top.get(prefix + "["+i+"]");
+                NetList.Node n = fnl.top.get(prefix + "["+i+"]");
                 if (n==null && i==0) n = fnl.top.get(prefix);
                 if (n==null) return;
                 Fpslic.Cell c = n.getPlacement(fpslic);
@@ -291,10 +278,10 @@ public class MPARDemo {
                 val = val >> 1;
             }
         }
-        public static int getOutput(FlatNetlist fnl, Fpslic fpslic, String prefix) {
+        public static int getOutput(NetList fnl, Fpslic fpslic, String prefix) {
             int val = 0;
             for(int i=0; ; i++) {
-                FlatNetlist.Node n = fnl.top.get(prefix+"["+i+"]");
+                NetList.Node n = fnl.top.get(prefix+"["+i+"]");
                 if (n==null && i==0) n = fnl.top.get(prefix);
                 if (n==null) return val;
                 Fpslic.Cell c = n.getPlacement(fpslic);
