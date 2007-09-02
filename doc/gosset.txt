@@ -1,0 +1,309 @@
+Summary
+
+  This document describes the correlation between publicly documented
+  logic, I/O, and routing resources within the Atmel AT40k/94k family
+  of chips and bits in the bitstreams needed to program them.
+
+  Our goal is to make this information available to the public without
+  restriction on its use, for the purpose of creating automated tools
+  which generate bitstreams.
+
+
+Statement of Public Knowledge
+
+  The Knowledge encapsulated in this document was derived by formal
+  scientific experimentation, using only information generally
+  available to the public.  Extreme care which has been taken to
+  ensure that the process did not violate any copyright, trademark,
+  trade secret, or patent statutes.  No licensing contracts or
+  non-disclosure agreements were entered into by the parties involved
+  in this endeavor, nor did they have access to any confidential
+  information.
+
+  This document is part of the Public Domain; its authors surrender
+  claim to copyright on it.
+
+
+Corrections
+
+  If you find errors in this document, please correct them and add the
+  date and a short description of the correction to the table below.
+  This will assist in merging changes made in disjoint derivitaves.
+
+    2005.08.12  [gosset]  Initial revision
+    2006.03.12  [megacz]  Swapped {L1,L0}->W, FB->{L0,L1}, {H0->L0,H1->L1}
+    2006.03.13  [megacz]  Fixed lowest bit of z=00000000; it should be "1"
+    2006.03.13  [megacz]  Corrected meaning of z-octet bits 2-4 in IOBs
+    2006.03.13  [megacz]  Added constant zeroes in IOB section
+    2006.04.15  [megacz]  un-swapped FB->{L0,L1}
+    2007.09.01  [megacz]  fix column clocking bits
+
+Background
+
+  The Atmel AT40k Datasheet describes in great detail the resources
+  available in the AT40k as well as the FPGA portion of the AT94k
+  (which is functionally identical and uses the same binary
+  configuration format).
+
+  The configuration space used to control these resources consists of
+  a collection of independent octets arranged in a sparse 24-bit
+  address space.  This document correlates those bits with the
+  resources described in the Datasheet.
+
+  The process of configuring the device consists of writing these
+  octets into the configuration memory.  Once the desired
+  configuration octets are known, the procedures for loading them into
+  configuration memory are well documented in Atmel Documents 1009 and
+  2313.
+
+  Each data octet "D" has a 24-bit address, divided into three address
+  octets "X", "Y", and "Z".  In general, the X and Y address octets
+  are related to the physical position of the resource, while the Z
+  octet is related to the type of resource being addressed.
+
+Notation
+
+  We will use the notation A->B to indicate that setting the
+  corresponding configuration bit high causes source A to drive wire
+  B, and the notation A<>B to indicate that a pass gate between A and
+  B is enabled.  The notation ~A or ~A->B indicates a configuration
+  bit controlling A or causing A to drive B is *active low*
+  (inverted).
+
+  We will use the following terms to describe routing resources.
+  They vary slightly from Atmel's documentation, but are less
+  ambiguous.
+
+   X, Y, W, Z   The cell's inputs
+   XO, YO       The X and Y outputs from the cell (to its neighbors)
+   N, S, E, W   Orthogonal lines: connections to neighboring cells
+   NE,SE,NW,SW  Diagonal lines: connections to neighboring cells
+   S0..S4       Quad lines: four-cell long routing lines
+     H0..H4       Horizontal quad lines
+     V0..V4       Vertical quad lines
+   L0..L4       Switchbox ports: the wires joining FB,H0..H4,V0..V4,X,Y,Z,W
+   G0a..G4b     Global lines: eight-cell long routing lines, in two sets (a+b)
+   FB           The cell's internal feedback line
+   R            The cell's internal register
+   C            The cell's "center" output; can drive the X or Y outputs
+   ZM           The "Z-mux"; the mux which drives the cell's register input
+   WM           The "W-mux"; the mux which drives the third input to the LUTs
+   XL, YL       The output of the X,Y-LUTs
+   IA           The "internal and" gate (W & Z)
+   
+
+Cartesian Resources
+
+  Although the exact interpretation of the X and Y octets depends on
+  the resource type (Z octet), in most cases the X and Y octets are
+  the cartesian coordinates of the logic cell nearest to the desired
+  resource (0,0 is the lower-left hand logic cell).  This section
+  describes the significance of the Z and D octets for such resources.
+
+  Notes:
+    - The most significant four bits of the Z octet are 0000 for these bits
+    - If WZ->WM and FB->WM are both low, then W->WM.
+    - If ZM->R and YL->R are both low, then the XL->R
+    - The ZM->C and ZM->FB bits are used to bypass the register (when high).
+    - ~SET bit controls the set/reset behavior of the register; 0=set, 1=reset
+
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |Z3:0|                           D  octet                                    |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0000| V4->L4 | H4->L4 | FB->L2 | FB->L3 | FB->L1 | FB->L0 | FB->L4 |   1    |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0001| ZM->R  | YL->R  | WZ->WM | FB->WM | ZM->C  | ZM->FB |  C->XO |  C->YO |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0010| L4->Z  | L4->Y  | L3->Z  | L2->Z  | L1->Z  | L0->Z  | V4->OE | H4->OE |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0011| L2->W  | L3->W  | L4->W  | L4->X  | L0->W  | L1->W  |H2a<>V2a|H3b<>V3b|
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0100|  N->Y  |  S->Y  |  W->Y  |  E->Y  | L0->Y  | L1->Y  | L2->Y  | L3->Y  |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0101| SW->X  | NE->X  | SE->X  | NW->X  | L0->X  | L1->X  | L2->X  | L3->X  |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0110|                  X-LUT truth table, inverted                          |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0111|                  Y-LUT truth table, inverted                          |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |1000| V3->L3 | H3->L3 | H2->L2 | V2->L2 | V1->L1 | H0->L0 | V0->L0 | H1->L1 |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |1001|H1a<>V1a|H0a<>V0a|H0b<>V0b|H4a<>V4a|H4b<>V4b|H1b<>V1b|H3a<>V3a|H2b<>V2b|
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  ...
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+  |0001|   1    |   1    |   1    |   1    |  ~SET  |   1    |   1    |   1    |
+  +----+--------+--------+--------+--------+--------+--------+--------+--------+
+
+
+Sector Resources
+
+  Clocking, reset, and inter-sector repeaters are resources which are
+  not specific to a particular cell.  As such, their X,Y addressing is
+  slightly different.  These resources are addressed by the cartesian
+  coordinates of the cell above or to the right of the resource, with
+  an additional twist: for resources in vertical channels, the
+  X-coordinate is shifted right by two bits (divided by four); for
+  resources in horizontal channels, the Y-coordinate is shifted right
+  by two bits (divided by four).
+
+  The most significant three bits of the Z-octet for a sector resource
+  are set to 001; the next bit (fourth most significant) is set to 0
+  for horizontal channels and 1 for vertical channels.
+
+  One sector wire and one global wire enter each side of each
+  repeater, for a total of four connections.  Each connection has an
+  associated four-bit code which indicates if that connection is
+  driven by the repeater, and if so, which connection to the repeater
+  is used to drive it:
+
+     000 - driver disabled
+     100 - source is global wire on the other side of the repeater
+     010 - source is sector wire on the other side of the repeater
+     001 - source is other connection on the same side of the repeater
+  
+  Example: a code of 001 for the left-hand side sector wire driver
+  means that the source of the driver should be the left hand side
+  global wire.  A code of 010 for the top sector wire driver means that
+  the source of the driver should be the bottom sector wire.
+
+     CC     = column clock
+     CR     = column reset
+     SC     = sector clock
+     SC+    = sector clock of the sector below this one
+     InvSC  = invert the clock source (CC or S4) before driving SC
+
+  Note that you must set both CC->SC in the desired sector and CC->SC+
+  in the sector above the desired sector in order to receive a column
+  clock.
+
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | Z octet  |                    D  octet                           |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0000 |   1    |   0    | Left/Top      G4 | Left/Top      S4 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0001 |   0    | S4->CR | Right/Bottom  G4 | Right/Bottom  S4 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0010 |   1    |   0    | Left/Top      G3 | Left/Top      S3 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0011 |   1    |   1    | Right/Bottom  G3 | Right/Bottom  S3 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0100 |   1    |   0    | Left/Top      G2 | Left/Top      S2 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0101 | CC->SC+| S3->SC | Right/Bottom  G2 | Right/Bottom  S2 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0110 |   1    |   0    | Left/Top      G1 | Left/Top      S1 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_0111 |   1    |   1    | Right/Bottom  G1 | Right/Bottom  S1 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_1000 |   1    |   0    | Left/Top      G0 | Left/Top      S0 |
+  +----------+--------+--------+-----+-----+------+-----+-----+------+
+  | 001_1001 | InvSC  | CC->SC | Right/Bottom  G0 | Right/Bottom  S0 |
+  +----------+--------+--------+----+--------+----+-----+--------+---+
+
+
+Block Memories
+
+  Although block memories are shown in the lower right hand corner of
+  each sector in the Atmel Datasheets, they are conceptually addressed
+  by the cartesian coordinate of the cell in the lower *left* hand
+  corner of the sector.  Furthermore, both coordinates are shifted
+  right two bits (divided by four).
+
+  The significance of the "D" octet for a given block memory depends
+  on its position; if it falls in an odd sector-column (4-7, 12-15,
+  etc), use the first chart; otherwise, use the second chart.
+
+    USECLK = the memory is synchronous
+    ENABLE = the memory is enabled
+      DUAL = enable both ports on a dual-ported memory
+
+  Odd Sector-Columns
+
+  +--------+------+------+------+------+--------+--------+--------+---------+
+  |Z octet |                       D octet                                  |
+  +--------+------+------+------+------+--------+---------+--------+--------+
+  |01000000|  1   |  1   |  1   |  1   |   1    |    1    |   1    |   1    |
+  +--------+------+------+------+------+--------+---------+--------+--------+
+  |01000001|  1   |  1   |  1   |  1   | USECLK | ~ENABLE | ENABLE | ENABLE |
+  +--------+------+------+------+------+--------+---------+--------+--------+
+
+  Even Sector-Columns
+
+  +--------+------+------+------+------+--------+--------+--------+--------+
+  |Z octet |                       D octet                                 |
+  +--------+------+------+------+------+--------+--------+--------+--------+
+  |01000000|  1   |  1   |  1   |  1   | USECLK |  DUAL  | ~DUAL  | ENABLE |
+  +--------+------+------+------+------+--------+--------+--------+--------+
+  |01000001|  1   |  1   |  1   |  1   |   1    |   1    |   1    |   1    |
+  +--------+------+------+------+------+--------+--------+--------+--------+
+
+
+I/O Blocks
+
+  The Z octet for I/O resources always its most significant three bits
+  set to 011.  The next bit is 1 for North/South IO Blocks and 0 for
+  East/West IO Blocks.  The next bit is always 0, and the bit
+  following that is set to 0 for primary (orthogonally connected)
+  IOBs, 1 for secondary (diagonally connected) IOBs.
+
+      S  = Sector wires of this cell
+      S+ = Sector wires of next cell
+      S- = Sector wires of previous cell
+      G  = Global wires of this cell
+      G+ = Global wires of next cell
+  Output = Allow output from this IOB
+      OE = when low, output is always enabled
+     OEM = 7 bits, one-hot encoded, chooses input to output-enable mux
+  USEOEM = when low, ignore the output enable mux
+   Delay = amount of delay to add; can be 0, 1, 3, or 5
+    Slew = slew time: 11=fast, 10=med, 01=slow
+    Pull = 00=pullup, 11=pulldown, 01=none
+
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+  |Z octet |                         D  octet                                  |
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+  |011_0_00| Schmit |      Slew     |~G2->CR|   0   |       Pull      |    0   |
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+  |011_0_01|REG->OUT|    0   |  OE  |              Output Mux                  |
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+  |011_0010|      Added Delay (primary)     |PRI->S-| PRI->G+| PRI->G | PRI->S |
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+  |011_0110|      Added Delay (secondary)   |SND->S | SND->S+|PRI->REG|SND->REG|
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+  |011_0_11|  OEM   | USEOEM |                   OEM                           |
+  +--------+--------+--------+------+-------+-------+--------+--------+--------+
+
+
+Global Clock/Reset Networks
+
+  To drive a column clock from one of the eight global clock/reset
+  networks, set the corresponding bit in the desired column:
+
+  +--------+--------+--------+
+  |Z octet |X octet |Y octet |
+  +--------+--------+--------+-----+-----+-----+-----+-----+-----+-----+-----+
+  |01010000| column |00000000| CK8 | CK7 | CK6 | CK5 | CK4 | CK3 | CK2 | CK1 |
+  +--------+--------+--------+-----+-----+-----+-----+-----+-----+-----+-----+
+
+Unknown
+
+  The following configuration resources are not fully understood, but
+  the values below appear to work.
+
+  +--------+--------+--------+
+  |Z octet |X octet |Y octet |
+  +--------+--------+--------+-----+-----+-----+-----+-----+-----+-----+-----+
+  |        |00000000|00000000|  1  |  1  |  1  |  1  |  1  |  1  | GCK  SRC  |
+  |10100001|00010111|00000000|  1  |  1  |  1  |  1  |  1  |  1  | GCK  SRC  |
+  |        |00101111|00000000|  1  |  1  |  1  |  1  |  1  |  1  | GCK  SRC  |
+  +--------+--------+--------+-----+-----+-----+-----+-----+-----+-----+-----+
+  |11010000|00000000|00000000|  1  |  1  |  0  |  0  |  0  |  0  |  0  |  0  |
+  +--------+--------+--------+-----+-----+-----+-----+-----+-----+-----+-----+
+  |11010011|00000000|00000000|  0  |  0  |  0  |  0  |  1  |  1  |  0  |  1  |
+  +--------+--------+--------+-----+-----+-----+-----+-----+-----+-----+-----+
+      
+
+
+
+
