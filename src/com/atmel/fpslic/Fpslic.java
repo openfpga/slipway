@@ -63,6 +63,13 @@ public abstract class Fpslic {
             this(horizontal, plane, col, row, false);
         }
 
+        public void useColumnClock() {
+            // this is very poorly understood
+            if (horizontal) throw new RuntimeException();
+            mode4(0x25, (row>>2)+1, col, 0x80);
+            mode4(0x29, (row>>2),   col, 0x40);
+        }
+
         public SectorWire(boolean horizontal, int plane, int col, int row, boolean global) {
             this.horizontal=horizontal;
             this.global=global;
@@ -190,6 +197,10 @@ public abstract class Fpslic {
     public final class Cell {
         public final int col;
         public final int row;
+
+        public void setColumnClock(int where) {
+            mode4(0x50, 0x00, col, where);
+        }
 
         public String toString() { return "cell@("+col+","+row+")"; }
 

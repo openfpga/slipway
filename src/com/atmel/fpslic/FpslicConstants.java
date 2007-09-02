@@ -44,5 +44,5 @@ public class FpslicConstants {
     public static final int TMUX_W_AND_FB  = 0x00001008;
     public static final int TMUX_FB        = 0x00001010;
 
-
+    public static final int GCLK5          = 0x10;
 }
