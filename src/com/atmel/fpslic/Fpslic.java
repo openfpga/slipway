@@ -60,11 +60,18 @@ public abstract class Fpslic {
         public final int     row;
         public final int     col;
         public SectorWire(boolean horizontal, int plane, int col, int row) {
+            this(horizontal, plane, col, row, false);
+        }
+
+        public SectorWire(boolean horizontal, int plane, int col, int row, boolean global) {
             this.horizontal=horizontal;
-            this.global = false;
+            this.global=global;
             this.plane=plane;
             this.col= horizontal ? (col & ~0x3) : col;
             this.row=!horizontal ? (row & ~0x3) : row;
+        }
+        public SectorWire global() {
+            return new SectorWire(horizontal, plane, col, row, true);
         }
         public boolean isDriven() {
             // FIXME: bridging connections (horiz-to-vert)
@@ -116,9 +123,20 @@ public abstract class Fpslic {
             throw new Error("not implemented");
         }
 
+        public void dork() {
+            mode4zyx(switchbox(north()), (1<<6), (1<<6));
+        }
+
         public void drives(SectorWire w, boolean enable) {
             // FIXME: better error checks?
-            mode4zyx(switchbox(w), enable?0x02:0x00, 0x07);
+            int val = 0;
+            if (enable) {
+                if (!global) val = 0x02;
+                else         val = 0x04;      
+            }
+            int mask = 0x07;
+            if (w.global) { mask = mask << 3; val = val << 3; }
+            mode4zyx(switchbox(w), val, mask);
         }
 
         public boolean drives(SectorWire w) {
