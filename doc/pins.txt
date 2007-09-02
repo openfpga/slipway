@@ -1,0 +1,73 @@
+
+- power
+- ground
+- config
+
+* all user i/os default to pull-up
+
+CON pin:
+  - during reset, FPSLIC drives low
+  - released when ready for config bits
+  - user drives low in order to start config
+  - FPSLIC then drives low when preamble OK
+
+Startup:
+  - power on or RESET goes low
+  - INIT,CON,LDC,HDC all low
+  - reset completes
+  - HDC goes high
+  - RESET is sampled; when high,
+  - INIT released, pin checked to make sure other devices ok
+  - INIT drifts high due to pullup
+  - mode pins sampled
+  - CON released (drifts high)
+  - LDC, HDC released
+
+- leds
+    - TXLED (usb)
+    - RXLED (usb)
+
+    - INIT (fpga)
+    - CON (fpga)
+    - LDC (fpga)
+    - HDC (fpga)
+    - config-to-chip tx/rx
+    - INIT: pulls down if config fails (internal 20kohm pullup)
+       => reusable as user I/O
+    - CON: driven low during reset, released when ready for cfg
+        - user drives this low
+
+- clock
+- M0, M2, CS0, UARTs, CON, RESET, PORTXXX
+
+- ExternalXTAL1 needs a pull-down resistor
+  XTAL1<->4.7kohms<->GND
+    - on-chip oscillator; see p41
+
+- USB.CLK12 -> FPGA.CCLK   ==> manual clock?
+- USB.CLK12 -> FPGA.XTAL1  ==> manual clock?
+
+* 8 bit-bang lines?
+
+
+- Tie-off
+    - AVRRESET
+    - CS0 low
+    - M0 high
+    - M2 low
+
+- Driveable pins:
+    - CHECK pin?
+    - OTS (tri-state all user IO)?
+    - RESET
+    - CON
+
+    - HDC (high during configuration)
+    - LDC (low during configuration)
+    - D0 (dedicated)
+    - UART pins
+
+- Slave serial: M0=1, M2=0, external source drives CCLK
+  - data applied on rising edge of clock
+    
+
