@@ -40,7 +40,7 @@ slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) misc/slip
 
 upstream/libusb:
 	mkdir -p `dirname $@`
-	cd upstream; curl http://umn.dl.sourceforge.net/sourceforge/libusb/libusb-0.1.12.tar.gz | tar -xvzf -
+	cd upstream; curl http://voxel.dl.sourceforge.net/sourceforge/libusb/libusb-0.1.12.tar.gz | tar -xvzf -
 	cd upstream; mv libusb-0.1.12 libusb
 
 upstream/libusb/.built: upstream/libusb
@@ -104,7 +104,7 @@ upstream/gcc/.built: upstream/gcc upstream/binutils/.built
 	touch $@
 
 upstream/avr-libc:
-	cd upstream; curl http://download.savannah.gnu.org/releases/avr-libc/avr-libc-1.4.3.tar.bz2 | tar -xvjf -
+	cd upstream; curl http://nongnu.askapache.com/avr-libc/avr-libc-1.4.3.tar.bz2 | tar -xvjf -
 	cd upstream; mv avr-libc-1.4.3 avr-libc
 
 upstream/avr-libc/.built: upstream/avr-libc upstream/gcc/.built
