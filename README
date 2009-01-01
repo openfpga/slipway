@@ -1,0 +1,43 @@
+______________________________________________________________________________
+Abits+Slipway software
+
+Quick start: type 'make asyncdemo' to run the asynchronous
+micropipeline demo from the FCCM paper
+
+
+______________________________________________________________________________
+Directory Layout
+
+src/
+    com/
+        atmel/                   -- Fpslic classes
+        ftdi/
+             FtdiUart.java       -- Java wrapper for libftdi
+             FtdiUart.i          -- swig interface definition file for libftdi
+    edu/
+        berkeley/
+                 abits/          -- Abits library interfaces
+                 slipway/        -- classes for the Slipway board/platform
+                         mpar/   -- experimental code for Map, Place, And Route
+    org/ibex/util/               -- utility classes
+
+doc/                             -- documentation
+    manuals/                     -- various manuals
+    pins.txt                     -- some notes on the pins used for configuration
+    gosset.txt                   -- Gosset's post to comp.arch.fpga
+    CONVENTIONS                  -- some naming conventions used
+    images/                      -- some images and diagrams
+    fccm07/                      -- Adam's FCCM'07 paper (TeX source)
+
+build/                           -- compiled stuff winds up here
+
+upstream/                        -- "upstream" software packages
+
+pcb/                             -- board schematic files for the Slipway board; unfortunately
+                                    these are in a proprietary expresspcb.com file format
+
+misc/
+     slipway.ept                 -- eeprom programming file for USB interface
+     slipway.apj                 -- Atmel project file (used for building drone bitstream)
+     slipway_drone.bst           -- prebuilt drone bitstream
+     verilog.model               -- an incomplete verilog model for emulating Atmel CLBs
