@@ -6,13 +6,23 @@ linkerflags =
 jnilib      = libFtdiUartNative.so
 endif
 
-## slipway ############################################################################
-
-run: slipway.jar 
-	java -cp slipway.jar edu.berkeley.slipway.Demo 30
+## demos ############################################################################
 
 demo: slipway.jar 
-	java -cp slipway.jar edu.berkeley.slipway.Demo2 30
+	java -cp slipway.jar edu.berkeley.slipway.demos.Demo 30
+
+demo2: slipway.jar 
+	java -cp slipway.jar edu.berkeley.slipway.demos.Demo2 30
+
+asyncdemo: slipway.jar 
+	java -cp slipway.jar edu.berkeley.slipway.demos.FastestMicropipelineFifoDemo misc/data/async/
+
+mpardemo: upstream/jhdl-edifparser.jar slipway.jar
+	iverilog  -t fpga -s main -o out.edf misc/mpardemo.v
+	java -cp slipway.jar:upstream/jhdl-edifparser.jar edu.berkeley.slipway.mpar.MPARDemo out.edf
+
+
+## slipway ############################################################################
 
 build/src/com/ftdi/usb/FtdiUart.c: src/com/ftdi/usb/FtdiUart.i
 	mkdir -p `dirname $@`
@@ -56,7 +66,7 @@ javac = javac -cp upstream/jhdl-edifparser.jar
 
 ## for rebuilding usbdrone.hex ###########################################################
 
-build/slipway_drone.hex: src/edu/berkeley/slipway/FtdiBoardSlave.c  upstream/avr-libc/.built
+build/slipway_drone.hex: src/edu/berkeley/slipway/SlipwaySlave.c  upstream/avr-libc/.built
 	upstream/prefix/bin/avr-gcc -O3 -mmcu=at94k $< -o $@.o
 	upstream/prefix/bin/avr-objcopy -O ihex $@.o $@
 
@@ -114,10 +124,6 @@ upstream/avr-libc/.built: upstream/avr-libc upstream/gcc/.built
 		PATH=$$PATH:$(shell pwd)/upstream/prefix/bin make && \
 		PATH=$$PATH:$(shell pwd)/upstream/prefix/bin make install
 	touch $@
-
-mpardemo: upstream/jhdl-edifparser.jar slipway.jar
-	iverilog  -t fpga -s main -o out.edf misc/mpardemo.v
-	java -cp slipway.jar:upstream/jhdl-edifparser.jar edu.berkeley.slipway.mpar.MPARDemo out.edf
 
 
 ## edif parser ##########################################################################

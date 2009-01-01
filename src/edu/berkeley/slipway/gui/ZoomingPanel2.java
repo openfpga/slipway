@@ -2,7 +2,6 @@ package edu.berkeley.slipway.gui;
 
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.FpslicUtil.*;
 import edu.berkeley.slipway.*;
 import java.awt.*;
 import java.awt.geom.*;
@@ -118,7 +117,7 @@ public abstract class ZoomingPanel2 extends JComponent implements KeyListener, M
             }
         }
         Gui2.Cell cell = whichCell(mousex, mousey);
-        Fpslic.Cell c = cell == null ? null : cell.cell;
+        FpslicDevice.Cell c = cell == null ? null : cell.cell;
         if ((k.getModifiers() & k.ALT_MASK) != 0 || (k.getModifiers() & k.META_MASK) != 0)
             switch(k.getKeyCode()) {
                 case VK_0: {

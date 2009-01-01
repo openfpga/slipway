@@ -2,7 +2,6 @@ package edu.berkeley.slipway.gui;
 
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.FpslicUtil.*;
 import edu.berkeley.slipway.*;
 import java.awt.*;
 import java.awt.geom.*;

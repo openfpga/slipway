@@ -5,7 +5,6 @@ package edu.berkeley.slipway.gui;
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.FpslicUtil.*;
 import static java.awt.event.KeyEvent.*;
 import edu.berkeley.slipway.*;
 import java.awt.*;
@@ -20,20 +19,20 @@ import static edu.berkeley.slipway.gui.GuiConstants.*;
 
 public class Gui3 extends Canvas implements MouseWheelListener, MouseMotionListener, KeyListener {
 
-    Fpslic at40k;
-    FtdiBoard drone;
+    FpslicDevice at40k;
+    SlipwayBoard slipway;
 
     private int width;
     private int height;
     private int magnify = 0;
     public GuiCell[][] ca = new GuiCell[128][];
-    private FtdiBoard ftdiboard;
-    public Gui3(Fpslic at40k, FtdiBoard drone) {
-        this(at40k, drone, 24, 24);
+    private SlipwayBoard ftdiboard;
+    public Gui3(FpslicDevice at40k, SlipwayBoard slipway) {
+        this(at40k, slipway, 24, 24);
     }
-    public Gui3(Fpslic at40k, FtdiBoard drone, int width, int height) {
+    public Gui3(FpslicDevice at40k, SlipwayBoard slipway, int width, int height) {
         this.at40k = at40k;
-        this.drone = drone;
+        this.slipway = slipway;
         this.width = width;
         this.height = height;
         for(int i=0; i<ca.length; i++)
@@ -51,7 +50,7 @@ public class Gui3 extends Canvas implements MouseWheelListener, MouseMotionListe
         repaint();
     }
 
-    Fpslic.Cell selectedCell = null;
+    FpslicDevice.Cell selectedCell = null;
     public void _paint(Graphics2D g_) {
         int SIZE = 100;
         //g_.setStroke(new BasicStroke((float)1.0/SIZE));

@@ -3,7 +3,6 @@ package edu.berkeley.slipway.gui;
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.FpslicUtil.*;
 import edu.berkeley.slipway.*;
 import java.awt.*;
 import java.awt.geom.*;
@@ -20,8 +19,8 @@ public class Gui2 extends ZoomingPanel2 implements KeyListener, MouseMotionListe
     Graphics2D g;
     G gg;
 
-    Fpslic at40k;
-    FtdiBoard drone;
+    FpslicDevice at40k;
+    SlipwayBoard drone;
 
     private Cell[][] ca = new Cell[128][];
 
@@ -29,11 +28,11 @@ public class Gui2 extends ZoomingPanel2 implements KeyListener, MouseMotionListe
     public static final Color nonselectedcell = new Color(0xee, 0xee, 0xee);
     public static final Color selectedcell    = new Color(0x00, 0x00, 0x00);
 
-    private FtdiBoard ftdiboard;
-    public Gui2(Fpslic at40k, FtdiBoard drone) {
+    private SlipwayBoard ftdiboard;
+    public Gui2(FpslicDevice at40k, SlipwayBoard drone) {
         this(at40k, drone, 24, 24);
     }
-    public Gui2(Fpslic at40k, FtdiBoard drone, int width, int height) {
+    public Gui2(FpslicDevice at40k, SlipwayBoard drone, int width, int height) {
         this.at40k = at40k;
         this.drone = drone;
         for(int i=0; i<ca.length; i++)
@@ -44,7 +43,7 @@ public class Gui2 extends ZoomingPanel2 implements KeyListener, MouseMotionListe
     }
 
     public class Cell {
-        Fpslic.Cell cell;
+        FpslicDevice.Cell cell;
         boolean in = false;
         public boolean scanme = false;
         public boolean xon = false;
@@ -52,7 +51,7 @@ public class Gui2 extends ZoomingPanel2 implements KeyListener, MouseMotionListe
         public boolean xknown = false;
         public boolean yknown = false;
         int _x, _y;
-        public Cell(int x, int y, Fpslic.Cell cell) {
+        public Cell(int x, int y, FpslicDevice.Cell cell) {
             _x = x;
             _y = y;
             ca[_x][_y] = this;
@@ -706,7 +705,7 @@ public class Gui2 extends ZoomingPanel2 implements KeyListener, MouseMotionListe
         return null;
     }
 
-    public static boolean xlut_relevant(Fpslic.Cell c) {
+    public static boolean xlut_relevant(FpslicDevice.Cell c) {
         return c.xlut_relevant();
     }
 
@@ -717,7 +716,7 @@ public class Gui2 extends ZoomingPanel2 implements KeyListener, MouseMotionListe
 
 
     int made = 0;
-    private class BCB extends FtdiBoard.ByteCallback {
+    private class BCB extends SlipwayBoard.ByteCallback {
         Gui2.Cell c;
         int who;
         public BCB(Gui2.Cell c, int who) {

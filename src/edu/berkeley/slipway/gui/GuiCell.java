@@ -16,13 +16,13 @@ public class GuiCell {
     private static final int LOCAL_ROUTING_CHANNEL_WIDTH = 7;
 
     public boolean val = false;
-    public final Fpslic.Cell fpslicCell;
+    public final FpslicDevice.Cell fpslicCell;
     private GuiGate xgate = new GuiGate(this);
     private GuiGate ygate = new GuiGate(this);
 
     R gateArea = null;
 
-    public GuiCell(Fpslic.Cell fpslicCell) {
+    public GuiCell(FpslicDevice.Cell fpslicCell) {
         this.fpslicCell = fpslicCell;
     }
 

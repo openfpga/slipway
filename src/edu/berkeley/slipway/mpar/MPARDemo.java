@@ -1,12 +1,15 @@
 package edu.berkeley.slipway.mpar;
 import com.atmel.fpslic.*;
+import java.awt.*;
 import byucc.edif.tools.merge.*;
 import byucc.edif.*;
 import java.io.*;
 import java.util.*;
 import edu.berkeley.slipway.*;
+import edu.berkeley.abits.*;
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
+import static edu.berkeley.slipway.mpar.PhysicalFpslic.*;
 
 // FIXME: sometimes gets stuck in a loop routing the last few nets
 
@@ -27,145 +30,134 @@ import static com.atmel.fpslic.FpslicConstants.*;
 
 public class MPARDemo {
 
-    public static final double alphaParameter = 00.9;
-    public static final double betaParameter  = 02.5;
-    public static final double gammaParameter =  1.0;
 
-    /*
-      test code for inter-sector switchboxes
-    public static void main2() throws Exception {
-        Fpslic fpslic = new FtdiBoard();
-        // set up scan cell
-        fpslic.cell(23,15).h(3, true);
-        fpslic.cell(23,15).yi(L3);
-        fpslic.cell(23,15).ylut(0xAA);
-        fpslic.iob_right(15, true).enableOutput(WEST);
-        fpslic.cell(23,0).ylut(0x00);
-        fpslic.iob_right(0, true).enableOutput(WEST);
-        fpslic.flush();
-        for(int x=0; x<20; x++) {
-            for(int y=0; y<20; y++) {
-                for(int l=0; l<5; l++) {
-                    for(int v = 0; v <= 1; v++) {
-                        boolean vert = v==1;
-                        int newx = vert ? x   : x-1;
-                        int newy = vert ? y-1 : y;
-                        if (newx<0 || newy<0) continue;
-                        if (vert  && (y%4) != 0) continue;
-                        if (!vert && (x%4) != 0) continue;
+    public static final double alphaParameter    =   0.9;
+    public static final double betaParameter     =   0.5;
+    public static final double wireCost          =   0.005;  
+    public static final double wireCostPlacement =   0.01;   // cost of an uncongested net (cost of congested net is 1)
+    //public static final double gammaParameter  =   1.0;
+    public static final double lambda            =  0.7;
 
-                        int layer = l;
-                        if (layer==3) continue;
-                        Fpslic.Cell c  = fpslic.cell(x, y);
-                        Fpslic.Cell c2 = fpslic.cell(newx, newy);
-                        Fpslic.SectorWire sw1 = vert ? c.vwire(layer)  : c.hwire(layer);
-                        Fpslic.SectorWire sw2 = vert ? c2.vwire(layer) : c2.hwire(layer);
-                        sw1.drives(sw2, true);
-
-                        c.c(YLUT);
-                        if (vert) c.v(L0 + layer, true);
-                        else      c.h(L0 + layer, true);
-                        c.out(L0 + layer, true);
-                        c.b(false);
-                        
-                        c2.yi(L0 + layer);
-                        if (vert) c2.v(L0 + layer, true);
-                        else      c2.h(L0 + layer, true);
-                        c2.ylut(LUT_SELF);
-                        c2.c(YLUT);
-                        c2.b(false);
-                        
-                        System.out.print(x+","+y+","+l+","+(vert?"v":"h")+": ");
-                        c.ylut(0x00);
-                        fpslic.flush();
-                        boolean good = scan(fpslic, c2)==0;
-                        if (!good) fails++;
-                        System.out.print(good ? "ok " : "bad ");
-                        c.ylut(0xff);
-                        fpslic.flush();
-                        good = scan(fpslic, c2)!=0;
-                        if (!good) fails++;
-                        System.out.print(good ? "ok " : "bad ");
-                        System.out.println();
-                        sw1.drives(sw2, false);
-                        if (vert) c.v(layer, false);
-                        else      c.h(layer, false);
-                        c.out(layer, false);
-                    }
-                }
-            }
-        }
-        System.out.println("fails = " + fails);
-        
-    }
-    public static int fails = 0;
-    */
+    public static double temperature = 300.0;
+    public static double congestion = 0;
+    public static double timingpenalty = 0;
 
     public static void main(String[] s) throws Exception {
-        EdifEnvironment topEnv = new EdifEnvironment("top");
-        EdifLibraryManager elm = new EdifLibraryManager(topEnv);
-        EdifLibrary initLib = new EdifLibrary(elm, "initLib");
-        EdifEnvironment env = EdifMergeParser.parseAndMerge(s, initLib);
-        System.out.println("top is " + env.getTopCell());
-        NetList fnl = new NetList();
 
-        for(Iterator<EdifCellInstance> it = (Iterator<EdifCellInstance>)env.getTopCell().cellInstanceIterator();
-            it.hasNext();
-            ) {
-            NetList.Node n = fnl.createNode(it.next(), null);
-        }
+        NetList fnl = new NetList(s[0]);
+        int width = 12;
+        int height = 12;
 
-        Fpslic fpslic = new FtdiBoard();
-        int width = 20;
-        int height = 20;
+        //SlipwayBoard slipway = new SlipwayBoard();
+        Board slipway = new FakeBoard(24, 24);
+
+        FpslicDevice fpslic = (FpslicDevice)slipway.getDevice();
+        while(true) {
         PhysicalDevice pd = new PhysicalFpslic(fpslic, width, height);
 
-        int px = 0;
-        int py = 0;
-
-        // crude map
+        Placement placement = new Placement(fnl, pd);
+        Routing routing = new Routing(placement);
         Random rand = new Random();
-        boolean[][] used = new boolean[width][height];
-        for(NetList.Node n : fnl.nodes) {
-            while(true) {
-                px = Math.abs(rand.nextInt()) % width;
-                py = Math.abs(rand.nextInt()) % height;
-                if (!used[px][py]) {
-                    used[px][py] = true;
-                    System.out.println("placed " + n + " at ("+px+","+py+")");
-                    pd.getCell(px, py).place(n);
-                    break;
-                }
-            }
-        }
+        placement.random(rand);
+        routing.routeAll();
 
         int trial = 0;
-        HashSet<NetList.LogicalNet> needUnroute = new HashSet<NetList.LogicalNet>();
-        while(true) {
+        int num_moves = width*height;
+
+        Visualization vis = new Visualization((PhysicalFpslic)pd);
+
+        boolean alldone = false;
+        long lastDraw = System.currentTimeMillis();
+        OUT: while(true) {
             System.out.println();
-            System.out.println("routing trial " + (++trial));
-            for(NetList.LogicalNet net : fnl.nets) {
-                if (net.getSize() <= 1) continue;
-                net.route(fpslic, pd);
-            }
-            double congestion = 0;
-            int overrouted = 0;
-            needUnroute.clear();
-            for(PhysicalDevice.PhysicalNet pn : pd) {
-                if (pn.isCongested()) {
-                    overrouted++;
-                    congestion += pn.getCongestion();
+            double max_swap_dist = 3 * Math.max(width,height) * Math.exp(-1 / temperature);
+            System.out.println("round " + (++trial) + "  (temp="+temperature+", maxdist="+max_swap_dist+")");
+            
+            if (alldone) break;
+
+            congestion = routing.measureCongestion();
+            timingpenalty = routing.measureTimingpenalty();
+            double wirecost = routing.measureWireCost();
+            int swaps = 0;
+            num_moves = 200;
+
+            for(int i=0; i<num_moves; i++) {
+                System.out.print("\r  [place: " + i + "/" + num_moves + "  congestion="+congestion+"]");
+                NetList.Node node1 = fnl.randomNode(rand);
+                PhysicalDevice.PhysicalCell cell1 = placement.nodeToCell(node1);
+                PhysicalDevice.PhysicalCell cell2 = cell1.randomCellWithin(rand, max_swap_dist);
+                NetList.Node node2 = placement.cellToNode(cell2);
+
+                // FIXME: cache and reuse "newrouting"
+                // also: fold down newrouting to collapse parentage
+                routing.checkpoint();
+                routing.unroute(node1);
+                routing.unroute(node2);
+                placement.unplace(cell1);
+                placement.unplace(cell2);
+                placement.place(node1, cell2);
+                placement.place(node2, cell1);
+                routing.routeAll();
+
+                double newcongestion = routing.measureCongestion();
+                double newwirecost = routing.measureWireCost();
+                double newtimingpenalty = routing.measureTimingpenalty();
+                double lam = 0.1;
+                double deltaCost =
+                    lam * ((newcongestion - congestion) / Math.max(0.001, congestion))
+                    +
+                    //(1-lam) * ((newwirecost - wirecost) / wirecost)
+                    //+
+                    (1-lam) * ((newtimingpenalty - timingpenalty) / Math.max(0.001, timingpenalty))
+                    ;
+                double swapProbability = Math.exp((-1 * deltaCost) / temperature);
+                //double dist = Math.sqrt( (5-p2x)*(5-p2x) + (5-p2y)*(5-p2y) );
+                double rad = 4;
+                /*
+                if (rand2 == null)
+                    swapProbability = Math.max(0, Math.min(swapProbability, dist / Math.sqrt(rad+rad)));
+                */
+                boolean doSwap = Math.random() < swapProbability;
+                if (doSwap) {
+                    swaps++;
+                    congestion = newcongestion;
+                    wirecost = newwirecost;
+                    timingpenalty = newtimingpenalty;
+                } else {
+                    placement.unplace(cell1);
+                    placement.unplace(cell2);
+                    placement.place(node1, cell1);
+                    placement.place(node2, cell2);
+                    routing.rollback();
                 }
-                pn.updateCongestion();
-                if (pn.isCongested())
-                    for(NetList.LogicalNet n : pn.getLogicalNets())
-                        needUnroute.add(n);
             }
-            System.out.println("  overrouted="+overrouted+", congestion="+congestion +
-                               ", ripping up " + needUnroute.size() +" nets of " + fnl.nets.size());
-            if (overrouted <= 0) break;
-            for(NetList.LogicalNet net : needUnroute) net.unroute();
+            double acceptance = ((double)swaps) / num_moves;
+            double gamma = 0;
+            if (acceptance > 0.96) gamma = 0.5;
+            else if (acceptance > 0.8) gamma = 0.9;
+            else if (acceptance > 0.15) gamma = 0.95;
+            else gamma = 0.8;
+
+            System.out.println("  acceptance="+acceptance);
+            temperature = temperature * gamma;
+            int num_routes = num_moves - swaps;
+            num_routes = 2;
+            for(int i=0; i<num_routes; i++) {
+                int overrouted = routing.measureOverloaded();
+                routing.unrouteOverloaded();
+                routing.reRouteAll();
+                System.out.print("\r  [route "+i+"/"+num_routes+"] overrouted="+overrouted+" congestion="+routing.measureCongestion()+"     penalty="+timingpenalty);
+                routing.updateCongestion(alphaParameter, betaParameter);
+                if (overrouted==0 && timingpenalty < 1) alldone = true;
+            }
+            num_moves = (int)(300 * gamma * gamma);
+            vis.draw(placement, routing, false);
+            System.out.println();
         }
+        vis.draw(placement, routing, true);
+        placement.setPlacement();
+        routing.setPips(true);
+        System.out.println("wire utilization: " + Math.round(routing.measureWireUtilization()*100));
 
         // set up scan cell
         fpslic.cell(23,15).h(3, true);
@@ -175,28 +167,32 @@ public class MPARDemo {
         fpslic.cell(23,0).ylut(0x00);
         fpslic.iob_right(0, true).enableOutput(WEST);
         fpslic.flush();
-
+        /*
         int xwidth = 8;
-        while(true) {
+        temperature = 0;
+        while(temperature==0) {
             int a = Math.abs(rand.nextInt()) % (1 << xwidth);
             int b = Math.abs(rand.nextInt()) % (1 << xwidth);
-            setInput(fnl, fpslic, "a",  a);
-            setInput(fnl, fpslic, "b",  b);
-            setInput(fnl, fpslic, "ci", 0);
-            int result = getOutput(fnl, fpslic, "out");
+            setInput(fnl, fpslic, "a",  a, placement);
+            setInput(fnl, fpslic, "b",  b, placement);
+            setInput(fnl, fpslic, "ci", 0, placement);
+            int result = getOutput(fnl, fpslic, slipway, "out", placement);
+            int expect = (a+b) & ~(-1 << (xwidth+1));
             System.out.println(Integer.toString(a,16) + " + " +
                                Integer.toString(b,16) + " = " +
                                Integer.toString(result,16) +
-                               " [ " + (a+b==result ? "ok" : "bad" ) + " ] ");
+                               " [ " + (expect==result ? "ok" : "bad" ) + " ] " + (Integer.toString((result^(expect)),16)));
         }
+        */
+    }
     }
 
 
     private static int ret;
-    public static synchronized int scan(final Fpslic device, final Fpslic.Cell cell) {
+    public static synchronized int scan(final FpslicDevice device, final SlipwayBoard slipway, final FpslicDevice.Cell cell) {
         try {
-            scan(device, cell, YLUT, true);
-            ((FtdiBoard)device).readBus(new FtdiBoard.ByteCallback() {
+            scan(device, cell, XLUT, true);
+            slipway.readFpgaData(new SlipwayBoard.ByteCallback() {
                     public void call(byte b) throws Exception {
                         ret = b;
                         synchronized(device) {
@@ -209,12 +205,12 @@ public class MPARDemo {
                     device.wait();
                 } catch (Exception e) { throw new RuntimeException(e); }
             }
-            scan(device, cell, YLUT, false);
+            scan(device, cell, XLUT, false);
             return ret;
         } catch (Exception e) { throw new RuntimeException(e); }
     }
 
-    public static void scan(Fpslic dev, Fpslic.Cell cell, int source, boolean setup) {
+    public static void scan(FpslicDevice dev, FpslicDevice.Cell cell, int source, boolean setup) {
         if (setup) {
             //if (source != NONE) cell.c(source);
             if (cell.b()) cell.b(false);
@@ -223,7 +219,7 @@ public class MPARDemo {
         if (cell.out(L3)!=setup) cell.out(L3, setup);
         if (cell.vx(L3)!=setup) cell.v(L3, setup);
 
-        Fpslic.SectorWire sw = cell.vwire(L3);
+        FpslicDevice.SectorWire sw = cell.vwire(L3);
         //System.out.println("wire is: " + sw);
 
         if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
@@ -266,30 +262,30 @@ public class MPARDemo {
 
     }
 
-        public static void setInput(NetList fnl, Fpslic fpslic, String prefix, int val) {
-            for(int i=0; ; i++) {
-                NetList.Node n = fnl.top.get(prefix + "["+i+"]");
-                if (n==null && i==0) n = fnl.top.get(prefix);
-                if (n==null) return;
-                Fpslic.Cell c = n.getPlacement(fpslic);
-                c.c(XLUT);
-                c.b(false);
-                c.xlut((val & 0x1)==0 ? 0x00 : 0xff);
-                val = val >> 1;
-            }
+    public static void setInput(NetList fnl, FpslicDevice fpslic, String prefix, int val, Placement placement) {
+        for(int i=0; ; i++) {
+            NetList.Node n = fnl.top.get(prefix + "["+i+"]");
+            if (n==null && i==0) n = fnl.top.get(prefix);
+            if (n==null) return;
+            FpslicDevice.Cell c = ((PhysicalFpslic.PhysicalFpslicCell)placement.nodeToCell(n)).cell();
+            c.c(XLUT);
+            c.b(false);
+            c.xlut((val & 0x1)==0 ? 0x00 : 0xff);
+            val = val >> 1;
         }
-        public static int getOutput(NetList fnl, Fpslic fpslic, String prefix) {
+    }
+    public static int getOutput(NetList fnl, FpslicDevice fpslic, SlipwayBoard slipway, String prefix, Placement placement) {
             int val = 0;
             for(int i=0; ; i++) {
                 NetList.Node n = fnl.top.get(prefix+"["+i+"]");
                 if (n==null && i==0) n = fnl.top.get(prefix);
                 if (n==null) return val;
-                Fpslic.Cell c = n.getPlacement(fpslic);
+                FpslicDevice.Cell c = ((PhysicalFpslic.PhysicalFpslicCell)placement.nodeToCell(n)).cell();
                 c.xlut(LUT_SELF);
                 c.c(XLUT);
                 c.b(false);
                 fpslic.flush();
-                int scan = scan(fpslic, c);
+                int scan = scan(fpslic, slipway, c);
                 val |= ((scan==0 ? 0 : 1) << i);
             }
         }

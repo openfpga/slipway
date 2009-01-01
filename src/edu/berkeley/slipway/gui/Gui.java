@@ -3,7 +3,6 @@ package edu.berkeley.slipway.gui;
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import static com.atmel.fpslic.FpslicConstants.*;
-import static com.atmel.fpslic.FpslicUtil.*;
 import edu.berkeley.slipway.*;
 import java.awt.*;
 import java.awt.geom.*;
@@ -20,8 +19,8 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     Graphics2D g;
     G gg;
 
-    Fpslic at40k;
-    FtdiBoard drone;
+    FpslicDevice fpslic;
+    SlipwayBoard slipway;
 
     private Cell[][] ca = new Cell[128][];
 
@@ -34,7 +33,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
             final JFileChooser fc = new JFileChooser();
             int returnVal = fc.showSaveDialog(this);
             Writer pw = new OutputStreamWriter(new FileOutputStream(fc.getSelectedFile()));
-            FpslicUtil.writeMode4(pw, drone);
+            slipway.getFpslicDevice().writeMode4(pw);
             pw.flush();
             pw.close();
             System.err.println("done writing");
@@ -47,7 +46,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         try {
             final JFileChooser fc = new JFileChooser();
             int returnVal = fc.showOpenDialog(this);
-            FpslicUtil.readMode4(new FileInputStream(fc.getSelectedFile()), drone);
+            slipway.getFpslicDevice().readMode4(new FileReader(fc.getSelectedFile()));
             System.err.println("done reading");
             repaint();
         } catch (Exception e) {
@@ -55,18 +54,18 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         }
     }
 
-    public Gui(Fpslic at40k, FtdiBoard drone) {
-        this(at40k, drone, 24, 24);
+    public Gui(FpslicDevice fpslic, SlipwayBoard slipway) {
+        this(fpslic, slipway, 24, 24);
     }
-    public Gui(Fpslic at40k, FtdiBoard drone, int width, int height) {
-        super(drone);
-        this.at40k = at40k;
-        this.drone = drone;
+    public Gui(FpslicDevice fpslic, SlipwayBoard slipway, int width, int height) {
+        super(slipway);
+        this.fpslic = fpslic;
+        this.slipway = slipway;
         for(int i=0; i<ca.length; i++)
             ca[i] = new Cell[128];
         for(int x=0; x<width; x++)
             for(int y=0; y<height; y++)
-                new Cell(x,y, at40k.cell(x, y));
+                new Cell(x,y, fpslic.cell(x, y));
 
 
 
@@ -81,7 +80,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
         /*
-        Fpslic.Cell c = at40k.cell(0,0);
+        FpslicDevice.Cell c = fpslic.cell(0,0);
         for(int i=0; i<256; i++) {
             c.ylut(i);
             System.out.println(c.printYLut());
@@ -90,7 +89,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
 
     public class Cell {
-        Fpslic.Cell cell;
+        FpslicDevice.Cell cell;
         boolean in = false;
         public boolean scanme = false;
         public boolean xon = false;
@@ -98,7 +97,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         public boolean xknown = false;
         public boolean yknown = false;
         int _x, _y;
-        public Cell(int x, int y, Fpslic.Cell cell) {
+        public Cell(int x, int y, FpslicDevice.Cell cell) {
             _x = x;
             _y = y;
             ca[_x][_y] = this;
@@ -746,7 +745,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         return null;
     }
 
-    public static boolean xlut_relevant(Fpslic.Cell c) {
+    public static boolean xlut_relevant(FpslicDevice.Cell c) {
         return c.xlut_relevant();
     }
 
@@ -757,16 +756,16 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
     }
 
     public void scan() {
-        for(int x=0; x<at40k.getWidth(); x++)
-            for(int y=0; y<at40k.getHeight(); y++)
+        for(int x=0; x<fpslic.getWidth(); x++)
+            for(int y=0; y<fpslic.getHeight(); y++)
                 if (ca[x][y] != null)
                     if (ca[x][y].scanme())
                         scan(ca[x][y]);
     }
     public void scan(final Gui.Cell c) {
         try {
-            final Fpslic.Cell cell = c.cell;
-            scan(at40k, cell, NONE, true);
+            final FpslicDevice.Cell cell = c.cell;
+            scan(fpslic, cell, NONE, true);
             boolean safe = !cell.fb_relevant();
             if (cell.xo()) safe = false;
             if (cell.yo()) safe = false;
@@ -777,13 +776,13 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 int oldc = cell.c();
                 if (cell.xlut_relevant()) {
                     cell.c(XLUT);
-                    drone.readBus(new BCB(c, XLUT));
+                    slipway.readFpgaData(new BCB(c, XLUT));
                 } else {
                     c.xknown = false;
                 }
                 if (cell.ylut_relevant()) {
                     cell.c(YLUT);
-                    drone.readBus(new BCB(c, YLUT));
+                    slipway.readFpgaData(new BCB(c, YLUT));
                 } else {
                     c.yknown = false;
                 }
@@ -794,18 +793,18 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         if (!cell.xlut_relevant()) {
                             c.xknown = false;
                         } else {
-                            drone.readBus(new BCB(c, XLUT));
+                            slipway.readFpgaData(new BCB(c, XLUT));
                         }
                         /*
                         if (!cell.yo())
-                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
+                        for(FpslicDevice.Cell c2 : new FpslicDevice.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
                             if (c2!=null && !c2.relevant()) {
-                                scan(at40k, cell, NONE, false);
+                                scan(fpslic, cell, NONE, false);
                                 c2.yo(cell);
                                 c2.c(YLUT);
-                                scan(at40k, c2, NONE, true);
-                                drone.readBus(new BCB(c, YLUT));
-                                scan(at40k, c2, NONE, false);
+                                scan(fpslic, c2, NONE, true);
+                                slipway.readFpgaData(new BCB(c, YLUT));
+                                scan(fpslic, c2, NONE, false);
                                 c2.yi(NONE);
                                 return;
                             }
@@ -816,18 +815,18 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         if (!cell.ylut_relevant()) {
                             c.yknown = false;
                         } else {
-                            drone.readBus(new BCB(c, YLUT));
+                            slipway.readFpgaData(new BCB(c, YLUT));
                         }
                         /*
                         if (!cell.xo())
-                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
+                        for(FpslicDevice.Cell c2 : new FpslicDevice.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
                             if (c2!=null && !c2.relevant()) {
-                                scan(at40k, cell, NONE, false);
+                                scan(fpslic, cell, NONE, false);
                                 c2.xo(cell);
-                                scan(at40k, c2, NONE, true);
+                                scan(fpslic, c2, NONE, true);
                                 c2.c(XLUT);
-                                drone.readBus(new BCB(c, XLUT));
-                                scan(at40k, c2, NONE, false);
+                                slipway.readFpgaData(new BCB(c, XLUT));
+                                scan(fpslic, c2, NONE, false);
                                 c2.xi(NONE);
                                 return;
                             }
@@ -836,29 +835,29 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                         break;
                     case ZMUX: {
                         /*
-                        scan(at40k, cell, NONE, false);
+                        scan(fpslic, cell, NONE, false);
                         c.xknown = false;
                         c.yknown = false;
                         if (!cell.xo())
-                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
+                        for(FpslicDevice.Cell c2 : new FpslicDevice.Cell[] { cell.nw(), cell.sw(), cell.ne(), cell.se() })
                             if (c2!=null && !c2.relevant()) {
-                                scan(at40k, cell, NONE, false);
+                                scan(fpslic, cell, NONE, false);
                                 c2.xo(cell);
-                                scan(at40k, c2, NONE, true);
+                                scan(fpslic, c2, NONE, true);
                                 c2.c(XLUT);
-                                drone.readBus(new BCB(c, XLUT));
-                                scan(at40k, c2, NONE, false);
+                                slipway.readFpgaData(new BCB(c, XLUT));
+                                scan(fpslic, c2, NONE, false);
                                 c2.xi(NONE);
                                 return;
                             }
                         if (!cell.yo())
-                        for(Fpslic.Cell c2 : new Fpslic.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
+                        for(FpslicDevice.Cell c2 : new FpslicDevice.Cell[] { cell.north(), cell.south(), cell.east(), cell.west() })
                             if (c2!=null && !c2.relevant()) {
                                 c2.yo(cell);
                                 c2.c(YLUT);
-                                scan(at40k, c2, NONE, true);
-                                drone.readBus(new BCB(c, YLUT));
-                                scan(at40k, c2, NONE, false);
+                                scan(fpslic, c2, NONE, true);
+                                slipway.readFpgaData(new BCB(c, YLUT));
+                                scan(fpslic, c2, NONE, false);
                                 c2.yi(NONE);
                                 break;
                             }
@@ -868,13 +867,13 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
                 }
                 
             }
-            scan(at40k, cell, NONE, false);
+            scan(fpslic, cell, NONE, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void scan(Fpslic dev, Fpslic.Cell cell, int source, boolean setup) {
+    public static void scan(FpslicDevice dev, FpslicDevice.Cell cell, int source, boolean setup) {
         if (setup) {
             if (source != NONE) cell.c(source);
             if (cell.b()) cell.b(false);
@@ -883,7 +882,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
         if (cell.out(L3)!=setup) cell.out(L3, setup);
         if (cell.vx(L3)!=setup) cell.v(L3, setup);
 
-        Fpslic.SectorWire sw = cell.vwire(L3);
+        FpslicDevice.SectorWire sw = cell.vwire(L3);
         //System.out.println("wire is: " + sw);
 
         if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
@@ -928,7 +927,7 @@ public class Gui extends ZoomingPanel implements KeyListener, MouseMotionListene
 
 
     int made = 0;
-    private class BCB extends FtdiBoard.ByteCallback {
+    private class BCB extends SlipwayBoard.ByteCallback {
         Gui.Cell c;
         int who;
         public BCB(Gui.Cell c, int who) {
