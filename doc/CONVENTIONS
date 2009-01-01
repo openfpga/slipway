@@ -1,0 +1,18 @@
+
+- cartesian coordinates
+
+    - always referred to as "col" and "row", not "x" and "y", since
+      the latter often have other meanings.
+
+    - whenever they appear together, __col__ comes first; not row.
+      This is cartesian convention.
+
+    - 0,0 is the "lower left" corner of the device when the
+      manufacturer specifies a canonical orientation.
+
+    - the unit of measurement is the smallest regular resource
+
+    - resources which occupy more than one unit are always addressed
+      by the lower-leftmost unit occupied.
+
+   
