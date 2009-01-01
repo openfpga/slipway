@@ -10,11 +10,21 @@ import java.io.*;
  */
 public class FtdiUart {
 
+    static {
+        try {
+            File f = new File("build/"+System.mapLibraryName("FtdiUartNative"));
+            if (f.exists()) System.load(f.getAbsolutePath());
+            else System.loadLibrary("FtdiUartNative");
+        } catch (Exception e) {
+            throw new RuntimeException();
+        }
+    }
+
     private SWIGTYPE_p_ftdi_context context = FtdiUartNative.new_ftdi_context();
 
-    public FtdiUart(int vendor, int product, int baud) throws IOException {
+    public FtdiUart(int vendorId, int productId, int baud) throws IOException {
         FtdiUartNative.ftdi_init(context);
-        FtdiUartNative.ftdi_usb_open(context, vendor, product);
+        FtdiUartNative.ftdi_usb_open(context, vendorId, productId);
         FtdiUartNative.ftdi_usb_reset(context);
         FtdiUartNative.ftdi_set_baudrate(context, baud);
         FtdiUartNative.ftdi_set_line_property(context, 8, 0, 0);
