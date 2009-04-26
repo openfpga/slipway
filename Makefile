@@ -8,14 +8,14 @@ endif
 
 ## demos ############################################################################
 
+asyncdemo: slipway.jar 
+	java -cp slipway.jar edu.berkeley.slipway.demos.FastestMicropipelineFifoDemo misc/data/async/
+
 demo: slipway.jar 
 	java -cp slipway.jar edu.berkeley.slipway.demos.Demo 30
 
 demo2: slipway.jar 
 	java -cp slipway.jar edu.berkeley.slipway.demos.Demo2 30
-
-asyncdemo: slipway.jar 
-	java -cp slipway.jar edu.berkeley.slipway.demos.FastestMicropipelineFifoDemo misc/data/async/
 
 mpardemo: upstream/jhdl-edifparser.jar slipway.jar
 	iverilog  -t fpga -s main -o out.edf misc/mpardemo.v
