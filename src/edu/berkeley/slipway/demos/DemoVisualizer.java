@@ -1,4 +1,4 @@
-package edu.berkeley.slipway;
+package edu.berkeley.slipway.demos;
 
 import edu.berkeley.slipway.*;
 import com.atmel.fpslic.*;
@@ -11,8 +11,7 @@ import java.awt.color.*;
 import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
-import static edu.berkeley.slipway.Demo.*;
+import static edu.berkeley.slipway.demos.Demo.*;
 
 public class DemoVisualizer extends Frame implements KeyListener, MouseMotionListener, MouseListener {
     public static final int WIDTH = 40;
@@ -21,11 +20,11 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
     public static final int LH = 15;
     public static final Color RED  = new Color(0xaa, 0x55, 0x55);
     public static final Color BLUE = new Color(0x55, 0x55, 0xaa);
-    private final Fpslic dev;
-    private final FtdiBoard drone;
+    private final FpslicDevice dev;
+    private final SlipwayBoard drone;
     int selx = -1;
     int sely = -1;
-    public DemoVisualizer(final Fpslic dev, final FtdiBoard drone) {
+    public DemoVisualizer(final FpslicDevice dev, final SlipwayBoard drone) {
         this.dev = dev;
         this.drone = drone;
         show();
@@ -70,15 +69,15 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         switch(keyevent==null ? '_' : keyevent.getKeyChar()) {
             case '1': {
                 if (selx==-1 || sely==-1) break;
-                Fpslic.Cell cell = dev.cell(selx, sely);
+                FpslicDevice.Cell cell = dev.cell(selx, sely);
                 cell.xlut(0xff);
                 cell.ylut(0xff);
                 drawCell(getGraphics(), selx, sely);
-                drone.flush();
+                dev.flush();
                 break;
             }
             case 'i': {
-                System.out.println("interrupt_count: " + drone.readCount());
+                System.out.println("interrupt_count: " + drone.readInterruptCount());
                 break;
             }
             case 'x': {
@@ -120,7 +119,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                         */
                         copy(dev.cell(mx, Demo.yofs-1), NORTH, SW);
                         boolean left = true;
-                        Fpslic.Cell lc = null;
+                        FpslicDevice.Cell lc = null;
                         for(int k=0; k<10; k++) {
                             int y = Demo.yofs-2-(k*2);
                             copy(dev.cell(left?(mx-1):mx, y),        SOUTH, left?NE:NW);
@@ -163,10 +162,10 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                         try { Thread.sleep(100); } catch (Exception e) { }
                         //showit(dev, drone, this);
                         fill(dev, drone, cap);
-                        drone.readCount();
+                        drone.readInterruptCount();
                         long now = System.currentTimeMillis();
                         try { Thread.sleep(4000); } catch (Exception e) { }
-                        int count = drone.readCount();
+                        int count = drone.readInterruptCount();
                         long now2 = System.currentTimeMillis();
                         System.out.println(cap + " ,  " + (((float)count * (2*2*2*2*2*2*2*2*2*1000))/(now2-now)));
                     }
@@ -175,18 +174,18 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
             }
             case 'C': {
                 if (selx==-1 || sely==-1) break;
-                Fpslic.Cell cell = dev.cell(selx, sely);
+                FpslicDevice.Cell cell = dev.cell(selx, sely);
                 cell.ylut(0xB2);
                 drawCell(getGraphics(), selx, sely);
                 break;
             }
             case '0': {
                 if (selx==-1 || sely==-1) break;
-                Fpslic.Cell cell = dev.cell(selx, sely);
+                FpslicDevice.Cell cell = dev.cell(selx, sely);
                 cell.xlut(0x00);
                 cell.ylut(0x00);
                 drawCell(getGraphics(), selx, sely);
-                drone.flush();
+                dev.flush();
                 break;
             }
         } 
@@ -194,10 +193,10 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         showit(dev, drone, this);
     }
     public void mousePressed(MouseEvent e) {
-        final Fpslic.Cell cell = dev.cell(selx, sely);
+        final FpslicDevice.Cell cell = dev.cell(selx, sely);
         if (cell==null) return;
         final int old = cell.c();
-        FtdiBoard.ByteCallback bc = new FtdiBoard.ByteCallback() {
+        SlipwayBoard.ByteCallback bc = new SlipwayBoard.ByteCallback() {
                 public void call(byte b) throws Exception {
                     boolean y = (b & 0x80) != 0;
                     //cell.c(old);
@@ -235,7 +234,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
             int cx = selx;
             int cy = sely;
-            Fpslic.Cell cell = dev.cell(cx, cy);
+            FpslicDevice.Cell cell = dev.cell(cx, cy);
             selx = -1;
             sely = -1;
             /*
@@ -246,7 +245,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         selx = (x-20)/(WIDTH+2);
         sely = (23 - (y-20)/(HEIGHT+2))+1;
         /*
-          Fpslic.Cell cell = dev.cell(selx, sely);
+          FpslicDevice.Cell cell = dev.cell(selx, sely);
           if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
           drawCell(getGraphics(), selx, sely);
           drawSector(getGraphics(), dev.cell(selx, sely).sector());
@@ -284,9 +283,9 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
           }
         */
     }
-    public static int left(Fpslic.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
-    public static int top(Fpslic.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
-    public void drawSector(Graphics g, Fpslic.Sector sector) {
+    public static int left(FpslicDevice.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
+    public static int top(FpslicDevice.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
+    public void drawSector(Graphics g, FpslicDevice.Sector sector) {
         g.setColor(Color.gray);
         ((Graphics2D)g).setStroke(new BasicStroke(1));
         int px = ((sector.col)*(WIDTH+2))+20-1;
@@ -297,9 +296,9 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
           boolean h = dir==0;
           for(int y=h?sector.row:sector.col; y<(h?sector.row+4:sector.col+4); y++)
           for(int plane=0; plane<=4; plane++) {
-          Fpslic.Cell cell      = h ? dev.cell(sector.col,   y) : dev.cell(y, sector.row);
-          Fpslic.Cell cell_east = h ? dev.cell(sector.col-1, y) : dev.cell(y, sector.row-1);
-          Fpslic.Cell cell_west = h ? dev.cell(sector.col+4, y) : dev.cell(y, sector.row+4);
+          FpslicDevice.Cell cell      = h ? dev.cell(sector.col,   y) : dev.cell(y, sector.row);
+          FpslicDevice.Cell cell_east = h ? dev.cell(sector.col-1, y) : dev.cell(y, sector.row-1);
+          FpslicDevice.Cell cell_west = h ? dev.cell(sector.col+4, y) : dev.cell(y, sector.row+4);
           boolean draw = false;
           if (h) {
           if (cell_east!=null &&
@@ -356,7 +355,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         int y = ((23-cy)*(HEIGHT+2))+60;
 
         //System.out.println("drawcell " + cx + "," + cy);
-        Fpslic.Cell cell = dev.cell(cx, cy);
+        FpslicDevice.Cell cell = dev.cell(cx, cy);
         g.setColor(bg);
         g.fillRect(x, y, WIDTH, HEIGHT);
 
@@ -429,7 +428,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
 
     }
 
-    public static void showit(Fpslic dev, FtdiBoard drone, final DemoVisualizer vis) {
+    public static void showit(FpslicDevice dev, SlipwayBoard drone, final DemoVisualizer vis) {
         final long then = System.currentTimeMillis();
         final Graphics g = vis.getGraphics();
         g.setFont(new Font("sansserif", Font.BOLD, 24));
@@ -441,9 +440,9 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                 //for(int yy=21; yy<=22; yy++) {
                 final int x = xx;
                 final int y = yy;
-                final Fpslic.Cell cell = dev.cell(x, y);
+                final FpslicDevice.Cell cell = dev.cell(x, y);
                 if ((cell.ylut()&0xff)!=0xB2) continue;
-                FtdiBoard.ByteCallback bc = new FtdiBoard.ByteCallback() {
+                SlipwayBoard.ByteCallback bc = new SlipwayBoard.ByteCallback() {
                         public void call(byte b) throws Exception {
                             boolean v = (b & 0x80) != 0;
                             vis.drawCell(g, x, y, v?red:green);

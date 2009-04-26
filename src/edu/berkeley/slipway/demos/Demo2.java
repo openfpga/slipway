@@ -12,7 +12,6 @@ import java.awt.color.*;
 import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
 public class Demo2 implements KeyListener {
 
@@ -175,7 +174,7 @@ public class Demo2 implements KeyListener {
     }
     public void scan(final GuiCell c) {
         try {
-            final FpslicDevice.Cell cell = c.fpslicCell;
+            final FpslicDevice.Cell cell = (FpslicDevice.Cell)c.fpslicCell;
             scan(slipway, cell, YLUT, true);
             int x = cell.col;
             int y = cell.row;

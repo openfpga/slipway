@@ -1,4 +1,4 @@
-package edu.berkeley.slipway;
+package edu.berkeley.slipway.demos;
 
 import edu.berkeley.slipway.*;
 import com.atmel.fpslic.*;
@@ -11,25 +11,25 @@ import java.awt.color.*;
 import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
 public class AsyncPaperDemo {
 
-    public FtdiBoard fpslic;
+    public SlipwayBoard board;
+    public FpslicDevice fpslic;
 
     public AsyncPaperDemo() throws Exception {
-        fpslic = new FtdiBoard();
+        board = new SlipwayBoard();
+        fpslic = (FpslicDevice)board.getDevice();
     }
 
-    Fpslic.Cell start;
+    FpslicDevice.Cell start;
     public void main(String[] s) throws Exception {
 
         //turnOnLeds();
         setupScanCell();
 
         for(int i=0; i<255; i++)
-            fpslic.readCount();
-
+            board.readInterruptCount();
 
         //System.in.read();
         for(int i=400; i<402; i+=2) {
@@ -47,7 +47,7 @@ public class AsyncPaperDemo {
         pipe(start.west().north(), start.west(),
              new int[] { NE, EAST, SW, SOUTH });
 
-        Fpslic.Cell div = start.east();
+        FpslicDevice.Cell div = start.east();
         while(true) {
             divider(div);
             if (div.south()==null || div.south().south()==null) break;
@@ -64,12 +64,12 @@ public class AsyncPaperDemo {
         fpslic.flush();
         /*
         for(int i=0; i<23; i++){
-            Fpslic.Cell c = fpslic.cell(0, i);
+            FpslicDevice.Cell c = fpslic.cell(0, i);
             c.ylut(0x00);
             c.c(YLUT);
             c.out(L3, true);
             c.h(L3, true);
-            for(Fpslic.SectorWire sw = c.hwire(L3).east();
+            for(FpslicDevice.SectorWire sw = c.hwire(L3).east();
                 sw!=null;
                 sw=sw.east())
                 sw.west().drives(sw, true);
@@ -97,7 +97,7 @@ public class AsyncPaperDemo {
 
         fpslic.flush();
 
-        fpslic.readCount();
+        board.readInterruptCount();
         long now = System.currentTimeMillis();
         Thread.sleep(1000);
         topLeft().ylut(0xff);
@@ -105,10 +105,10 @@ public class AsyncPaperDemo {
         fpslic.flush();
         long then = System.currentTimeMillis();
 
-        int tokens = fpslic.readCount();
+        int tokens = board.readInterruptCount();
 
         int clockrate = 24; // (in mhz)
-        double elapsed = (double)((((FtdiBoard)fpslic).timer)/clockrate);
+        double elapsed = (double)((((SlipwayBoard)board).readInterruptCount())/clockrate);
         
         double occupancy = ((double)(2*count))/((double)size);
 
@@ -138,7 +138,7 @@ public class AsyncPaperDemo {
             }
             
             fpslic.flush();
-            fpslic.readCount();
+            board.readInterruptCount();
             try { Thread.sleep(100); } catch (Exception e) { }
             int rc = fpslic.readCount();
             if (rc!=0) { System.err.println("flush() failed REALLY BADLY => " + rc); continue; }
@@ -157,9 +157,9 @@ public class AsyncPaperDemo {
                 }
             fpslic.flush();
             
-            fpslic.readCount();
+            board.readInterruptCount();
             try { Thread.sleep(100); } catch (Exception e) { }
-            int rc = fpslic.readCount();
+            int rc = board.readInterruptCount();
             if (rc!=0) {
                 System.err.println("flush() failed => " + rc);
                 try { Thread.sleep(1000); } catch (Exception e) { }
@@ -212,10 +212,10 @@ public class AsyncPaperDemo {
         //try { Thread.sleep(2000); } catch (Exception _) { }
     }
 
-    private Fpslic.Cell topLeft() { return start.north().north(); }
-    private Fpslic.Cell topRight() { return start.north().ne(); }
+    private FpslicDevice.Cell topLeft() { return start.north().north(); }
+    private FpslicDevice.Cell topRight() { return start.north().ne(); }
     private void reconfigTopLeft() {
-        Fpslic.Cell c = topLeft();
+        FpslicDevice.Cell c = topLeft();
                 c.c(YLUT);
                 c.ylut(0x00);
                 c.xlut(0x00);
@@ -231,7 +231,7 @@ public class AsyncPaperDemo {
             fpslic.flush();
     }
     private void reconfigTopLeftNice() {
-        Fpslic.Cell c = topLeft();
+        FpslicDevice.Cell c = topLeft();
         c.c(YLUT);
         c.xlut(LUT_Z);
         fpslic.flush();
@@ -241,7 +241,7 @@ public class AsyncPaperDemo {
         fpslic.flush();
     }
     private void reconfigTopLeftPreserve(boolean on) {
-        Fpslic.Cell c = topLeft();
+        FpslicDevice.Cell c = topLeft();
         fpslic.flush();
         if (on) c.ylut(0x00);
         //else    c.ylut(0xff);
@@ -255,9 +255,9 @@ public class AsyncPaperDemo {
     }
     private void reconfigTopRight() { micropipelineStage(topRight(), topRight().west(), topRight().sw()); }
 
-    private Fpslic.Cell pipe(Fpslic.Cell c, Fpslic.Cell prev, int[] dirs) {
+    private FpslicDevice.Cell pipe(FpslicDevice.Cell c, FpslicDevice.Cell prev, int[] dirs) {
         for(int i=0; i<dirs.length; i++) {
-            Fpslic.Cell next = c.dir(dirs[i]);
+            FpslicDevice.Cell next = c.dir(dirs[i]);
             micropipelineStage(c, prev, next);
             prev = c;
             c = next;
@@ -265,7 +265,7 @@ public class AsyncPaperDemo {
         return c;
     }
 
-    private int createPipeline(Fpslic.Cell c, boolean downward, int length, boolean start) {
+    private int createPipeline(FpslicDevice.Cell c, boolean downward, int length, boolean start) {
         boolean stop = false;
         do {
         if (downward) {
@@ -303,7 +303,7 @@ public class AsyncPaperDemo {
             } else {
                 if (length < 8+4) { stop = true; break; }
                 length -= 8;
-                Fpslic.Cell ret = c = pipe(c, c.south(), new int[] { NE, NORTH, NW, NORTH });
+                FpslicDevice.Cell ret = c = pipe(c, c.south(), new int[] { NE, NORTH, NW, NORTH });
                 c = c.se();
                 c = pipe(c, c.north(), new int[] { SW, SOUTH, SE, SOUTH });
                 c = ret;
@@ -327,7 +327,7 @@ public class AsyncPaperDemo {
     }
 
     /*
-    private void createPipeline(Fpslic.Cell c, boolean downward, int length) {
+    private void createPipeline(FpslicDevice.Cell c, boolean downward, int length) {
         length -= 2;
         if (downward) {
             if (c.row == 0) {
@@ -353,10 +353,10 @@ public class AsyncPaperDemo {
     }
     */
 
-    private Fpslic.Cell micropipelineStage(Fpslic.Cell c, Fpslic.Cell prev, Fpslic.Cell next) {
+    private FpslicDevice.Cell micropipelineStage(FpslicDevice.Cell c, FpslicDevice.Cell prev, FpslicDevice.Cell next) {
         return micropipelineStage(c, prev, next, true);
     }
-    private Fpslic.Cell micropipelineStage(Fpslic.Cell c, Fpslic.Cell prev, Fpslic.Cell next, boolean configDir) {
+    private FpslicDevice.Cell micropipelineStage(FpslicDevice.Cell c, FpslicDevice.Cell prev, FpslicDevice.Cell next, boolean configDir) {
         c.b(false);
         c.f(false);
         switch(c.dir(next)) {
@@ -385,7 +385,7 @@ public class AsyncPaperDemo {
 
             //c.c(YLUT);
             /*
-            Fpslic.SectorWire sw = c.vwire(L3);
+            FpslicDevice.SectorWire sw = c.vwire(L3);
             while(sw.south() != null) {
                 sw.south().drives(sw, true);
                 sw = sw.south();
@@ -464,9 +464,9 @@ public class AsyncPaperDemo {
         fpslic.flush();
     }
 
-    public static void divider(Fpslic.Cell c) {
-        Fpslic.Cell detect1 = c;
-        Fpslic.Cell detect2 = c.east();
+    public static void divider(FpslicDevice.Cell c) {
+        FpslicDevice.Cell detect1 = c;
+        FpslicDevice.Cell detect2 = c.east();
 
         detect1.yi(NORTH);
         detect1.ylut(LUT_SELF);
@@ -513,7 +513,7 @@ public class AsyncPaperDemo {
     }
 
     public void runGui(int width, int height) throws Exception {
-        Gui vis = new Gui(fpslic, fpslic, width, height);
+        Gui vis = new Gui(fpslic, board, width, height);
         Frame fr = new Frame();
         fr.setTitle("SLIPWAY Live Fabric Debugger");
         fr.addKeyListener(vis);

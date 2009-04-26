@@ -1,4 +1,4 @@
-package edu.berkeley.slipway;
+package edu.berkeley.slipway.demos;
 
 import static java.awt.event.KeyEvent.*;
 import edu.berkeley.slipway.*;
@@ -12,16 +12,17 @@ import java.awt.color.*;
 import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
-public class Demo2 implements KeyListener {
+public class Demo4 implements KeyListener {
 
     public static void main(String[] s) throws Exception {
-        new Demo2().go(); 
+        new Demo4().go(); 
     }
-    public FtdiBoard device;
-    public Demo2() throws Exception {
-        device = new FtdiBoard();
+    public SlipwayBoard board;
+    public FpslicDevice device;
+    public Demo4() throws Exception {
+        board = new SlipwayBoard();
+        device = (FpslicDevice)board.getDevice();
     }
     public void go() throws Exception {
         long begin = System.currentTimeMillis();
@@ -33,7 +34,7 @@ public class Demo2 implements KeyListener {
 
         Log.info(Demo.class, "issuing command");
 
-        Fpslic.Cell root = device.cell(5,5);
+        FpslicDevice.Cell root = device.cell(5,5);
 
         root.ylut(LUT_SELF);
         root.yi(NORTH);
@@ -64,7 +65,7 @@ public class Demo2 implements KeyListener {
         //root = root.n();
 
         device.iob_bot(12, false).enableOutput(NW);
-        Fpslic.Cell c = device.cell(12, 0);
+        FpslicDevice.Cell c = device.cell(12, 0);
         c.xo(c.east());
         while(c.east() != null && c.east().east() != null) {
             c.yo(c.east());
@@ -72,7 +73,7 @@ public class Demo2 implements KeyListener {
         }
         device.flush();
 
-        Fpslic.Cell div = device.cell(19, 21);
+        FpslicDevice.Cell div = device.cell(19, 21);
         while(true) {
             AsyncPaperDemo.divider(div);
             div = div.south().south();
@@ -83,9 +84,9 @@ public class Demo2 implements KeyListener {
         int MAX=17;
         for(int x=2; x<MAX+1; x++) {
             c = device.cell(x, 20);
-            Fpslic.Cell bridge = x==2 ? c.sw()    : c.nw();
-            Fpslic.Cell pred   = x==MAX ? c.south() : c.east();
-            Fpslic.Cell next   = x==2 ? c.south() : c.west();
+            FpslicDevice.Cell bridge = x==2 ? c.sw()    : c.nw();
+            FpslicDevice.Cell pred   = x==MAX ? c.south() : c.east();
+            FpslicDevice.Cell next   = x==2 ? c.south() : c.west();
             muller(c, pred, bridge, next);
 
             c = c.south();
@@ -110,7 +111,7 @@ public class Demo2 implements KeyListener {
         setupScanCell();
         device.flush();
 
-        vis = new Gui3((Fpslic)device, (FtdiBoard)device);
+        vis = new Gui3(device, board);
         vis.addKeyListener(this);
         Frame fr = new Frame();
         fr.setLayout(new BorderLayout());
@@ -129,7 +130,7 @@ public class Demo2 implements KeyListener {
         }
     }
     Gui3 vis;
-    public void muller(Fpslic.Cell c, Fpslic.Cell pred, Fpslic.Cell bridge, Fpslic.Cell next) {
+    public void muller(FpslicDevice.Cell c, FpslicDevice.Cell pred, FpslicDevice.Cell bridge, FpslicDevice.Cell next) {
         bridge.yi(next);
         bridge.xlut(LUT_OTHER);
 
@@ -145,7 +146,7 @@ public class Demo2 implements KeyListener {
     }
 
     public void setupScanCell() {
-        Fpslic fpslic = (Fpslic)device;
+        FpslicDevice fpslic = (FpslicDevice)device;
         fpslic.cell(23,15).h(3, true);
         fpslic.cell(23,15).yi(L3);
         fpslic.cell(23,15).ylut(0xAA);
@@ -175,18 +176,18 @@ public class Demo2 implements KeyListener {
     }
     public void scan(final GuiCell c) {
         try {
-            final Fpslic.Cell cell = c.fpslicCell;
+            final FpslicDevice.Cell cell = (FpslicDevice.Cell)(Object)c.fpslicCell;
             scan(device, cell, YLUT, true);
             int x = cell.col;
             int y = cell.row;
-            device.readBus(new BCB(c));
+            board.readFpgaData(new BCB(c));
             scan(device, cell, YLUT, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public static void scan(Fpslic dev, Fpslic.Cell cell, int source, boolean setup) {
+    public static void scan(FpslicDevice dev, FpslicDevice.Cell cell, int source, boolean setup) {
         if (setup) {
             //if (source != NONE) cell.c(source);
             if (cell.b()) cell.b(false);
@@ -195,7 +196,7 @@ public class Demo2 implements KeyListener {
         if (cell.out(L3)!=setup) cell.out(L3, setup);
         if (cell.vx(L3)!=setup) cell.v(L3, setup);
 
-        Fpslic.SectorWire sw = cell.vwire(L3);
+        FpslicDevice.SectorWire sw = cell.vwire(L3);
         //System.out.println("wire is: " + sw);
 
         if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
@@ -239,7 +240,7 @@ public class Demo2 implements KeyListener {
     }
 
 
-    private class BCB extends FtdiBoard.ByteCallback {
+    private class BCB extends SlipwayBoard.ByteCallback {
         GuiCell c;
         public BCB(GuiCell c) {
             this.c = c;

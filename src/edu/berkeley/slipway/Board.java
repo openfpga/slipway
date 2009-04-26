@@ -4,7 +4,6 @@ import edu.berkeley.obits.*;
 import org.ibex.util.Log;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
 public interface Board {
 

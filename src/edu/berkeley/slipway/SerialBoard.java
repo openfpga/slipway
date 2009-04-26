@@ -4,10 +4,10 @@ import edu.berkeley.obits.*;
 import org.ibex.util.Log;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
-public class SerialBoard implements Board {
+public abstract class SerialBoard implements Board {
 
+    /*
     private final SerialPort sp;
     private final DataInputStream in;
     private final DataOutputStream out;
@@ -43,7 +43,7 @@ public class SerialBoard implements Board {
 
     public InputStream getInputStream() { return in; }
     public OutputStream getOutputStream() { return out; }
-
+    */
     /*
     public static SerialPort detectObitsPort() throws Exception {
         Enumeration e = CommPortIdentifier.getPortIdentifiers();

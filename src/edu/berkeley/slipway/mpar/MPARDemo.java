@@ -6,7 +6,7 @@ import byucc.edif.*;
 import java.io.*;
 import java.util.*;
 import edu.berkeley.slipway.*;
-import edu.berkeley.abits.*;
+//import edu.berkeley.abits.*;
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 import static edu.berkeley.slipway.mpar.PhysicalFpslic.*;
@@ -49,7 +49,7 @@ public class MPARDemo {
         int height = 12;
 
         //SlipwayBoard slipway = new SlipwayBoard();
-        Board slipway = new FakeBoard(24, 24);
+        FakeBoard slipway = new FakeBoard(24, 24);
 
         FpslicDevice fpslic = (FpslicDevice)slipway.getDevice();
         while(true) {

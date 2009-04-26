@@ -1,4 +1,4 @@
-package edu.berkeley.slipway;
+package edu.berkeley.slipway.demos;
 
 import edu.berkeley.slipway.*;
 import com.atmel.fpslic.*;
@@ -11,9 +11,8 @@ import java.awt.color.*;
 import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
-public class Demo {
+public class Demo3 {
 
     public static boolean mullers = true;
     public static int masterx = 1;
@@ -25,15 +24,16 @@ public class Demo {
     }
 
     public static void mainw(String[] s) throws Exception {
-        FtdiBoard device = new FtdiBoard();
-        Fpslic at40k = device;
+        SlipwayBoard board = new SlipwayBoard();
+        FpslicDevice device = (FpslicDevice)board.getDevice();
+        FpslicDevice at40k = device;
         try {
             long begin = System.currentTimeMillis();
-            //FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), device);
+            //FpslicUtil.readMode4(new ProgressInputStream("configuring fabric", System.in, 111740), board);
             long end = System.currentTimeMillis();
-            Log.info(Demo.class, "finished in " + ((end-begin)/1000) + "s");
+            Log.info(Demo3.class, "finished in " + ((end-begin)/1000) + "s");
             Thread.sleep(1000);
-            Log.info(Demo.class, "issuing command");
+            Log.info(Demo3.class, "issuing command");
 
             //at40k.iob_top(2, true).oe(false);
             //at40k.iob_top(2, false).oe(false);
@@ -63,12 +63,12 @@ public class Demo {
             /*
               System.out.println("a: " + at40k.new SectorWire(true, 0, 4, 0x17).driverRight());
               System.out.println("b: " + at40k.new SectorWire(true, 1, 4, 0x17).driverRight());
-              Fpslic.SectorWire h0p0 = at40k.new SectorWire(true, 0, 0, 0x17);
-              Fpslic.SectorWire h0p1 = at40k.new SectorWire(true, 1, 0, 0x17);
-              Fpslic.SectorWire h0p2 = at40k.new SectorWire(true, 2, 0, 0x17);
-              Fpslic.SectorWire h4p0 = at40k.new SectorWire(true, 0, 4, 0x17);
-              Fpslic.SectorWire h4p1 = at40k.new SectorWire(true, 1, 4, 0x17);
-              Fpslic.SectorWire h4p2 = at40k.new SectorWire(true, 2, 4, 0x17);
+              FpslicDevice.SectorWire h0p0 = at40k.new SectorWire(true, 0, 0, 0x17);
+              FpslicDevice.SectorWire h0p1 = at40k.new SectorWire(true, 1, 0, 0x17);
+              FpslicDevice.SectorWire h0p2 = at40k.new SectorWire(true, 2, 0, 0x17);
+              FpslicDevice.SectorWire h4p0 = at40k.new SectorWire(true, 0, 4, 0x17);
+              FpslicDevice.SectorWire h4p1 = at40k.new SectorWire(true, 1, 4, 0x17);
+              FpslicDevice.SectorWire h4p2 = at40k.new SectorWire(true, 2, 4, 0x17);
 
               //h4p1.drives(h0p1, false);
               //at40k.cell(0x04, 0x17).out(L1, false);
@@ -94,7 +94,7 @@ public class Demo {
             /*
               System.out.println("xlut is " + hex(at40k.cell(0x04, 0x17).xlut()));
               System.out.println("ylut is " + hex(at40k.cell(0x04, 0x17).ylut()));
-              Fpslic.Cell cell = at40k.cell(0x04, 0x17);
+              FpslicDevice.Cell cell = at40k.cell(0x04, 0x17);
               //cell.xlut(0xff);
               //cell.f(false);
               System.out.println(cell.c());
@@ -223,7 +223,7 @@ public class Demo {
                at40k.cell(22,15).ylut(0xAA);
             */
 
-            Fpslic.Cell root = at40k.cell(10,20);
+            FpslicDevice.Cell root = at40k.cell(10,20);
             
             root.yo(root.north());
             root.ylut(~LUT_SELF);
@@ -252,7 +252,7 @@ public class Demo {
             at40k.iob_right(15, true).enableOutput(WEST);
 
 
-            Fpslic.Cell c = at40k.cell(10,10);
+            FpslicDevice.Cell c = at40k.cell(10,10);
             c.ylut(~LUT_SELF);
             c.xlut(LUT_Z);
             c.yi(WEST);
@@ -470,7 +470,7 @@ public class Demo {
             //at40k.cell(6,22).ylut(0xff);
             //at40k.cell(22,11).ylut(0xff);
             /*
-              Fpslic.Cell cell = at40k.cell(4, 16);
+              FpslicDevice.Cell cell = at40k.cell(4, 16);
               cell.xlut(0xff);
               cell.ylut(0xff);
               cell.b(false);
@@ -518,7 +518,7 @@ public class Demo {
 
             device.flush();
 
-            Gui vis = new Gui(at40k, device);
+            Gui vis = new Gui(device, board);
             Frame fr = new Frame();
             fr.addKeyListener(vis);
             fr.setLayout(new BorderLayout());
@@ -528,7 +528,7 @@ public class Demo {
             vis.repaint();
             fr.repaint();
             fr.show();
-            synchronized(Demo.class) { Demo.class.wait(); }
+            synchronized(Demo3.class) { Demo3.class.wait(); }
 
 
 
@@ -536,7 +536,7 @@ public class Demo {
               Visualizer v = new Visualizer(at40k, device);
               v.show();
               v.setSize(1380, 1080);
-              Fpslic.Cell cell = at40k.cell(4, 23);
+              FpslicDevice.Cell cell = at40k.cell(4, 23);
             */
             //Image img = v.createImage(v.getWidth(), v.getHeight());
             /*
@@ -554,7 +554,7 @@ public class Demo {
             //int y = 11;
 
             //selfTest(device, at40k, v);
-            //System.out.println("save: " + FtdiBoard.save + " of " + (FtdiBoard.saveof*5));
+            //System.out.println("save: " + SlipwayBoard.save + " of " + (SlipwayBoard.saveof*5));
 
             at40k.iob_top(0, true).enableInput();
             copy(at40k.cell(0, 23), NORTH, NORTH);
@@ -640,17 +640,17 @@ public class Demo {
               device.flush();
               Thread.sleep(3000);
 
-              Log.info(Demo.class, "issuing command");
+              Log.info(Demo3.class, "issuing command");
               at40k.iob_top(1, true).pulldown();
               device.flush();
             */
-            Log.info(Demo.class, "done");
+            Log.info(Demo3.class, "done");
             System.exit(0);
         } catch (Exception e) { e.printStackTrace(); }
     }
 
 
-    public static void copy(Fpslic.Cell c, int xdir, int ydir) {
+    public static void copy(FpslicDevice.Cell c, int xdir, int ydir) {
         switch(xdir) {
             case NW: case NE: case SW: case SE: {
                 c.xi(xdir);
@@ -686,7 +686,7 @@ public class Demo {
         return Long.toString(x & 0xffffffffL, 16);
     }
 
-    public static void handshaker(Fpslic.Cell cell) {
+    public static void handshaker(FpslicDevice.Cell cell) {
         cell.xlut(0x22);
         cell.ylut(0x71);
         cell.c(XLUT);
@@ -704,7 +704,7 @@ public class Demo {
         return ret;
     }
 
-    public static void bounce(Fpslic.Cell cell, int xi, int yi) {
+    public static void bounce(FpslicDevice.Cell cell, int xi, int yi) {
         cell.xlut((byte)0xCC);
         cell.ylut((byte)0xCC);
         cell.xi(xi);
@@ -712,7 +712,7 @@ public class Demo {
         cell.xo(false);
         cell.yo(false);
     }
-    public static void muller(Fpslic.Cell cell, int xi, int yi) {
+    public static void muller(FpslicDevice.Cell cell, int xi, int yi) {
         cell.ylut(0xB2);
         cell.c(YLUT);
         cell.f(false);
@@ -724,7 +724,7 @@ public class Demo {
     }
 
     /** watches for a rising/falling edge on Yin, emits a pulse on Xout */
-    public static void pulse_detect(Fpslic.Cell c, int in, boolean falling) {
+    public static void pulse_detect(FpslicDevice.Cell c, int in, boolean falling) {
         c.ylut(0x00);
         c.xlut(0x00);
         switch(in) {
@@ -749,7 +749,7 @@ public class Demo {
     }
 
     /** watches for a pulse on Xin, copies value of Yin */
-    public static void pulse_copy(Fpslic.Cell cell, int xi, int yi, boolean invert) {
+    public static void pulse_copy(FpslicDevice.Cell cell, int xi, int yi, boolean invert) {
         loopback(cell, YLUT);
         if (!invert) cell.ylut(0xB8);   /* yo = x ?  yi : z => 1011 1000 */
         else         cell.ylut(0x74);   /* yo = x ? !yi : z => 0111 0100 */
@@ -759,7 +759,7 @@ public class Demo {
         cell.yi(yi);
     }
 
-    public static void loopback(Fpslic.Cell cell, int cin) {
+    public static void loopback(FpslicDevice.Cell cell, int cin) {
         cell.f(false);
         cell.b(false);
         cell.t(false, false, true);
@@ -768,9 +768,9 @@ public class Demo {
         cell.c(cin);
     }
 
-    public static void doit(Fpslic at40k, FtdiBoard device) throws Exception {
+    public static void doit(FpslicDevice at40k, SlipwayBoard device) throws Exception {
 
-        Fpslic.Cell led = at40k.cell(1, 23);
+        FpslicDevice.Cell led = at40k.cell(1, 23);
         led.v(L2, true);
         led.h(L2, false);
         led.yi(L2);
@@ -778,7 +778,7 @@ public class Demo {
         led.xlut(LUT_SELF);
         led.yo(false);
 
-        Fpslic.Cell c = at40k.cell(1, 22);
+        FpslicDevice.Cell c = at40k.cell(1, 22);
         c.out(L1, true);
         c.out(L0, true);
         c.oe(V4);
@@ -794,7 +794,7 @@ public class Demo {
         c.c(YLUT);
 
         for(int i=0; i<4; i++) at40k.cell(i, 20).h(L0, false);
-        Fpslic.Cell z = at40k.cell(1, 20);
+        FpslicDevice.Cell z = at40k.cell(1, 20);
         z.out(L0, true);
         z.xlut(0xff);
         z.c(XLUT);
@@ -926,7 +926,7 @@ public class Demo {
     }
 
     public static int yofs = mullers ? 19 : 22;
-    public static void counter(Fpslic at40k, FtdiBoard device) throws Exception {
+    public static void counter(FpslicDevice at40k, SlipwayBoard device) throws Exception {
         // watch for rising edge from south, emit pulse on Xout (to NE)
         //copy(at40k.cell(16,23), SW, WEST);
         
@@ -967,43 +967,43 @@ public class Demo {
 
     }
 
-    public static void fill(Fpslic at40k, FtdiBoard device, int num) throws Exception {
+    public static void fill(FpslicDevice at40k, SlipwayBoard device, int num) throws Exception {
         //muller(at40k.cell(PIPELEN,22), NE, WEST);
-        Fpslic.Cell a = at40k.cell(10,22);
-        Fpslic.Cell b = at40k.cell(11,22);
+        FpslicDevice.Cell a = at40k.cell(10,22);
+        FpslicDevice.Cell b = at40k.cell(11,22);
         a.ylut(0x00);
         for(int i=0; i<num; i++) {
             //System.out.println(i);
             b.lut(0xff, 0xff);
-            device.flush();
+            at40k.flush();
             try { Thread.sleep(1); } catch (Exception e) { }
             b.lut(0x00, 0x00);
-            device.flush();
+            at40k.flush();
             try { Thread.sleep(1); } catch (Exception e) { }
         }
         b.ylut(0xB2);
         a.ylut(0xB2);
     }
 
-    public static void drain(Fpslic at40k, FtdiBoard device) throws Exception {
-        Fpslic.Cell a = at40k.cell(10,22);
-        Fpslic.Cell b = at40k.cell(11,22);
+    public static void drain(FpslicDevice at40k, SlipwayBoard device) throws Exception {
+        FpslicDevice.Cell a = at40k.cell(10,22);
+        FpslicDevice.Cell b = at40k.cell(11,22);
         a.lut(0x00, 0x00);
         b.lut(0x00, 0x00);
         for(int i=0; i<30; i++) {
             //System.out.println(i);
             a.lut(0xff, 0xff);
-            device.flush();
+            at40k.flush();
             try { Thread.sleep(1); } catch (Exception e) { }
             a.lut(0x00, 0x00);
-            device.flush();
+            at40k.flush();
             try { Thread.sleep(1); } catch (Exception e) { }
         }
         b.ylut(0xB2);
         a.ylut(0xB2);
     }
 
-    public static void doitx(Fpslic at40k, FtdiBoard device) throws Exception {
+    public static void doitx(FpslicDevice at40k, SlipwayBoard device) throws Exception {
         for(int i=5; i<PIPELEN+1; i++) bounce(at40k.cell(i, 23), SE,                     SOUTH);
         for(int x=5; x<PIPELEN;   x++) muller(at40k.cell(x, 22), x==PIPELEN-1 ? SE : NE, WEST);
         

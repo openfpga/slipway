@@ -17,7 +17,7 @@ public class FpslicUtil {
             (x & 0x01);
     }
 
-    public static void readMode4(InputStream in, Fpslic fpslic) throws IOException {
+    public static void readMode4(InputStream in, FpslicDevice fpslic) throws IOException {
         int count = 0;
         BufferedReader br = new BufferedReader(new InputStreamReader(in));
         for(String str = br.readLine(); str != null; str = br.readLine()) {
@@ -29,7 +29,7 @@ public class FpslicUtil {
         in.close();
     }
 
-    public static void writeMode4(Writer w, Fpslic fpslic) throws IOException {
+    public static void writeMode4(Writer w, FpslicDevice fpslic) throws IOException {
         for(int x=0; x<fpslic.getWidth(); x++)
             for(int y=0; y<fpslic.getWidth(); y++)
                 for(int z=0; z<255; z++) {

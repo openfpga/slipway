@@ -1,5 +1,5 @@
 ifeq ($(shell uname),Darwin)
-linkerflags = -Wl,-framework -Wl,IOKit -Wl,-framework -Wl,CoreFoundation
+linkerflags = -Wl,-framework -Wl,IOKit -Wl,-framework -Wl,CoreFoundation -dynamiclib -framework JavaVM
 jnilib      = libFtdiUartNative.jnilib
 else
 linkerflags =
@@ -36,9 +36,9 @@ build/$(jnilib): build/src/com/ftdi/usb/FtdiUart.c upstream/libusb/.built
 		upstream/libftdi/ftdi.c \
 		upstream/libusb/.libs/libusb.a \
 		$(linkerflags) \
-		-o $@ -dynamiclib -framework JavaVM
+		-o $@
 
-slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) misc/slipway_drone.bst
+slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) misc/slipway_drone.bst upstream/jhdl-edifparser.jar
 	mkdir -p build
 	$(javac) -d build $(shell find src build/src -name \*.java)
 	cp misc/slipway_drone.bst build/edu/berkeley/slipway/
@@ -71,16 +71,16 @@ build/slipway_drone.hex: src/edu/berkeley/slipway/SlipwaySlave.c  upstream/avr-l
 	upstream/prefix/bin/avr-objcopy -O ihex $@.o $@
 
 # this only works on my personal setup [adam]
-misc/slipway_drone.bst: build/slipway_drone.hex
-	cp $<    /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
-	fs flush /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
-	echo okay...
-	read
-	rm /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
-	diff -u /afs/research.cs.berkeley.edu/user/megacz/slipway/$@ $@ && \
-		exit -1; true
-	mv /afs/research.cs.berkeley.edu/user/megacz/slipway/$@ $@
-	touch $@
+#misc/slipway_drone.bst: build/slipway_drone.hex
+#	cp $<    /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
+#	fs flush /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
+#	echo okay...
+#	read
+#	rm /afs/research.cs.berkeley.edu/user/megacz/slipway/$<
+#	diff -u /afs/research.cs.berkeley.edu/user/megacz/slipway/$@ $@ && \
+#		exit -1; true
+#	mv /afs/research.cs.berkeley.edu/user/megacz/slipway/$@ $@
+#	touch $@
 
 
 

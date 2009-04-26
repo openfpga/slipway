@@ -44,7 +44,7 @@ public class FakeBoard extends FpslicDevice implements Board {
         };
     }
 
-    public InputStream  getInputStream() throws IOException {
+    public InputStream  getInputStream() {
         return new InputStream() {
             public int available() { return 0; }
             public int read() { return -1; }
@@ -52,7 +52,7 @@ public class FakeBoard extends FpslicDevice implements Board {
         };
     }
 
-    public OutputStream getOutputStream() throws IOException {
+    public OutputStream getOutputStream() {
         return new OutputStream() {
             public void flush() { }
             public void write(int b) { }
@@ -60,9 +60,10 @@ public class FakeBoard extends FpslicDevice implements Board {
         };
     }
 
-    public void selfTest(SelfTestResultListener resultListener) throws Exception { }
+    //public void selfTest(SelfTestResultListener resultListener) throws Exception { }
 
     public Device getDevice() { return this; }
 
+    public void boot(Reader r) throws Exception { }
 }
 

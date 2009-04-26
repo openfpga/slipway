@@ -10,7 +10,6 @@ import java.awt.color.*;
 import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
-import gnu.io.*;
 
 public class Demo {
 

@@ -6,7 +6,7 @@ import java.util.*;
 import java.io.*;
 import org.ibex.util.Log;
 
-public class FakeFpslic extends Fpslic {
+public class FakeFpslic extends FpslicDevice {
 
     public FakeFpslic(int width, int height) { super(width, height); }
 
