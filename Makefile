@@ -87,8 +87,8 @@ misc/slipway_drone.bst: build/slipway_drone.hex
 ## avr-gcc toolchain and libc ################################################################
 
 upstream/binutils:
-	cd upstream; curl http://ftp.gnu.org/pub/pub/pub/gnu/binutils/binutils-2.16.1.tar.bz2 | tar -xvjf -
-	cd upstream; mv binutils-2.16.1 binutils
+	cd upstream; curl http://ftp.gnu.org/pub/pub/pub/gnu/binutils/binutils-2.19.1.tar.bz2 | tar -xvjf -
+	cd upstream; mv binutils-2.19.1 binutils
 
 upstream/binutils/.built: upstream/binutils
 	mkdir -p upstream/prefix
