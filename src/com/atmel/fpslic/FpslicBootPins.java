@@ -3,7 +3,8 @@ import com.ftdi.usb.*;
 import java.io.*;
 
 /**
- * Pin-level access to the bootstrap interface of the FPSLIC
+ * Pin-level access to the bootstrap interface of the FPSLIC; this
+ * interface is generally implemented by subclasses of Board.
  */
 public interface FpslicBootPins {
 
