@@ -5,6 +5,10 @@ import org.ibex.util.Log;
 import java.io.*;
 import java.util.*;
 
+/**
+ *  This class is obsolete; it used to be an implementation intended
+ *  for an RS-232 interface to Atmel's development kit board.
+ */
 public abstract class SerialBoard implements Board {
 
     /*
