@@ -1,7 +1,6 @@
 package edu.berkeley.slipway.demos;
 
 import edu.berkeley.slipway.*;
-import edu.berkeley.slipway.util.*;
 import static java.awt.event.KeyEvent.*;
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;

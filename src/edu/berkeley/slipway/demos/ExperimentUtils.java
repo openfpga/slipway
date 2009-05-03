@@ -1,4 +1,4 @@
-package edu.berkeley.slipway.util;
+package edu.berkeley.slipway.demos;
 
 import java.io.*;
 import java.util.*;
