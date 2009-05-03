@@ -60,7 +60,7 @@ public class FakeBoard extends FpslicDevice implements Board {
         };
     }
 
-    //public void selfTest(SelfTestResultListener resultListener) throws Exception { }
+    public void selfTest(SelfTestResultListener resultListener) throws Exception { }
 
     public Device getDevice() { return this; }
 

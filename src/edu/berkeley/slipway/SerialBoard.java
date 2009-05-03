@@ -1,6 +1,6 @@
 package edu.berkeley.slipway;
 
-import edu.berkeley.obits.*;
+import edu.berkeley.abits.*;
 import org.ibex.util.Log;
 import java.io.*;
 import java.util.*;
