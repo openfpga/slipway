@@ -1,4 +1,4 @@
-package edu.berkeley.slipway;
+package com.atmel.fpslic;
 
 import java.io.*;
 import java.util.*;
@@ -12,10 +12,10 @@ import org.ibex.util.*;
 /**
  * Slipway board (Fpslic via FTDI USB-UART, running <tt>SlipwaySlave.c</tt>)
  */
-public class FakeBoard extends FpslicDevice implements Board {
+public class FakeFpslicBoard extends FpslicDevice implements Board {
 
     private byte[][][] cache;
-    public FakeBoard(int width, int height) {
+    public FakeFpslicBoard(int width, int height) {
         super(width, height);
         cache = new byte[256][][];
         for(int i=0; i < cache.length; i++) {

@@ -49,7 +49,7 @@ public class MPARDemo {
         int height = 12;
 
         //SlipwayBoard slipway = new SlipwayBoard();
-        FakeBoard slipway = new FakeBoard(24, 24);
+        FakeFpslicBoard slipway = new FakeFpslicBoard(24, 24);
 
         FpslicDevice fpslic = (FpslicDevice)slipway.getDevice();
         while(true) {
