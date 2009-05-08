@@ -185,56 +185,7 @@ public class Demo2 implements KeyListener {
     }
 
     public static void scan(SlipwayBoard slipway, FpslicDevice.Cell cell, int source, boolean setup) {
-        FpslicDevice dev = slipway.getFpslicDevice();
-        if (setup) {
-            //if (source != NONE) cell.c(source);
-            if (cell.b()) cell.b(false);
-            if (cell.f()) cell.f(false);
-        }
-        if (cell.out(L3)!=setup) cell.out(L3, setup);
-        if (cell.vx(L3)!=setup) cell.v(L3, setup);
-
-        FpslicDevice.SectorWire sw = cell.vwire(L3);
-        //System.out.println("wire is: " + sw);
-
-        if (sw.row > (12 & ~0x3) && sw.north()!=null && sw.north().drives(sw))
-            sw.north().drives(sw, false);
-        while(sw.row > (12 & ~0x3) && sw.south() != null) {
-            //System.out.println(sw + " -> " + sw.south());
-            if (sw.drives(sw.south())!=setup) sw.drives(sw.south(), setup);
-            sw = sw.south();
-        }
-        if (sw.row < (12 & ~0x3) && sw.south() != null && sw.south().drives(sw))
-            sw.north().drives(sw, false);
-        while(sw.row < (12 & ~0x3) && sw.north() != null) {
-            //System.out.println(sw + " -> " + sw.north());
-            if (sw.drives(sw.north())!=setup) sw.drives(sw.north(), setup);
-            sw = sw.north();
-        }
-
-        //cell = dev.cell(19, 15);
-        cell = dev.cell(cell.col, 15);
-        /*
-        System.out.println("cell is " + cell);
-        cell.xlut(0xff);
-        cell.ylut(0xff);
-        cell.b(false);
-        cell.f(false);
-        cell.c(XLUT);
-        cell.out(L3, true);
-        cell.oe(NONE);
-        */
-        if (cell.hx(L3) != setup) cell.h(L3, setup);
-        if (cell.vx(L3) != setup) cell.v(L3, setup);
-        sw = cell.hwire(L3);
-
-        if (sw.west()!=null && sw.west().drives(sw)) { sw.west().drives(sw, false); }
-        while(sw.east() != null) {
-            //System.out.println(sw + " -> " + sw.east());
-            if (sw.drives(sw.east())!=setup) sw.drives(sw.east(), setup);
-            sw = sw.east();
-        }
-
+        ExperimentUtils.scan(cell, source, setup);
     }
 
 

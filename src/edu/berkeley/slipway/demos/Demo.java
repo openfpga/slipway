@@ -4,6 +4,7 @@ import edu.berkeley.slipway.*;
 import com.atmel.fpslic.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 import edu.berkeley.slipway.gui.*;
+import static edu.berkeley.slipway.demos.ExperimentUtils.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.color.*;
@@ -22,15 +23,14 @@ public class Demo {
         SlipwayBoard slipway = new SlipwayBoard();
         FpslicDevice device = slipway.getFpslicDevice();
         FpslicDevice at40k = device;
+        FpslicDevice fpslic = device;
         try {
             Log.info(Demo.class, "issuing command");
 
             //at40k.iob_top(2, true).oe(false);
             //at40k.iob_top(2, false).oe(false);
-            //at40k.iob_top(1, true).oe(false);
 
-            // this command confirmed to turn *on* led0
-            //at40k.iob_top(1, false).output(0);
+
             /*
               for(int i=0; i<20; i++) {
               at40k.iob_bot(i, false).output(0);
@@ -201,7 +201,24 @@ public class Demo {
             */
 
             doitx(at40k, slipway);
-            Gui vis = new Gui(device, slipway);
+            ExperimentUtils.setupScanCell(at40k);
+            at40k.flush();
+            //Gui vis = new Gui(device, slipway);
+
+        for(int i=0; i<24; i++) {
+            fpslic.iob_bot(i, true).enableOutput(NORTH);
+            fpslic.iob_bot(i, false).enableOutput(NW);
+            fpslic.cell(i, 0).xlut(0xff);
+            fpslic.cell(i, 0).ylut(0xff);
+            if (i<22) {
+                copy(fpslic.cell(i, 19), NW, NW);
+                for(int y=18; y>=0; y--) {
+                    copy(fpslic.cell(i, y), NORTH, NORTH);
+                }
+            }
+        }
+
+            DemoVisualizer vis = new DemoVisualizer(device, slipway);
             Frame fr = new Frame();
             fr.addKeyListener(vis);
             fr.setLayout(new BorderLayout());
@@ -518,8 +535,6 @@ public class Demo {
                 at40k.cell(i, 0).ylut(0xff);
             }
 
-            device.flush();
-
             fr.addKeyListener(vis);
             fr.setLayout(new BorderLayout());
             fr.add(vis, BorderLayout.CENTER);
@@ -528,6 +543,9 @@ public class Demo {
             vis.repaint();
             fr.repaint();
             fr.show();
+
+
+
             synchronized(Demo.class) { Demo.class.wait(); }
 
 
@@ -631,8 +649,6 @@ public class Demo {
               device.getFpslicDevice().flush();
               }
             */
-
-
             /*
               at40k.iob_top(0, true).output(0);
               at40k.iob_top(0, true).oe(false);
@@ -649,52 +665,7 @@ public class Demo {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-
-    public static void copy(FpslicDevice.Cell c, int xdir, int ydir) {
-        switch(xdir) {
-            case NW: case NE: case SW: case SE: {
-                c.xi(xdir);
-                c.xlut(LUT_SELF);
-                break;
-            }
-            case NORTH: case SOUTH: case EAST: case WEST: {
-                c.yi(xdir);
-                c.xlut(LUT_OTHER);
-                break;
-            }
-            case NONE: break;
-            default: throw new Error();
-        }
-        switch(ydir) {
-            case NW: case NE: case SW: case SE: {
-                c.xi(ydir);
-                c.ylut(LUT_OTHER);
-                break;
-            }
-            case NORTH: case SOUTH: case EAST: case WEST: {
-                c.yi(ydir);
-                c.ylut(LUT_SELF);
-                break;
-            }
-            case NONE: break;
-            default: throw new Error();
-        }
-        c.xo(false);
-        c.yo(false);
-    }
-    public static String hex(int x) {
-        return Long.toString(x & 0xffffffffL, 16);
-    }
-
-    public static void handshaker(FpslicDevice.Cell cell) {
-        cell.xlut(0x22);
-        cell.ylut(0x71);
-        cell.c(XLUT);
-        cell.f(false);
-        cell.t(false, false, true);
-    }
-
-
+    public static String hex(int x) { return Long.toString(x & 0xffffffffL, 16); }
     private static String pad(int i, String s) { if (s.length()>i) return s; return "0"+pad((i-1),s); }
     public static String bin8(byte b) {
         int n = b & 0xff;
@@ -704,6 +675,13 @@ public class Demo {
         return ret;
     }
 
+    public static void handshaker(FpslicDevice.Cell cell) {
+        cell.xlut(0x22);
+        cell.ylut(0x71);
+        cell.c(XLUT);
+        cell.f(false);
+        cell.t(false, false, true);
+    }
     public static void bounce(FpslicDevice.Cell cell, int xi, int yi) {
         cell.xlut((byte)0xCC);
         cell.ylut((byte)0xCC);
@@ -723,62 +701,6 @@ public class Demo {
         cell.xo(false);
     }
 
-    public static int lutSwap(int x) {
-        return
-            (x & 0x80)        |
-            ((x & 0x20) << 1) |
-            ((x & 0x40) >> 1) |
-            (x & 0x10) |
-            (x & 0x08)        |
-            ((x & 0x02) << 1) |
-            ((x & 0x04) >> 1) |
-            (x & 0x01);
-    }
-
-    /** watches for a rising/falling edge on Yin, emits a pulse on Xout */
-    public static void pulse_detect(FpslicDevice.Cell c, int in, boolean falling) {
-        c.ylut(0x00);
-        c.xlut(0x00);
-        switch(in) {
-            case NW: case NE: case SW: case SE: {
-                c.xi(in);
-                loopback(c, XLUT);
-                if (!falling) c.ylut(lutSwap(0x0C)); /* x & !z */
-                else          c.ylut(lutSwap(0x30)); /* !x & z */
-                c.xlut(LUT_SELF);
-                break;
-            }
-            case NORTH: case SOUTH: case EAST: case WEST: {
-                c.yi(in);
-                loopback(c, YLUT);
-                if (!falling) c.xlut(0x0C); /* y & !z */
-                else          c.xlut(0x30); /* !y & z */
-                c.ylut(LUT_SELF);
-                break;
-            }
-            default: throw new Error();
-        }
-    }
-
-    /** watches for a pulse on Xin, copies value of Yin */
-    public static void pulse_copy(FpslicDevice.Cell cell, int xi, int yi, boolean invert) {
-        loopback(cell, YLUT);
-        if (!invert) cell.ylut(0xB8);   /* yo = x ?  yi : z => 1011 1000 */
-        else         cell.ylut(0x74);   /* yo = x ? !yi : z => 0111 0100 */
-        if (!invert) cell.xlut(lutSwap(0xB8));   /* yo = x ?  yi : z => 1011 1000 */
-        else         cell.xlut(lutSwap(0x74));   /* yo = x ? !yi : z => 0111 0100 */
-        cell.xi(xi);
-        cell.yi(yi);
-    }
-
-    public static void loopback(FpslicDevice.Cell cell, int cin) {
-        cell.f(false);
-        cell.b(false);
-        cell.t(false, false, true);
-        cell.yo(false);
-        cell.xo(false);
-        cell.c(cin);
-    }
 
     public static void doit(FpslicDevice at40k, SlipwayBoard device) throws Exception {
 

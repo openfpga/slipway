@@ -6,7 +6,6 @@ import java.awt.*;
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import edu.berkeley.slipway.gui.*;
-import edu.berkeley.slipway.util.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 
 
@@ -52,6 +51,24 @@ public abstract class MicropipelineFifoDemo {
 
     public void mainx(String[] s) throws Exception {
         System.err.println("MicropipelineFifoDemo: setting up scan cell...");
+        
+        //if (s.length > 0 && s[0].equals("-g")) {
+
+        /*
+        Gui vis = new Gui(fpslic, slipway, fpslic.getWidth(), fpslic.getHeight());
+            Frame fr = new Frame();
+            fr.setTitle("SLIPWAY Live Fabric Debugger");
+            fr.addKeyListener(vis);
+            fr.setLayout(new BorderLayout());
+            fr.add(vis, BorderLayout.CENTER);
+            fr.pack();
+            fr.setSize(900, 900);
+            vis.repaint();
+            fr.repaint();
+            fr.show();
+        */
+            //}
+    
         ExperimentUtils.setupScanCell(fpslic);
 
         for(int i=0; i<255; i++) {

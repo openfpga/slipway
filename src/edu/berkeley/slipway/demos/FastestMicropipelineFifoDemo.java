@@ -6,7 +6,6 @@ import java.awt.*;
 import com.atmel.fpslic.*;
 import edu.berkeley.slipway.*;
 import edu.berkeley.slipway.gui.*;
-import edu.berkeley.slipway.util.*;
 import static com.atmel.fpslic.FpslicConstants.*;
 
 public class FastestMicropipelineFifoDemo extends MicropipelineFifoDemo {

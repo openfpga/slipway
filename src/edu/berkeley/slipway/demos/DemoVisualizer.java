@@ -12,6 +12,7 @@ import org.ibex.util.*;
 import java.io.*;
 import java.util.*;
 import static edu.berkeley.slipway.demos.Demo.*;
+import static edu.berkeley.slipway.demos.ExperimentUtils.*;
 
 public class DemoVisualizer extends Frame implements KeyListener, MouseMotionListener, MouseListener {
     public static final int WIDTH = 40;
@@ -21,12 +22,12 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
     public static final Color RED  = new Color(0xaa, 0x55, 0x55);
     public static final Color BLUE = new Color(0x55, 0x55, 0xaa);
     private final FpslicDevice dev;
-    private final SlipwayBoard drone;
+    private final SlipwayBoard board;
     int selx = -1;
     int sely = -1;
-    public DemoVisualizer(final FpslicDevice dev, final SlipwayBoard drone) {
+    public DemoVisualizer(final FpslicDevice dev, final SlipwayBoard board) {
         this.dev = dev;
-        this.drone = drone;
+        this.board = board;
         show();
         addMouseMotionListener(this);
         addMouseListener(this);
@@ -58,15 +59,28 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
     public void mouseClicked(MouseEvent e) { }
     public void mouseEntered(MouseEvent e) { }
     public void mouseExited(MouseEvent e) { }
-    public void mouseReleased(MouseEvent e) {
-    }
-    public void keyTyped(KeyEvent k) {
-    }
-    public void keyReleased(KeyEvent k) {
-    }
+    public void mouseReleased(MouseEvent e) { }
+    public void keyTyped(KeyEvent k) { }
+    public void keyReleased(KeyEvent k) { }
     public void keyPressed(KeyEvent keyevent) {
         boolean scan = false;
         switch(keyevent==null ? '_' : keyevent.getKeyChar()) {
+            case 'C': {
+                if (selx==-1 || sely==-1) break;
+                FpslicDevice.Cell cell = dev.cell(selx, sely);
+                cell.ylut(0xB2);
+                drawCell(getGraphics(), selx, sely);
+                break;
+            }
+            case '0': {
+                if (selx==-1 || sely==-1) break;
+                FpslicDevice.Cell cell = dev.cell(selx, sely);
+                cell.xlut(0x00);
+                cell.ylut(0x00);
+                drawCell(getGraphics(), selx, sely);
+                dev.flush();
+                break;
+            }
             case '1': {
                 if (selx==-1 || sely==-1) break;
                 FpslicDevice.Cell cell = dev.cell(selx, sely);
@@ -77,7 +91,7 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                 break;
             }
             case 'i': {
-                System.out.println("interrupt_count: " + drone.readInterruptCount());
+                System.out.println("interrupt_count: " + board.readInterruptCount());
                 break;
             }
             case 'x': {
@@ -158,76 +172,25 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                 //enabled = !enabled;
                 try {
                     for(int cap=0; cap<15; cap++) {
-                        drain(dev, drone);
+                        drain(dev, board);
                         try { Thread.sleep(100); } catch (Exception e) { }
-                        //showit(dev, drone, this);
-                        fill(dev, drone, cap);
-                        drone.readInterruptCount();
+                        //showit(dev, board, this);
+                        fill(dev, board, cap);
+                        board.readInterruptCount();
                         long now = System.currentTimeMillis();
                         try { Thread.sleep(4000); } catch (Exception e) { }
-                        int count = drone.readInterruptCount();
+                        int count = board.readInterruptCount();
                         long now2 = System.currentTimeMillis();
                         System.out.println(cap + " ,  " + (((float)count * (2*2*2*2*2*2*2*2*2*1000))/(now2-now)));
                     }
                 } catch (Exception e) { e.printStackTrace(); }
                 break;
             }
-            case 'C': {
-                if (selx==-1 || sely==-1) break;
-                FpslicDevice.Cell cell = dev.cell(selx, sely);
-                cell.ylut(0xB2);
-                drawCell(getGraphics(), selx, sely);
-                break;
-            }
-            case '0': {
-                if (selx==-1 || sely==-1) break;
-                FpslicDevice.Cell cell = dev.cell(selx, sely);
-                cell.xlut(0x00);
-                cell.ylut(0x00);
-                drawCell(getGraphics(), selx, sely);
-                dev.flush();
-                break;
-            }
         } 
         if (!scan) return;
-        showit(dev, drone, this);
+        showit(dev, board, this);
     }
-    public void mousePressed(MouseEvent e) {
-        final FpslicDevice.Cell cell = dev.cell(selx, sely);
-        if (cell==null) return;
-        final int old = cell.c();
-        SlipwayBoard.ByteCallback bc = new SlipwayBoard.ByteCallback() {
-                public void call(byte b) throws Exception {
-                    boolean y = (b & 0x80) != 0;
-                    //cell.c(old);
-                    Graphics g = getGraphics();
-                    g.setFont(new Font("sansserif", Font.BOLD, 14));
-                    g.setColor(Color.white);
-                    //g.drawString("X=0", left(cell) + 10, top(cell) + 20);
-                    //g.drawString("X=1", left(cell) + 10, top(cell) + 20);
-                    //g.setColor(Color.white);
-                    //g.drawString("Y=0", left(cell) + 8, top(cell) + 35);
-                    //g.drawString("Y=1", left(cell) + 8, top(cell) + 35);
-                    //g.setColor(RED);
-                    //g.drawString("X="+(x?"1":"0"), left(cell) + 10, top(cell) + 20);
-                    String v = (cell.c()==YLUT ? "Y" : cell.c()==XLUT ? "X" : "C");
-                    g.drawString(v+"="+(y?"0":"1"), left(cell) + 8, top(cell) + 35);
-                    g.setColor(BLUE);
-                    g.drawString(v+"="+(y?"1":"0"), left(cell) + 8, top(cell) + 35);
-                } };
-            /*
-        try {
-            scan(dev, cell, NONE, true);
-            drone.readBus(bc);
-            //scan(dev, cell, XLUT, true);
-            //boolean x = (drone.readBus() & 0x80) != 0;
-            scan(dev, cell, NONE, false);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-            */
-    }
-
+    public void mousePressed(MouseEvent e) { }
     public void mouseMoved(MouseEvent e) {
         int x = e.getX();
         int y = e.getY();
@@ -237,20 +200,9 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
             FpslicDevice.Cell cell = dev.cell(cx, cy);
             selx = -1;
             sely = -1;
-            /*
-              drawCell(getGraphics(), cx, cy);
-              drawSector(getGraphics(), dev.cell(cx, cy).sector());
-            */
         }
         selx = (x-20)/(WIDTH+2);
         sely = (23 - (y-20)/(HEIGHT+2))+1;
-        /*
-          FpslicDevice.Cell cell = dev.cell(selx, sely);
-          if (selx >= 0 && selx < 24 && sely >= 0 && sely < 24) {
-          drawCell(getGraphics(), selx, sely);
-          drawSector(getGraphics(), dev.cell(selx, sely).sector());
-          }
-        */
     }
     public void mouseDragged(MouseEvent e) { mousePressed(e); }
     public void paint(Graphics g) {
@@ -264,25 +216,9 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
         for(int x=0; x<=23; x+=4)
             for(int y=23; y>=0; y-=4) 
                 drawSector(g, dev.cell(x, y).sector());
-        /*
-          g.setColor(BLUE);
-          g.drawString("Ready", (5*(WIDTH+2))+20, 40);
-          g.setColor(RED);
-          g.drawString("Send",  (3*(WIDTH+2))+20, 40);
-          g.setColor(BLUE);
-        */
         refresh();
     }
-    public void refresh() {
-        Graphics g = getGraphics();
-        /*
-          int data = drone.readBus() & 0xff;
-          for(int i=0; i<8; i++) {
-          g.setColor((data & (1<<i))==0 ? Color.black : Color.green);
-          g.drawString("D"+i,  (24*(WIDTH+2))+20, ((23-(i+7))*(HEIGHT+2))+60-HEIGHT/2);
-          }
-        */
-    }
+    public void refresh() { }
     public static int left(FpslicDevice.Cell cell) { return (cell.col)   *(WIDTH+2)+20; }
     public static int top(FpslicDevice.Cell cell)  { return (23-cell.row)*(HEIGHT+2)+60; }
     public void drawSector(Graphics g, FpslicDevice.Sector sector) {
@@ -428,16 +364,13 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
 
     }
 
-    public static void showit(FpslicDevice dev, SlipwayBoard drone, final DemoVisualizer vis) {
-        final long then = System.currentTimeMillis();
-        final Graphics g = vis.getGraphics();
-        g.setFont(new Font("sansserif", Font.BOLD, 24));
+    public static void showit(FpslicDevice dev, SlipwayBoard board, final DemoVisualizer vis) {
         final Color red = new Color(0xff, 0x99, 0x99);
         final Color green = new Color(0x99, 0xff, 0x99);
-        for(int xx=0; xx<=22; xx++) {
-            for(int yy=23; yy>=0; yy--) {
-                //for(int xx=5; xx<=PIPELEN-1; xx++) {
-                //for(int yy=21; yy<=22; yy++) {
+        final Graphics g = vis.getGraphics();
+        g.setFont(new Font("sansserif", Font.BOLD, 24));
+        for(int xx=0; xx<=dev.getWidth()-2; xx++) {
+            for(int yy=dev.getHeight()-1; yy>=0; yy--) {
                 final int x = xx;
                 final int y = yy;
                 final FpslicDevice.Cell cell = dev.cell(x, y);
@@ -446,21 +379,15 @@ public class DemoVisualizer extends Frame implements KeyListener, MouseMotionLis
                         public void call(byte b) throws Exception {
                             boolean v = (b & 0x80) != 0;
                             vis.drawCell(g, x, y, v?red:green);
-                            //if (x==PIPELEN-1 && y==22) System.out.println("time: " + (System.currentTimeMillis()-then));
                         }
                     };
-                /*
-                scan(dev, cell, NONE, true);
                 try {
-                    drone.readBus(bc);
-                    //scan(dev, cell, YLUT, false);
-                    cell.v(L3, false);
-                    dev.cell(x, 15).h(L3, false);
-                    dev.cell(x, 15).v(L3, false);
+                    ExperimentUtils.scan(cell, YLUT, true);
+                    board.readFpgaData(bc);
+                    ExperimentUtils.scan(cell, NONE, false);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
-                */
             }
         }
     }
