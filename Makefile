@@ -6,6 +6,9 @@ linkerflags =
 jnilib      = libFtdiUartNative.so
 endif
 
+libusb_url = 'http://downloads.sourceforge.net/project/libusb/libusb-0.1%20%28LEGACY%29/0.1.12/libusb-0.1.12.tar.gz?use_mirror=cdnetworks-us-1'
+edifparser_url = 'http://downloads.sourceforge.net/project/byuediftools/byuediftools/proton%20%280.5.2%29/byuediftools-0.5.2.jar?use_mirror=cdnetworks-us-2'
+
 ## demos ############################################################################
 
 asyncdemo: slipway.jar 
@@ -50,7 +53,7 @@ slipway.jar: build/$(jnilib) $(shell find src build/src -name \*.java) misc/slip
 
 upstream/libusb:
 	mkdir -p `dirname $@`
-	cd upstream; curl http://voxel.dl.sourceforge.net/sourceforge/libusb/libusb-0.1.12.tar.gz | tar -xvzf -
+	cd upstream; curl -L ${libusb_url} | tar -xvzf -
 	cd upstream; mv libusb-0.1.12 libusb
 
 upstream/libusb/.built: upstream/libusb
@@ -87,7 +90,7 @@ build/slipway_drone.hex: src/edu/berkeley/slipway/SlipwaySlave.c  upstream/avr-l
 ## avr-gcc toolchain and libc ################################################################
 
 upstream/binutils:
-	cd upstream; curl http://ftp.gnu.org/pub/pub/pub/gnu/binutils/binutils-2.19.1.tar.bz2 | tar -xvjf -
+	cd upstream; curl -L http://ftp.gnu.org/pub/pub/pub/gnu/binutils/binutils-2.19.1.tar.bz2 | tar -xvjf -
 	cd upstream; mv binutils-2.19.1 binutils
 
 upstream/binutils/.built: upstream/binutils
@@ -100,7 +103,7 @@ upstream/binutils/.built: upstream/binutils
 	touch $@
 
 upstream/gcc:
-	cd upstream; curl http://ftp.gnu.org/pub/gnu/gcc/gcc-4.0.3/gcc-core-4.0.3.tar.bz2 | tar -xvjf -
+	cd upstream; curl -L http://ftp.gnu.org/pub/gnu/gcc/gcc-4.0.3/gcc-core-4.0.3.tar.bz2 | tar -xvjf -
 	cd upstream; mv gcc-4.0.3 gcc
 
 upstream/gcc/.built: upstream/gcc upstream/binutils/.built
@@ -114,7 +117,7 @@ upstream/gcc/.built: upstream/gcc upstream/binutils/.built
 	touch $@
 
 upstream/avr-libc:
-	cd upstream; curl http://nongnu.askapache.com/avr-libc/avr-libc-1.4.3.tar.bz2 | tar -xvjf -
+	cd upstream; curl -L http://nongnu.askapache.com/avr-libc/avr-libc-1.4.3.tar.bz2 | tar -xvjf -
 	cd upstream; mv avr-libc-1.4.3 avr-libc
 
 upstream/avr-libc/.built: upstream/avr-libc upstream/gcc/.built
@@ -130,7 +133,7 @@ upstream/avr-libc/.built: upstream/avr-libc upstream/gcc/.built
 
 upstream/jhdl-edifparser.jar:
 	mkdir -p upstream
-	curl -o $@- http://reliability.ee.byu.edu/edif/jars/release_0.3.0/edif-0.3.0.jar
+	curl -Lo $@- ${edifparser_url}
 	mv $@- $@
 
 ## javadoc ##############################################################################
